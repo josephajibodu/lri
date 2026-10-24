@@ -564,12 +564,26 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
 }
 .foot-word span { display: inline-block; transition: font-stretch .25s ease, font-weight .25s ease, color .25s ease; }
 .foot-word span.hot { color: var(--yellow); -webkit-text-stroke: 2px var(--ink); }
+.foot-word .foot-word-group { white-space: nowrap; }
 .foot-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px 32px; padding-top: 22px; border-top: 1px solid var(--line); }
 .foot-logo { display: block; height: 96px; width: auto; }
 .foot-tag { margin: 0; font: 400 .68rem/1.4 var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
 .foot-links { display: flex; flex-wrap: wrap; gap: 8px 22px; font-weight: 500; }
 @media (max-width: 640px) { .foot-word { white-space: normal; font-size: 15vw; } }
 
+/* Error pages: the status code as a pinned race bib */
+.error-page { padding-block: clamp(48px, 8vw, 104px) clamp(64px, 9vw, 120px); }
+.error-inner { display: grid; justify-items: center; gap: 24px; text-align: center; }
+.error-bib { width: min(100%, 380px); margin-bottom: 16px; transform: rotate(-3deg); transition: transform .35s ease; }
+.error-bib:hover { transform: rotate(0deg); }
+@media (prefers-reduced-motion: no-preference) {
+    .error-bib { animation: pin-in .8s cubic-bezier(.2, .8, .2, 1) backwards; }
+}
+@keyframes pin-in { from { transform: rotate(-9deg) translateY(14px); } to { transform: rotate(-3deg); } }
+.error-number { margin: 0; font: italic 900 clamp(5rem, 16vw, 8.5rem)/.85 var(--display); font-stretch: 118%; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.error-label { margin: 12px 0 0; font: 400 .7rem/1.3 var(--mono); text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
+.error-title { font-family: var(--sans); font-weight: 400; font-size: clamp(2.6rem, 6.4vw, 5.2rem); line-height: 1; letter-spacing: -.045em; }
+
 @media (prefers-reduced-motion: reduce) {
-    .ticket, .ticket:hover, .tile, .tile:hover, .perk, .perk:hover, .tribe, .tribe:hover { transition: none; transform: none; }
+    .ticket, .ticket:hover, .tile, .tile:hover, .perk, .perk:hover, .tribe, .tribe:hover, .error-bib, .error-bib:hover { transition: none; transform: none; }
 }
