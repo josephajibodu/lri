@@ -46,7 +46,7 @@ The app uses the database for sessions and cache, so the page returns a 500 erro
 
 ### The next community run
 
-Edit `next_run` in `config/lri.php` whenever a new run is announced. The top bar, the countdown card and the live countdown all read from it.
+Edit `next_run` in `config/lri.php` whenever a new run is announced. The top bar, the countdown card, the live countdown and the event listing search engines read all come from it.
 
 | Key | What it controls |
 | --- | --- |
@@ -63,6 +63,27 @@ Once the start time passes, the countdown shows "Last community run" until you s
 ### Links
 
 `links` in `config/lri.php` holds the Instagram profile, the member registration form and the Run the Elements challenge. Every button and link on the page uses these values.
+
+### Search and link previews
+
+`site` in `config/lri.php` controls how the club shows up in search results and link previews:
+
+| Key | What it controls |
+| --- | --- |
+| `name`, `alternate_name` | The club's name and short name in search results |
+| `title` | The page title in search results and browser tabs. Keep it under about 60 characters |
+| `description` | The snippet under the title in search results and link previews. Keep it under about 160 characters |
+| `slogan`, `locality`, `region`, `country` | The club details in the structured data |
+
+The site also serves:
+
+- **Structured data** on the home page (schema.org JSON-LD), describing the club, the website and the next run as a free event. The run is listed only until it starts.
+- **`/sitemap.xml`** listing the pages to index, and **`/robots.txt`** pointing crawlers to it.
+- **A link preview image** at `public/images/og-image.png`, used by WhatsApp, Instagram, X and others.
+- **Icons:** `favicon.ico`, `favicon.svg`, `apple-touch-icon.png` and the `site.webmanifest` icons in `public/`.
+- **`noindex` on error pages**, so they never appear in search results.
+
+All of these build their links from the address the site is served on, and use `https` when `APP_ENV=production`. Set `APP_URL` to the live address too.
 
 ### Page content
 

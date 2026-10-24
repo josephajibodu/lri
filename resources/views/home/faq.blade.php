@@ -10,6 +10,10 @@
                 <p>No. Walking is allowed. Run your own race at your own pace, and a leader will stay at the back with you.</p>
             </details>
             <details>
+                <summary>Is there a running group near me in Ibadan?</summary>
+                <p>LRI has tribes across the city in Akobo, Bodija, UI / Eleyele and Oluyole / Akala. Join the one closest to you, and on the first Saturday of the month every tribe runs together.</p>
+            </details>
+            <details>
                 <summary>Does it cost anything?</summary>
                 <p>Tribe runs and community runs are free. Some hangouts ask for an optional chip-in toward fruit and water, and extras like padel are paid separately.</p>
             </details>

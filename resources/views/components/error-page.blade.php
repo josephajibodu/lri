@@ -6,7 +6,7 @@
     'message',
 ])
 
-<x-layouts.app :title="$label.' · Let’s Run Ibadan'">
+<x-layouts.app :title="$label.' · Let’s Run Ibadan'" robots="noindex">
     <x-site.header />
 
     <main class="error-page">

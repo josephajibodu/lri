@@ -1,4 +1,8 @@
-<x-layouts.app>
+<x-layouts.app :canonical="route('home')">
+    <x-slot:head>
+        <script type="application/ld+json">@json($structuredData)</script>
+    </x-slot:head>
+
     <x-site.topbar :next-run="$nextRun" />
     <x-site.header />
 
