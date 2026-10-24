@@ -2,7 +2,7 @@
     <div class="wrap hero-inner">
         <span class="hero-pill"><b>Running community</b> in Ibadan, Oyo State</span>
         <h1 class="wordmark"><span class="wm-line">Let’s run,</span><span class="wm-line"><span class="wm-hl">Ibadan.</span></span></h1>
-        <p class="lede">Runners, joggers and walkers in local tribes across the city. We meet every Saturday at 6:30 AM, run 5 to 10 km together, and nobody gets left behind.</p>
+        <p class="lede">Runners, joggers and walkers in local tribes across the city. We meet every Saturday at 6:30 AM, run 5 km or more together, and nobody gets left behind.</p>
         <div class="cta-row">
             <a class="btn btn-yellow" href="{{ config('lri.links.member_form') }}" target="_blank" rel="noopener">Become a member ↗</a>
             <a class="btn" href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">Follow @@letsrunibadan</a>
@@ -24,7 +24,7 @@
             </div>
             <div class="sticker s-burst"><span><b>6:30</b><small>AM · Sat</small></span></div>
             <div class="sticker s-pill">Walking allowed</div>
-            <div class="sticker s-km"><span>5–10<small>km</small></span></div>
+            <div class="sticker s-km"><span>5+<small>km</small></span></div>
             <div class="sticker s-tag">No one left behind</div>
         </div>
         <p class="drag-hint" aria-hidden="true">Psst. The stickers move.</p>

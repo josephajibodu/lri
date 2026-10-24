@@ -19,7 +19,7 @@
             <article class="ticket ticket-yellow">
                 <span class="t-day">Sat</span>
                 <h3>6:30 AM run</h3>
-                <p>5 to 10 km from your tribe’s meeting point.</p>
+                <p>5 km and up from your tribe’s meeting point.</p>
             </article>
             <article class="ticket ticket-coral">
                 <span class="t-day">1st Sat</span>

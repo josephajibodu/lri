@@ -9,7 +9,7 @@
             <ul class="expect">
                 <li><span class="shape shape-circle" aria-hidden="true"></span><h3>Walk, jog or run</h3><p>Walking is allowed. Nobody has to keep up with the fastest runners.</p></li>
                 <li><span class="shape shape-tri" aria-hidden="true"></span><h3>Nobody gets left behind</h3><p>A leader stays with the last runner, so the whole group finishes together.</p></li>
-                <li><span class="shape shape-square" aria-hidden="true"></span><h3>5 to 10 km</h3><p>Most routes have a shorter loop, so you can stop at 5 km.</p></li>
+                <li><span class="shape shape-square" aria-hidden="true"></span><h3>5 km and up</h3><p>Runs start at 5 km and often go further. Most routes have a shorter loop, so you can stop at 5 km.</p></li>
                 <li><span class="shape shape-star" aria-hidden="true"></span><h3>Stay for the after</h3><p>Stretching, gist and a group photo. This is where most LRI friendships start.</p></li>
             </ul>
             <div class="kit" id="kit">
