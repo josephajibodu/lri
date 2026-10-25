@@ -69,14 +69,14 @@ return [
     */
 
     'instagram_posts' => [
-        'https://www.instagram.com/reel/DefHjXaAi4H/',
-        'https://www.instagram.com/reel/DeRgSJOucMh/',
-        'https://www.instagram.com/reel/DeANMbFOo2u/',
-        'https://www.instagram.com/reel/DdtbPRJOFPv/',
-        'https://www.instagram.com/reel/DdqejFru2U7/',
-        'https://www.instagram.com/p/DdGyaBjgEG0/',
-        'https://www.instagram.com/reel/DczBXPiuWBL/',
-        'https://www.instagram.com/reel/DcAvb9BO6J6/',
+        'https://www.instagram.com/p/DZGD_DFDkOe/',
+        'https://www.instagram.com/p/De4FdImMUwc/',
+        'https://www.instagram.com/p/Del0-_VuHec/',
+        'https://www.instagram.com/p/DejRLtzuSeP/',
+        'https://www.instagram.com/p/DeRgSJOucMh/',
+        'https://www.instagram.com/p/Dd_PTPpuX-v/',
+        'https://www.instagram.com/p/DeANMbFOo2u/',
+        'https://www.instagram.com/p/Ddw9cdDgK-_/',
     ],
 
 ];
