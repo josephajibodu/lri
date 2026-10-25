@@ -64,6 +64,12 @@ Once the start time passes, the countdown shows "Last community run" until you s
 
 `links` in `config/lri.php` holds the Instagram profile, the member registration form and the Run the Elements challenge. Every button and link on the page uses these values.
 
+### Instagram highlights
+
+`instagram_posts` in `config/lri.php` lists the posts and reels shown in the scrolling "Fresh from the road" section, in order. To feature a post, open it on Instagram, choose "Copy link" and paste the link into the list. Posts must be public. Leave the list empty to hide the section.
+
+The section uses Instagram's official embeds, so each card shows the real post or reel. Instagram's embed script only loads once a visitor scrolls near the section, which keeps the page fast. If a visitor's browser blocks Instagram, each card falls back to a "View this post on Instagram" link.
+
 ### Search and link previews
 
 `site` in `config/lri.php` controls how the club shows up in search results and link previews:
@@ -103,6 +109,7 @@ Each section of the page is its own Blade file:
 | Events | `resources/views/home/events.blade.php` |
 | First Saturday and kit check | `resources/views/home/first-run.blade.php` |
 | Beyond the run | `resources/views/home/community.blade.php` |
+| Instagram highlights | `resources/views/home/instagram.blade.php` |
 | Join | `resources/views/home/join.blade.php` |
 | FAQ | `resources/views/home/faq.blade.php` |
 | Footer | `resources/views/components/site/footer.blade.php` |

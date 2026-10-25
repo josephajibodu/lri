@@ -17,6 +17,7 @@
         @include('home.events')
         @include('home.first-run')
         @include('home.community')
+        @include('home.instagram')
         @include('home.join')
         @include('home.faq')
     </main>

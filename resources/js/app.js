@@ -255,6 +255,54 @@
     }
     initKit();
 
+    /* Instagram rail: arrow buttons, and Instagram's embed script loaded only once the rail is near the screen */
+    function initInstagram() {
+        var rail = $("ig-rail");
+        if (!rail) return;
+        var prev = document.querySelector("[data-rail-prev]");
+        var next = document.querySelector("[data-rail-next]");
+        function step() {
+            var slide = rail.querySelector(".ig-slide");
+            var gap = parseFloat(getComputedStyle(rail).columnGap) || 0;
+            return slide ? slide.getBoundingClientRect().width + gap : rail.clientWidth * 0.8;
+        }
+        function updateArrows() {
+            prev.disabled = rail.scrollLeft <= 2;
+            next.disabled = rail.scrollLeft >= rail.scrollWidth - rail.clientWidth - 2;
+        }
+        prev.addEventListener("click", function () { rail.scrollBy({ left: -step(), behavior: reduce ? "auto" : "smooth" }); });
+        next.addEventListener("click", function () { rail.scrollBy({ left: step(), behavior: reduce ? "auto" : "smooth" }); });
+        rail.addEventListener("scroll", updateArrows, { passive: true });
+        window.addEventListener("resize", updateArrows);
+        updateArrows();
+
+        var requested = false;
+        function loadEmbeds() {
+            if (requested) return;
+            requested = true;
+            var script = document.createElement("script");
+            script.src = "https://www.instagram.com/embed.js";
+            script.async = true;
+            script.onload = function () {
+                if (window.instgrm) window.instgrm.Embeds.process();
+                setTimeout(updateArrows, 1500);
+            };
+            document.body.appendChild(script);
+        }
+        if ("IntersectionObserver" in window) {
+            var observer = new IntersectionObserver(function (entries) {
+                if (entries.some(function (e) { return e.isIntersecting; })) {
+                    observer.disconnect();
+                    loadEmbeds();
+                }
+            }, { rootMargin: "600px 0px" });
+            observer.observe(rail);
+        } else {
+            loadEmbeds();
+        }
+    }
+    initInstagram();
+
     /* Footer wordmark stretches toward the pointer */
     function initFooterWord() {
         var word = $("foot-word");

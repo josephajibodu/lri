@@ -31,3 +31,27 @@ test('the home page links to the member form and Instagram from config', functio
         ->assertSee('href="https://instagram.example.com/lri"', false)
         ->assertSeeText('Follow @letsrunibadan');
 });
+
+test('the home page features the configured Instagram posts in order', function () {
+    config()->set('lri.instagram_posts', [
+        'https://www.instagram.com/reel/RunRaveReel/',
+        'https://www.instagram.com/p/HangoutPhoto/',
+    ]);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('id="instagram"', false)
+        ->assertSeeInOrder([
+            'data-instgrm-permalink="https://www.instagram.com/reel/RunRaveReel/"',
+            'data-instgrm-permalink="https://www.instagram.com/p/HangoutPhoto/"',
+        ], false);
+});
+
+test('the Instagram section is hidden when no posts are configured', function () {
+    config()->set('lri.instagram_posts', []);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertDontSee('id="instagram"', false)
+        ->assertDontSee('data-instgrm-permalink', false);
+});

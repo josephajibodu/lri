@@ -526,6 +526,80 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
 @media (max-width: 960px) { .perks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .perks { grid-template-columns: minmax(0, 1fr); } }
 
+/* Instagram highlights: a horizontal rail of embedded posts that starts in line with the page column */
+.ig-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px 32px; margin-bottom: clamp(28px, 4vw, 44px); }
+.ig-head .sec-head { margin-bottom: 0; }
+.ig-controls { display: flex; gap: 10px; }
+.ig-arrow {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--card);
+    color: var(--ink);
+    font: 600 1.2rem/1 var(--sans);
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.ig-arrow:hover:not(:disabled) { transform: translate(-2px, -2px); box-shadow: var(--pop); background: var(--yellow); }
+.ig-arrow:disabled { opacity: .35; cursor: default; }
+.ig-rail {
+    --rail-inset: max(16px, calc((100% - var(--wrap)) / 2 + 16px));
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    overflow-x: auto;
+    padding: 4px var(--rail-inset) 20px;
+    scroll-padding-inline: var(--rail-inset);
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ink) transparent;
+}
+.ig-slide {
+    flex: 0 0 auto;
+    width: min(340px, calc(100vw - 48px));
+    scroll-snap-align: start;
+    border: 2px solid var(--ink);
+    border-radius: 20px;
+    background: var(--card);
+    box-shadow: var(--pop);
+    overflow: hidden;
+}
+.ig-slide .instagram-media { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+.ig-slide blockquote.instagram-media { display: grid; place-items: center; min-height: 420px; padding: 24px; background: var(--paper); }
+.ig-fallback { display: grid; justify-items: center; gap: 14px; text-align: center; }
+.ig-fallback .ig-glyph { width: 64px; height: 64px; margin: 0; padding: 12px; border-radius: 20px; background: var(--yellow); color: var(--on-color); }
+.ig-fallback-handle { font: 400 .7rem/1 var(--mono); text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
+.ig-slide blockquote.instagram-media a { padding: .8em 1.2em; border: 2px solid var(--ink); border-radius: 999px; background: var(--card); font-weight: 600; font-size: .92rem; text-decoration: none; }
+.ig-more {
+    flex: 0 0 auto;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 12px;
+    width: min(300px, calc(100vw - 48px));
+    min-height: 420px;
+    padding: 28px 24px;
+    scroll-snap-align: start;
+    border: 2px solid var(--ink);
+    border-radius: 20px;
+    background: var(--yellow);
+    color: var(--on-color);
+    text-decoration: none;
+    box-shadow: var(--pop);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.ig-more:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+.ig-glyph { width: 56px; height: 56px; margin-bottom: auto; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.ig-more-handle { font: italic 900 clamp(1.4rem, 2.4vw, 1.7rem)/1 var(--display); font-stretch: 85%; text-transform: uppercase; overflow-wrap: anywhere; }
+.ig-more-text { font-size: 1.02rem; }
+.ig-more-cta { align-self: flex-start; margin-top: 6px; padding: .65em 1.05em; border: 2px solid var(--ink); border-radius: 999px; background: var(--card); font-weight: 600; font-size: .92rem; }
+@media (prefers-reduced-motion: reduce) { .ig-arrow, .ig-arrow:hover, .ig-more, .ig-more:hover { transition: none; transform: none; } }
+
 /* Join (yellow band) */
 .join { background: var(--yellow); color: var(--on-color); border-block: 2px solid var(--ink); }
 .join .label { color: var(--on-color); }

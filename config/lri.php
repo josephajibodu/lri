@@ -57,4 +57,26 @@ return [
         'run_the_elements' => 'https://www.runtheelements.com/',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Instagram Highlights
+    |--------------------------------------------------------------------------
+    |
+    | Public posts and reels from @letsrunibadan shown in the scrolling
+    | Instagram section on the home page, in this order. Paste the post's
+    | link from Instagram's "Copy link". Leave the list empty to hide it.
+    |
+    */
+
+    'instagram_posts' => [
+        'https://www.instagram.com/reel/DefHjXaAi4H/',
+        'https://www.instagram.com/reel/DeRgSJOucMh/',
+        'https://www.instagram.com/reel/DeANMbFOo2u/',
+        'https://www.instagram.com/reel/DdtbPRJOFPv/',
+        'https://www.instagram.com/reel/DdqejFru2U7/',
+        'https://www.instagram.com/p/DdGyaBjgEG0/',
+        'https://www.instagram.com/reel/DczBXPiuWBL/',
+        'https://www.instagram.com/reel/DcAvb9BO6J6/',
+    ],
+
 ];
