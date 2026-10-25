@@ -41,7 +41,7 @@ return [
         'timezone' => 'Africa/Lagos',
         'venue' => 'The Law Hub',
         'address' => 'No. 9 Ring Road',
-        'map_url' => 'https://maps.google.com/?q=7.3731818199157715,3.858956813812256',
+        'map_url' => 'https://maps.app.goo.gl/jcXfeecZv1zgkQot6',
         'note' => 'Every tribe runs together, then we hang out. Bring a friend.',
     ],
 
