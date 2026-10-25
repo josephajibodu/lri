@@ -48,7 +48,11 @@ test('the structured data lists the club and the next run while it is still to c
 
     expect($graph->keys()->all())->toBe(['SportsClub', 'WebSite', 'SportsEvent'])
         ->and($graph['SportsClub']['name'])->toBe("Let's Run Ibadan")
-        ->and($graph['SportsClub']['sameAs'])->toBe([config('lri.links.instagram')])
+        ->and($graph['SportsClub']['sameAs'])->toBe([
+            config('lri.links.instagram'),
+            config('lri.links.tiktok'),
+            config('lri.links.strava'),
+        ])
         ->and($graph['SportsEvent']['name'])->toBe('Harmattan Hill Run')
         ->and($graph['SportsEvent']['startDate'])->toBe('2026-12-05T06:30:00+01:00')
         ->and($graph['SportsEvent']['location']['name'])->toBe('Agodi Gardens')

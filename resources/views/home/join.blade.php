@@ -20,6 +20,6 @@
                 <p>6:30 AM at your tribe’s meeting point. Walk, jog or run, and bring a friend.</p>
             </li>
         </ol>
-        <p class="follow">Run updates, reels and event news go out on Instagram at <a href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">@@letsrunibadan</a>.</p>
+        <p class="follow">Run updates, reels and event news go out on Instagram at <a href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">@@letsrunibadan</a> and on <a href="{{ config('lri.links.tiktok') }}" target="_blank" rel="noopener">TikTok</a>. Log your runs with the club on <a href="{{ config('lri.links.strava') }}" target="_blank" rel="noopener">Strava</a>.</p>
     </div>
 </section>

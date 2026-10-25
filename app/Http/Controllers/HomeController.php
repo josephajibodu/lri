@@ -54,7 +54,11 @@ class HomeController extends Controller
                 'sport' => 'Running',
                 'address' => $address,
                 'areaServed' => ['@type' => 'City', 'name' => $site['locality']],
-                'sameAs' => [config('lri.links.instagram')],
+                'sameAs' => [
+                    config('lri.links.instagram'),
+                    config('lri.links.tiktok'),
+                    config('lri.links.strava'),
+                ],
             ],
             [
                 '@type' => 'WebSite',

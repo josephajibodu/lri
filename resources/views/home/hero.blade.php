@@ -1,17 +1,16 @@
 <section class="hero" id="top">
     <div class="wrap hero-inner">
-        <span class="hero-pill"><b>Running community</b> in Ibadan, Oyo State</span>
-        <h1 class="wordmark"><span class="wm-line">Let’s run,</span><span class="wm-line"><span class="wm-hl">Ibadan.</span></span></h1>
-        <p class="lede">Runners, joggers and walkers in local tribes across the city. We meet every Saturday at 6:30 AM, run 5 km or more together, and nobody gets left behind.</p>
-        <div class="cta-row">
-            <a class="btn btn-yellow" href="{{ config('lri.links.member_form') }}" target="_blank" rel="noopener">Become a member ↗</a>
-            <a class="btn" href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">Follow @@letsrunibadan</a>
-        </div>
         <ul class="hero-facts">
             <li>Everyone</li>
             <li>Every pace</li>
             <li>One community</li>
         </ul>
+        <h1 class="wordmark"><span class="wm-line">Let’s run,</span><span class="wm-line"><span class="wm-hl">Ibadan.</span></span></h1>
+        <p class="lede">Runners, joggers and walkers in local tribes across Ibadan. We meet every Saturday at 6:30 AM, run 5 km or more together, and nobody gets left behind.</p>
+        <div class="cta-row">
+            <a class="btn btn-yellow" href="{{ config('lri.links.member_form') }}" target="_blank" rel="noopener">Become a member ↗</a>
+            <a class="btn" href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">Follow @@letsrunibadan</a>
+        </div>
 
         <div class="stickers" aria-hidden="true">
             <div class="sticker s-badge">

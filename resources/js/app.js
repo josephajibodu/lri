@@ -303,6 +303,20 @@
     }
     initInstagram();
 
+    /* FAQ: one answer open at a time. Browsers that support <details name> do this already */
+    function initFaq() {
+        var items = [].slice.call(document.querySelectorAll(".faq details"));
+        items.forEach(function (item) {
+            item.addEventListener("toggle", function () {
+                if (!item.open) return;
+                items.forEach(function (other) {
+                    if (other !== item) other.open = false;
+                });
+            });
+        });
+    }
+    initFaq();
+
     /* Footer wordmark stretches toward the pointer */
     function initFooterWord() {
         var word = $("foot-word");

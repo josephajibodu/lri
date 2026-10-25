@@ -53,6 +53,8 @@ return [
 
     'links' => [
         'instagram' => 'https://www.instagram.com/letsrunibadan/',
+        'tiktok' => 'https://www.tiktok.com/@lri.letsrunibadan',
+        'strava' => 'https://www.strava.com/clubs/1955817',
         'member_form' => 'https://docs.google.com/forms/d/e/1FAIpQLScBqAfuSOLlA2YSUpJ9XBdNeo9MVbmwh1gQWNr8z_BMtIb1QA/viewform',
         'run_the_elements' => 'https://www.runtheelements.com/',
     ],

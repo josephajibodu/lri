@@ -62,7 +62,7 @@ Once the start time passes, the countdown shows "Last community run" until you s
 
 ### Links
 
-`links` in `config/lri.php` holds the Instagram profile, the member registration form and the Run the Elements challenge. Every button and link on the page uses these values.
+`links` in `config/lri.php` holds the Instagram, TikTok and Strava accounts, the member registration form and the Run the Elements challenge. Every button and link on the page uses these values, and the three social accounts are also listed in the structured data so search engines connect them to the club.
 
 ### Instagram highlights
 
@@ -148,4 +148,6 @@ In production, set `APP_ENV=production`, `APP_DEBUG=false` and `APP_URL` to the 
 ## Community
 
 - Instagram: [@letsrunibadan](https://www.instagram.com/letsrunibadan/)
+- TikTok: [@lri.letsrunibadan](https://www.tiktok.com/@lri.letsrunibadan)
+- Strava: [LRI club](https://www.strava.com/clubs/1955817)
 - Become a member: [member registration form](https://docs.google.com/forms/d/e/1FAIpQLScBqAfuSOLlA2YSUpJ9XBdNeo9MVbmwh1gQWNr8z_BMtIb1QA/viewform)

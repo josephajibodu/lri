@@ -21,14 +21,18 @@ test('the home page shows the next community run from config', function () {
         ->assertSee('data-starts-at="2026-12-05T06:30:00+01:00"', false);
 });
 
-test('the home page links to the member form and Instagram from config', function () {
+test('the home page links to the member form and social accounts from config', function () {
     config()->set('lri.links.member_form', 'https://forms.example.com/join-lri');
     config()->set('lri.links.instagram', 'https://instagram.example.com/lri');
+    config()->set('lri.links.tiktok', 'https://tiktok.example.com/@lri');
+    config()->set('lri.links.strava', 'https://strava.example.com/clubs/lri');
 
     $this->get(route('home'))
         ->assertOk()
         ->assertSee('href="https://forms.example.com/join-lri"', false)
         ->assertSee('href="https://instagram.example.com/lri"', false)
+        ->assertSee('href="https://tiktok.example.com/@lri"', false)
+        ->assertSee('href="https://strava.example.com/clubs/lri"', false)
         ->assertSeeText('Follow @letsrunibadan');
 });
 
