@@ -558,9 +558,17 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
     scrollbar-width: thin;
     scrollbar-color: var(--ink) transparent;
 }
+/*
+ * Every card is a fixed phone-shaped frame, so the row keeps its shape before and after Instagram loads.
+ * The loaded post centres in the frame; auto margins collapse when a tall reel overflows,
+ * so it stays pinned to the top (profile header visible) and only its footer is trimmed.
+ */
 .ig-slide {
     flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
     width: min(340px, calc(100vw - 48px));
+    aspect-ratio: 9 / 16;
     scroll-snap-align: start;
     border: 2px solid var(--ink);
     border-radius: 20px;
@@ -568,8 +576,8 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
     box-shadow: var(--pop);
     overflow: hidden;
 }
-.ig-slide .instagram-media { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
-.ig-slide blockquote.instagram-media { display: grid; place-items: center; min-height: 420px; padding: 24px; background: var(--paper); }
+.ig-slide .instagram-media { flex: none; width: 100% !important; min-width: 0 !important; max-width: none !important; margin: auto 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+.ig-slide blockquote.instagram-media { flex: 1 0 auto; display: grid; place-items: center; margin: 0 !important; padding: 24px; background: var(--paper); }
 .ig-fallback { display: grid; justify-items: center; gap: 14px; text-align: center; }
 .ig-fallback .ig-glyph { width: 64px; height: 64px; margin: 0; padding: 12px; border-radius: 20px; background: var(--yellow); color: var(--on-color); }
 .ig-fallback-handle { font: 400 .7rem/1 var(--mono); text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
@@ -582,7 +590,6 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
     justify-content: flex-end;
     gap: 12px;
     width: min(300px, calc(100vw - 48px));
-    min-height: 420px;
     padding: 28px 24px;
     scroll-snap-align: start;
     border: 2px solid var(--ink);
