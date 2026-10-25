@@ -658,7 +658,7 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
     cursor: default;
 }
 .foot-word span { display: inline-block; transition: font-stretch .25s ease, font-weight .25s ease, color .25s ease; }
-.foot-word span.hot { color: var(--yellow); -webkit-text-stroke: 2px var(--ink); }
+.foot-word span.hot { color: var(--yellow); -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
 .foot-word .foot-word-group { white-space: nowrap; }
 .foot-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px 32px; padding-top: 22px; border-top: 1px solid var(--line); }
 .foot-logo { display: block; height: 96px; width: auto; }
