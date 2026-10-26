@@ -975,6 +975,63 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
 .error-label { margin: 12px 0 0; font: 400 .7rem/1.3 var(--mono); text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
 .error-title { font-family: var(--sans); font-weight: 400; font-size: clamp(2.6rem, 6.4vw, 5.2rem); line-height: 1; letter-spacing: -.045em; }
 
+/* Birthdays: the share form and the organisers' monthly list */
+.bday-wrap { max-width: 860px; }
+.bday-title { font-family: var(--sans); font-weight: 400; font-size: clamp(2.4rem, 6vw, 4.6rem); line-height: 1; letter-spacing: -.045em; }
+.bday-notice { margin: 0 0 20px; padding: 14px 18px; border: 2px solid var(--ink); border-radius: 14px; font-weight: 500; }
+.bday-notice-ok { background: var(--green); color: var(--on-color); }
+.bday-notice-error { background: var(--cream); }
+.bday-card { display: grid; gap: 34px; padding: clamp(22px, 4vw, 40px); border: 2px solid var(--ink); border-radius: var(--r); background: var(--card); box-shadow: var(--pop); }
+.bday-card > .btn { justify-self: start; cursor: pointer; }
+.bday-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.bday-group legend { margin-bottom: 18px; padding: 0; font-weight: 600; font-size: 1.3rem; letter-spacing: -.02em; }
+.bday-group-date { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bday-group-wide { grid-template-columns: minmax(0, 1fr); }
+.field { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.field-label { font-weight: 600; font-size: .95rem; }
+.field-optional { margin-left: 6px; font: 400 .6rem/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+.field-hint { margin: 0; color: var(--muted); font-size: .86rem; }
+.field-error { margin: 0; color: #B42318; font-size: .88rem; font-weight: 500; }
+.input { width: 100%; padding: .7em .85em; border: 2px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font: inherit; font-size: 1rem; transition: border-color .15s ease, background-color .15s ease; }
+.input:hover { border-color: var(--muted); }
+.input:focus { outline: none; border-color: var(--ink); background: var(--card); box-shadow: 3px 3px 0 var(--yellow); }
+textarea.input { resize: vertical; min-height: 3.2em; }
+.input-file { width: 100%; padding: 14px; border: 2px dashed var(--muted); border-radius: 12px; background: var(--paper); font: inherit; font-size: .92rem; cursor: pointer; }
+.input-file::file-selector-button { margin-right: 14px; padding: .6em 1em; border: 2px solid var(--ink); border-radius: 999px; background: var(--yellow); color: var(--on-color); font: 600 .88rem/1 var(--sans); cursor: pointer; }
+.bday-previews { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.bday-previews:empty { display: none; }
+.bday-previews img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border: 2px solid var(--ink); border-radius: 14px; }
+.bday-consent { display: flex; align-items: flex-start; gap: 14px; cursor: pointer; }
+.bday-consent input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.bday-consent input:checked + .box { background: var(--yellow); }
+.bday-consent input:checked + .box::after { transform: rotate(45deg) scale(1); }
+.bday-consent input:focus-visible + .box { outline: 3px solid var(--ink); outline-offset: 3px; }
+.bday-list-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px 32px; margin-bottom: clamp(28px, 4vw, 44px); }
+.bday-list-head .sec-head { margin-bottom: 0; }
+.bday-month { display: flex; align-items: center; gap: 10px; }
+.bday-month .input { width: auto; }
+.bday-month .btn { cursor: pointer; }
+.bday-list { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.bday-person { display: flex; gap: 20px; padding: 22px; border: 2px solid var(--ink); border-radius: var(--r); background: var(--card); box-shadow: var(--pop); }
+.bday-date { flex: none; display: grid; place-content: center; justify-items: center; gap: 6px; width: 76px; height: 84px; margin: 0; border: 2px solid var(--ink); border-radius: 14px; background: var(--yellow); color: var(--on-color); }
+.bday-date-day { font: italic 900 2.2rem/.85 var(--display); font-stretch: 115%; font-variant-numeric: tabular-nums; }
+.bday-date-week { font: 600 .62rem/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; }
+.bday-person-body { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.bday-person-body h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 1.4rem; letter-spacing: -.02em; }
+.bday-person-body p { margin: 0; overflow-wrap: anywhere; }
+.bday-meta { color: var(--muted); font-size: .92rem; }
+.bday-notes { white-space: pre-line; }
+.bday-photos { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.bday-photos img { display: block; width: 96px; height: 96px; object-fit: cover; border: 2px solid var(--ink); border-radius: 12px; }
+.bday-empty { padding: 40px 22px; border: 2px dashed var(--line); border-radius: var(--r); color: var(--muted); text-align: center; }
+@media (max-width: 640px) {
+    .bday-group { grid-template-columns: minmax(0, 1fr); }
+    .bday-group-date { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); }
+    .bday-group-date .field:last-child { grid-column: 1 / -1; }
+    .bday-person { flex-direction: column; }
+    .bday-date { width: 100%; height: auto; padding: 10px; grid-auto-flow: column; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .ticket, .ticket:hover, .tile, .tile:hover, .perk, .perk:hover, .tribe, .tribe:hover, .error-bib, .error-bib:hover { transition: none; transform: none; }
 }

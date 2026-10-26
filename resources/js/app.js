@@ -422,4 +422,24 @@ import.meta.glob("../fonts/*.woff2");
     }
     initFooterWord();
 
+    /* Birthday form: preview the chosen photos and stop more than the allowed number */
+    function initBirthdayPhotos() {
+        var input = $("photos");
+        var previews = $("bday-previews");
+        if (!input || !previews) return;
+        var max = Number(input.dataset.maxPhotos);
+        input.addEventListener("change", function () {
+            var files = [].slice.call(input.files);
+            input.setCustomValidity(files.length > max ? "Please choose no more than " + max + " photos." : "");
+            input.reportValidity();
+            previews.replaceChildren.apply(previews, files.slice(0, max).map(function (file) {
+                var img = document.createElement("img");
+                img.src = URL.createObjectURL(file);
+                img.alt = file.name;
+                return img;
+            }));
+        });
+    }
+    initBirthdayPhotos();
+
 })();
