@@ -39,10 +39,7 @@
         <meta name="twitter:description" content="{{ $description }}">
         <meta name="twitter:image" content="{{ asset('images/og-image.png') }}">
 
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anybody:ital,wdth,wght@0,50..150,100..900;1,50..150,100..900&family=Instrument+Sans:ital,wdth,wght@0,75..100,400..700;1,75..100,400..700&family=Martian+Mono:wght@400;600;800&display=swap">
-
+        <link rel="preload" href="{{ Vite::asset('resources/fonts/instrument-sans-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         {{ $head ?? '' }}

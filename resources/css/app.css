@@ -9,6 +9,102 @@
 }
 
 /*
+ * Fonts, self-hosted so the first paint does not wait on another site.
+ * Latin and Latin Extended subsets of Anybody, Instrument Sans and Martian Mono (all SIL Open Font License),
+ * with the full width and weight ranges the stretch animations use.
+ */
+@font-face {
+    font-family: "Anybody";
+    font-style: italic;
+    font-weight: 100 900;
+    font-stretch: 50% 150%;
+    font-display: swap;
+    src: url("../fonts/anybody-italic-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+    font-family: "Anybody";
+    font-style: italic;
+    font-weight: 100 900;
+    font-stretch: 50% 150%;
+    font-display: swap;
+    src: url("../fonts/anybody-italic-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: "Anybody";
+    font-style: normal;
+    font-weight: 100 900;
+    font-stretch: 50% 150%;
+    font-display: swap;
+    src: url("../fonts/anybody-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+    font-family: "Anybody";
+    font-style: normal;
+    font-weight: 100 900;
+    font-stretch: 50% 150%;
+    font-display: swap;
+    src: url("../fonts/anybody-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: "Instrument Sans";
+    font-style: italic;
+    font-weight: 400 700;
+    font-stretch: 75% 100%;
+    font-display: swap;
+    src: url("../fonts/instrument-sans-italic-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+    font-family: "Instrument Sans";
+    font-style: italic;
+    font-weight: 400 700;
+    font-stretch: 75% 100%;
+    font-display: swap;
+    src: url("../fonts/instrument-sans-italic-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: "Instrument Sans";
+    font-style: normal;
+    font-weight: 400 700;
+    font-stretch: 75% 100%;
+    font-display: swap;
+    src: url("../fonts/instrument-sans-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+    font-family: "Instrument Sans";
+    font-style: normal;
+    font-weight: 400 700;
+    font-stretch: 75% 100%;
+    font-display: swap;
+    src: url("../fonts/instrument-sans-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: "Martian Mono";
+    font-style: normal;
+    font-weight: 400 800;
+    font-stretch: 100%;
+    font-display: swap;
+    src: url("../fonts/martian-mono-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+    font-family: "Martian Mono";
+    font-style: normal;
+    font-weight: 400 800;
+    font-stretch: 100%;
+    font-display: swap;
+    src: url("../fonts/martian-mono-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
  * Let's Run Ibadan.
  * Light only: a warm off-white base with white cards and flat colour in a few places.
  * LRI yellow (#FEB203, from the logo) marks brand moments and never carries text on the light base;
@@ -353,13 +449,15 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
 .lane { position: relative; display: flex; align-items: center; height: 32px; margin: 0 22px 0 60px; border-bottom: 2px dashed var(--card); }
 .lane:last-child { border-bottom: 0; }
 .lane-name { position: absolute; right: calc(100% + 10px); font: 600 .6rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
-.runner { position: absolute; left: var(--rest, 30%); width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--card); border: 2px solid var(--ink); }
-.lane-you .runner { width: 22px; height: 22px; margin-left: -11px; background: var(--ink); }
+/* The runner spans the lane and slides with transform, so the laps run on the compositor; the dot is its ::before */
+.runner { position: absolute; top: 50%; left: 0; width: 100%; height: 0; transform: translateX(var(--rest, 30%)); pointer-events: none; }
+.runner::before { content: ""; position: absolute; top: -8px; left: -8px; width: 16px; height: 16px; border-radius: 50%; background: var(--card); border: 2px solid var(--ink); }
+.lane-you .runner::before { top: -11px; left: -11px; width: 22px; height: 22px; background: var(--ink); }
 .lane-you .lane-name { color: var(--gold-ink); font-weight: 800; }
 @media (prefers-reduced-motion: no-preference) {
     .runner { animation: lap var(--dur, 8s) linear infinite; animation-delay: var(--delay, 0s); }
 }
-@keyframes lap { from { left: 0%; } to { left: 100%; } }
+@keyframes lap { from { transform: translateX(0); } to { transform: translateX(100%); } }
 @media (max-width: 900px) { .pace-grid { grid-template-columns: minmax(0, 1fr); } }
 
 /* Week tickets */

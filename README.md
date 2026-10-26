@@ -25,7 +25,7 @@ The website for Let's Run Ibadan (LRI), a running community of runners, joggers 
 - Vite builds `resources/css/app.css` and `resources/js/app.js`. Tailwind CSS 4 is imported, but the page styles are plain CSS in `app.css`
 - Vanilla JavaScript for the countdown, stickers, pace slider, route map, kit check and footer animation
 - [Pest](https://pestphp.com) for tests and [Pint](https://laravel.com/docs/pint) for code style
-- Anybody, Instrument Sans and Martian Mono from Google Fonts, loaded in the layout because the stretch animations need the fonts' variable width axis
+- Anybody, Instrument Sans and Martian Mono, self-hosted in `resources/fonts` (Latin and Latin Extended subsets from Google Fonts) with their variable width axis, which the stretch animations need. The layout preloads Instrument Sans, the font of the headline and body text
 
 ## Getting started
 

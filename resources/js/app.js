@@ -1,7 +1,22 @@
+/* Let Vite fingerprint the fonts so the layout can preload them with Vite::asset() */
+import.meta.glob("../fonts/*.woff2");
+
 (function () {
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     function $(id) { return document.getElementById(id); }
     function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+    /* Run fn once el is close to the screen, so sections further down cost nothing while the page loads */
+    function whenNear(el, fn) {
+        if (!("IntersectionObserver" in window)) { fn(); return; }
+        var observer = new IntersectionObserver(function (entries) {
+            if (entries.some(function (e) { return e.isIntersecting; })) {
+                observer.disconnect();
+                fn();
+            }
+        }, { rootMargin: "600px 0px" });
+        observer.observe(el);
+    }
 
     /* Race clock to the next run, read from the countdown's data-starts-at */
     var countdown = $("countdown");
@@ -122,7 +137,6 @@
         };
         var NS = "http://www.w3.org/2000/svg";
         var base = $("route-base"), draw = $("route-draw"), stopsG = $("route-stops"), runner = $("route-runner");
-        if (!base) return;
         var L = base.getTotalLength();
         draw.style.strokeDasharray = L;
         draw.style.strokeDashoffset = reduce ? 0 : L;
@@ -227,7 +241,7 @@
             draw.style.strokeDashoffset = 0;
         }
     }
-    initRoutes();
+    if ($("route-panel")) whenNear($("route-panel"), initRoutes);
 
     /* Saturday kit check, remembered in this browser only */
     function initKit() {
@@ -274,12 +288,9 @@
         next.addEventListener("click", function () { rail.scrollBy({ left: step(), behavior: reduce ? "auto" : "smooth" }); });
         rail.addEventListener("scroll", updateArrows, { passive: true });
         window.addEventListener("resize", updateArrows);
-        updateArrows();
 
-        var requested = false;
-        function loadEmbeds() {
-            if (requested) return;
-            requested = true;
+        whenNear(rail, function () {
+            updateArrows();
             var script = document.createElement("script");
             script.src = "https://www.instagram.com/embed.js";
             script.async = true;
@@ -288,18 +299,7 @@
                 setTimeout(updateArrows, 1500);
             };
             document.body.appendChild(script);
-        }
-        if ("IntersectionObserver" in window) {
-            var observer = new IntersectionObserver(function (entries) {
-                if (entries.some(function (e) { return e.isIntersecting; })) {
-                    observer.disconnect();
-                    loadEmbeds();
-                }
-            }, { rootMargin: "600px 0px" });
-            observer.observe(rail);
-        } else {
-            loadEmbeds();
-        }
+        });
     }
     initInstagram();
 
