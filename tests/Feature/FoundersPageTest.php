@@ -85,6 +85,12 @@ test('the founders page tells the club story from the configured milestones in o
         ->assertSeeTextInOrder(['Split 01', 'Mar 2023', 'The first run', 'Five friends at Agodi Gardens.', 'Split 02', 'Jan 2024', 'Four tribes']);
 });
 
+test('the site header and footer link to the founders page', function () {
+    $response = $this->get(route('home'))->assertOk();
+
+    expect(substr_count($response->getContent(), 'href="'.route('founders').'"'))->toBe(2);
+});
+
 test('the founders page points visitors to the member form', function () {
     config()->set('lri.links.member_form', 'https://forms.example.com/join-lri');
 
