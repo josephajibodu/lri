@@ -384,6 +384,77 @@ import.meta.glob("../fonts/*.woff2");
     }
     initFounderReveal();
 
+    /* Pace setters: lane chips narrow the page to one group, and cards rise in a row at a time */
+    function initPaceSetters() {
+        var filter = $("ps-filter");
+        var list = $("ps-groups");
+        if (!filter || !list) return;
+        var chips = [].slice.call(filter.querySelectorAll(".ps-chip"));
+        var groups = [].slice.call(list.querySelectorAll(".ps-group"));
+        var cards = [].slice.call(list.querySelectorAll(".ps-card"));
+        var animate = !reduce && "IntersectionObserver" in window;
+        var observer;
+
+        function reveal(card) {
+            card.classList.add("is-in");
+            setTimeout(function () { card.style.removeProperty("--stagger"); }, 900);
+        }
+        if (animate) {
+            observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (!e.isIntersecting) return;
+                    reveal(e.target);
+                    observer.unobserve(e.target);
+                });
+            }, { rootMargin: "0px 0px -8% 0px" });
+            list.classList.add("ps-reveal");
+            groups.forEach(function (group) {
+                [].forEach.call(group.querySelectorAll(".ps-card"), function (card, i) {
+                    card.style.setProperty("--stagger", (i % 4) * .07 + "s");
+                    observer.observe(card);
+                });
+            });
+        }
+
+        function show(lane) {
+            chips.forEach(function (chip) { chip.setAttribute("aria-pressed", chip.dataset.lane === lane ? "true" : "false"); });
+            groups.forEach(function (group) { group.hidden = lane !== "all" && group.dataset.lane !== lane; });
+            if (!animate) return;
+            cards.forEach(function (card, i) {
+                if (card.closest(".ps-group").hidden) return;
+                card.classList.remove("is-in");
+                card.style.setProperty("--stagger", (i % 4) * .05 + "s");
+            });
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    cards.forEach(function (card) { if (!card.closest(".ps-group").hidden) reveal(card); });
+                });
+            });
+        }
+
+        filter.hidden = false;
+        chips.forEach(function (chip) {
+            chip.addEventListener("click", function () {
+                show(chip.dataset.lane);
+                filter.scrollTo({ left: chip.offsetLeft - 24, behavior: reduce ? "auto" : "smooth" });
+                var top = list.getBoundingClientRect().top;
+                if (top < 0) window.scrollTo({ top: window.scrollY + top - 170, behavior: reduce ? "auto" : "smooth" });
+            });
+        });
+
+        /* A lane picked from the hero board should never land on a hidden group */
+        function followHash() {
+            var target = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+            var group = target && target.closest ? target.closest(".ps-group") : null;
+            if (group && group.hidden) {
+                show("all");
+                target.scrollIntoView();
+            }
+        }
+        window.addEventListener("hashchange", followHash);
+    }
+    initPaceSetters();
+
     /* Footer wordmark stretches toward the pointer */
     function initFooterWord() {
         var word = $("foot-word");

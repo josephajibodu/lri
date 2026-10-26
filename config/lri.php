@@ -175,4 +175,131 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Pace Setters
+    |--------------------------------------------------------------------------
+    |
+    | The club's leaders, shown on the pace setters page. Each person's group
+    | is "Club-wide" for leaders of the whole club, or one of the tribes
+    | above; the page shows Club-wide first, then the tribes in order, and
+    | hides any group with nobody in it. A photo is a path under public/,
+    | such as images/pace-setters/name.jpg (portrait, about 4:5); leave it
+    | null to show initials. Instagram is the handle without the @, or null.
+    | Group lines are optional one-liners shown under each group's name.
+    |
+    | PLACEHOLDER: every person below is a stand-in until the real names,
+    | roles, photos and handles arrive.
+    |
+    */
+
+    'pace_setters' => [
+        'groups' => [
+            'Club-wide' => 'Lead the community runs, plan the hangouts and keep all four tribes moving together.',
+            'Akobo' => 'Saturday mornings from the Barracks gate.',
+            'Bodija' => 'Loops past Bodija Market, Sango and the Secretariat.',
+            'UI / Eleyele' => 'Home of the Thursday track session.',
+            'Oluyole / Akala' => 'The south side, carpools included.',
+        ],
+
+        'people' => [
+            [
+                'name' => 'Leader A',
+                'role' => 'Club captain',
+                'group' => 'Club-wide',
+                'bio' => 'Placeholder line. What they look after across the club.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+            [
+                'name' => 'Leader B',
+                'role' => 'Run director',
+                'group' => 'Club-wide',
+                'bio' => 'Placeholder line. What they look after across the club.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+            [
+                'name' => 'Leader C',
+                'role' => 'Community lead',
+                'group' => 'Club-wide',
+                'bio' => 'Placeholder line. What they look after across the club.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+            [
+                'name' => 'Leader D',
+                'role' => 'Tribe lead',
+                'group' => 'Akobo',
+                'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+            [
+                'name' => 'Leader E',
+                'role' => 'Pacer',
+                'group' => 'Akobo',
+                'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+            [
+                'name' => 'Leader F',
+                'role' => 'Sweeper',
+                'group' => 'Akobo',
+                'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+            [
+                'name' => 'Leader G',
+                'role' => 'Tribe lead',
+                'group' => 'Bodija',
+                'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+            [
+                'name' => 'Leader H',
+                'role' => 'Pacer',
+                'group' => 'Bodija',
+                'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+            [
+                'name' => 'Leader I',
+                'role' => 'Tribe lead',
+                'group' => 'UI / Eleyele',
+                'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+            [
+                'name' => 'Leader J',
+                'role' => 'Track coach',
+                'group' => 'UI / Eleyele',
+                'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+            [
+                'name' => 'Leader K',
+                'role' => 'Pacer',
+                'group' => 'UI / Eleyele',
+                'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+            [
+                'name' => 'Leader L',
+                'role' => 'Tribe lead',
+                'group' => 'Oluyole / Akala',
+                'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
+                'photo' => null,
+                'instagram' => null,
+            ],
+        ],
+    ],
+
 ];
