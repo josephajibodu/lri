@@ -95,7 +95,7 @@ test('links and the canonical address use https in production', function () {
         ->and(route('sitemap'))->toStartWith('https://');
 });
 
-test('the sitemap lists the home page', function () {
+test('the sitemap lists the home, founders and pace setters pages', function () {
     $response = $this->get('/sitemap.xml');
 
     $response->assertOk()
@@ -104,5 +104,7 @@ test('the sitemap lists the home page', function () {
     $sitemap = simplexml_load_string($response->getContent());
 
     expect((string) $sitemap->url[0]->loc)->toBe(route('home'))
-        ->and($sitemap->url)->toHaveCount(1);
+        ->and((string) $sitemap->url[1]->loc)->toBe(route('founders'))
+        ->and((string) $sitemap->url[2]->loc)->toBe(route('pace-setters'))
+        ->and($sitemap->url)->toHaveCount(3);
 });

@@ -103,3 +103,9 @@ test('the pace setters page points visitors to the member form', function () {
         ->assertOk()
         ->assertSee('href="https://forms.example.com/join-lri"', false);
 });
+
+test('the site header and footer link to the pace setters page', function () {
+    $response = $this->get(route('home'))->assertOk();
+
+    expect(substr_count($response->getContent(), 'href="'.route('pace-setters').'"'))->toBe(2);
+});

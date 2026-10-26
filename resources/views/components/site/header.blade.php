@@ -12,6 +12,7 @@
             <a href="{{ route('home') }}#events">Events</a>
             <a href="{{ route('home') }}#faq">FAQ</a>
             <a href="{{ route('founders') }}">Founders</a>
+            <a href="{{ route('pace-setters') }}">Pace setters</a>
         </nav>
         <a class="btn btn-yellow btn-sm" href="{{ route('home') }}#join">Join LRI</a>
     </div>
