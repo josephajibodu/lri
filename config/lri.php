@@ -81,4 +81,81 @@ return [
         'https://www.instagram.com/p/Ddw9cdDgK-_/',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Founders
+    |--------------------------------------------------------------------------
+    |
+    | The people who started the club and the story so far, shown on the
+    | founders page in this order. A photo is a path under public/, such as
+    | images/founders/name.jpg (portrait, about 4:5); leave it null to show
+    | the founder's initials instead. Facts and links are label => value
+    | pairs and can be left empty. Milestones run oldest first.
+    |
+    | PLACEHOLDER: both founders and the first two milestones below are
+    | stand-ins until the real names, photos, bios and dates arrive.
+    |
+    */
+
+    'founders' => [
+        'founded' => '20XX',
+
+        'people' => [
+            [
+                'name' => 'Founder One',
+                'role' => 'Co-founder',
+                'tribe' => 'Bodija',
+                'photo' => null,
+                'quote' => 'Placeholder quote. One line on why they started LRI.',
+                'bio' => 'Placeholder bio. Two or three sentences on who they are, how they started running and what they look after in the club today.',
+                'facts' => [
+                    'Saturday pace' => '6:30 /km',
+                    'Favourite route' => 'Ring Road loop',
+                ],
+                'links' => [],
+            ],
+            [
+                'name' => 'Founder Two',
+                'role' => 'Co-founder',
+                'tribe' => 'Akobo',
+                'photo' => null,
+                'quote' => 'Placeholder quote. One line on why they started LRI.',
+                'bio' => 'Placeholder bio. Two or three sentences on who they are, how they started running and what they look after in the club today.',
+                'facts' => [
+                    'Saturday pace' => '7:00 /km',
+                    'Favourite route' => 'Bodija 10K',
+                ],
+                'links' => [],
+            ],
+        ],
+
+        'milestones' => [
+            [
+                'date' => 'Placeholder date',
+                'title' => 'The first run',
+                'text' => 'Placeholder. Where the first run started, how far it went and how many people turned up.',
+            ],
+            [
+                'date' => 'Placeholder date',
+                'title' => 'Four tribes',
+                'text' => 'Placeholder. When Akobo, Bodija, UI / Eleyele and Oluyole / Akala became tribes so members could run close to home.',
+            ],
+            [
+                'date' => 'Aug 2026',
+                'title' => 'Ring Road loop',
+                'text' => 'Every tribe ran the Ring Road loop together from The Law Hub.',
+            ],
+            [
+                'date' => 'Sep 2026',
+                'title' => 'Bodija 10K',
+                'text' => 'A 10K and a 5K from Pasta Express, Osuntokun, then a community hangout.',
+            ],
+            [
+                'date' => 'Oct 2026',
+                'title' => 'Breast Cancer Awareness Run',
+                'text' => 'All four tribes together at The Law Hub, running for a cause.',
+            ],
+        ],
+    ],
+
 ];
