@@ -64,6 +64,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Akobo Barracks Registration
+    |--------------------------------------------------------------------------
+    |
+    | Adekunle Fajuyi Cantonment (Akobo Barracks) asks every runner to fill
+    | its paper permit form. Members fill it online and organisers print the
+    | forms and drop them off. The work lines are the same for every runner,
+    | so they are printed from here rather than asked on the form. The fee
+    | and deadline are shown on the form; set the deadline to null to hide it.
+    |
+    */
+
+    'barracks_registration' => [
+        'cantonment' => 'Adekunle Fajuyi Cantonment',
+        'fee' => '₦2,000',
+        'deadline' => 'Friday',
+        'work_activity' => "Recreational running with Let's Run Ibadan (Akobo tribe)",
+        'place_of_work' => 'Sports Centre',
+        'start_of_work' => 'Saturdays, 6:30 AM',
+        'end_of_work' => '9:00 AM',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Community Links
     |--------------------------------------------------------------------------
     */

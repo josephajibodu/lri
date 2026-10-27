@@ -1206,6 +1206,25 @@ textarea.input { resize: vertical; min-height: 3.2em; }
     .bday-date { width: 100%; height: auto; padding: 10px; grid-auto-flow: column; }
 }
 
+/* Akobo Barracks registration: the permit form and the organisers' list */
+.btn:disabled { opacity: .6; cursor: progress; transform: none; box-shadow: none; }
+.upload-status { display: flex; align-items: center; gap: 16px; padding: 14px; border: 2px solid var(--line); border-radius: 14px; background: var(--paper); }
+.upload-status[hidden] { display: none; }
+.upload-status[data-state="done"] { border-color: var(--green); }
+.upload-status[data-state="error"] { border-color: #B42318; }
+.upload-preview { flex: none; width: 64px; aspect-ratio: 7 / 9; object-fit: cover; border: 2px solid var(--ink); border-radius: 10px; }
+.upload-preview[hidden] { display: none; }
+.upload-body { display: grid; flex: 1; gap: 8px; min-width: 0; }
+.upload-text { margin: 0; font-weight: 500; font-size: .92rem; }
+.upload-status[data-state="error"] .upload-text { color: #B42318; }
+.upload-bar { width: 100%; height: 10px; border: 2px solid var(--ink); border-radius: 999px; background: var(--card); overflow: hidden; appearance: none; }
+.upload-bar[hidden] { display: none; }
+.upload-bar::-webkit-progress-bar { background: var(--card); }
+.upload-bar::-webkit-progress-value { background: var(--yellow); transition: width .15s ease; }
+.upload-bar::-moz-progress-bar { background: var(--yellow); }
+.bday-span { grid-column: 1 / -1; }
+.barracks-passport { display: block; flex: none; width: 112px; aspect-ratio: 7 / 9; object-fit: cover; border: 2px solid var(--ink); border-radius: 12px; }
+
 @media (prefers-reduced-motion: reduce) {
     .ticket, .ticket:hover, .tile, .tile:hover, .perk, .perk:hover, .tribe, .tribe:hover, .error-bib, .error-bib:hover { transition: none; transform: none; }
 }

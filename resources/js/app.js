@@ -513,4 +513,100 @@ import.meta.glob("../fonts/*.woff2");
     }
     initBirthdayPhotos();
 
+    /* Barracks registration: upload the passport photograph as soon as it is chosen, with progress, and hold the form until it finishes */
+    function initPassportUpload() {
+        var input = $("passport");
+        var uploaded = $("passport_upload");
+        var status = $("passport-status");
+        if (!input || !uploaded || !status) return;
+        var form = input.form;
+        var submit = form.querySelector('[type="submit"]');
+        var submitLabel = submit.textContent;
+        var text = $("passport-status-text");
+        var bar = $("passport-progress");
+        var preview = $("passport-preview");
+        var request = null;
+
+        function show(state, message) {
+            status.hidden = false;
+            status.dataset.state = state;
+            text.textContent = message;
+            bar.hidden = state !== "uploading";
+        }
+        function setUploading(isUploading) {
+            submit.disabled = isUploading;
+            submit.textContent = isUploading ? "Uploading photo…" : submitLabel;
+            form.setAttribute("aria-busy", isUploading ? "true" : "false");
+        }
+        function fail(message) {
+            uploaded.value = "";
+            input.value = "";
+            input.required = true;
+            preview.hidden = true;
+            show("error", message);
+        }
+
+        input.addEventListener("change", function () {
+            var file = input.files[0];
+            if (request) request.abort();
+            if (!file) return;
+
+            /* The photo goes up now, so the form itself doesn't send it again */
+            input.removeAttribute("name");
+            uploaded.value = "";
+            preview.src = URL.createObjectURL(file);
+            preview.hidden = false;
+            bar.value = 0;
+            show("uploading", "Uploading… 0%");
+            setUploading(true);
+
+            var data = new FormData();
+            data.append("passport", file);
+            data.append("_token", form.querySelector('[name="_token"]').value);
+
+            var xhr = request = new XMLHttpRequest();
+            xhr.open("POST", status.dataset.uploadUrl);
+            xhr.setRequestHeader("Accept", "application/json");
+            xhr.upload.addEventListener("progress", function (e) {
+                if (!e.lengthComputable) return;
+                var percent = Math.round(e.loaded / e.total * 100);
+                bar.value = percent;
+                bar.textContent = percent + "%";
+                text.textContent = percent < 100 ? "Uploading… " + percent + "%" : "Finishing up…";
+            });
+            xhr.addEventListener("load", function () {
+                if (request !== xhr) return;
+                request = null;
+                setUploading(false);
+                var body = null;
+                try { body = JSON.parse(xhr.responseText); } catch (e) {}
+                if (xhr.status >= 200 && xhr.status < 300 && body && body.passport_upload) {
+                    uploaded.value = body.passport_upload;
+                    input.required = false;
+                    show("done", "Photo uploaded. Choose another to replace it.");
+                } else if (body && body.errors && body.errors.passport) {
+                    fail(body.errors.passport[0]);
+                } else if (xhr.status === 419) {
+                    fail("This page has expired. Refresh the page and try again.");
+                } else if (xhr.status === 429) {
+                    fail("Too many uploads. Wait a minute, then choose the photo again.");
+                } else {
+                    fail("The upload didn’t work. Choose the photo again.");
+                }
+            });
+            xhr.addEventListener("error", function () {
+                if (request !== xhr) return;
+                request = null;
+                setUploading(false);
+                fail("The upload didn’t work. Check your connection and choose the photo again.");
+            });
+            xhr.send(data);
+        });
+
+        form.addEventListener("submit", function (e) {
+            if (request) e.preventDefault();
+        });
+    }
+    initPassportUpload();
+
 })();
