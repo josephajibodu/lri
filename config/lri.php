@@ -32,17 +32,19 @@ return [
     | The run shown in the top bar and the countdown card on the home page.
     | Update these values when the next community run is announced. The
     | start time is read in the given timezone (Ibadan is Africa/Lagos).
+    | For a run where each tribe starts from its own meeting point, leave
+    | address and map_url null and the card links to the tribes instead.
     |
     */
 
     'next_run' => [
-        'title' => 'Breast Cancer Awareness Run + Hangout',
-        'starts_at' => '2026-10-31 06:30',
+        'title' => 'Saturday Tribe Run',
+        'starts_at' => '2026-11-07 06:30',
         'timezone' => 'Africa/Lagos',
-        'venue' => 'The Law Hub',
-        'address' => 'No. 9 Ring Road',
-        'map_url' => 'https://maps.app.goo.gl/jcXfeecZv1zgkQot6',
-        'note' => 'Every tribe runs together, then we hang out. Bring a friend.',
+        'venue' => 'Your tribe’s meeting point',
+        'address' => null,
+        'map_url' => null,
+        'note' => 'Every tribe runs 5 km and up from home. Your tribe posts the route in its group.',
     ],
 
     /*
@@ -153,13 +155,15 @@ return [
 
     'instagram_posts' => [
         'https://www.instagram.com/p/DZGD_DFDkOe/',
-        'https://www.instagram.com/p/De4FdImMUwc/',
-        'https://www.instagram.com/p/Del0-_VuHec/',
-        'https://www.instagram.com/p/DejRLtzuSeP/',
-        'https://www.instagram.com/p/DeRgSJOucMh/',
-        'https://www.instagram.com/p/Dd_PTPpuX-v/',
-        'https://www.instagram.com/p/DeANMbFOo2u/',
-        'https://www.instagram.com/p/Ddw9cdDgK-_/',
+        'https://www.instagram.com/p/DfPguYwjCyf/',
+        'https://www.instagram.com/reel/DfPFIpiOZ2t/',
+        'https://www.instagram.com/reel/DfNOY9kMrQF/',
+        'https://www.instagram.com/p/DfMirsbCFD8/',
+        'https://www.instagram.com/p/DfK-6moDpzV/',
+        'https://www.instagram.com/reel/DfK614su9p5/',
+        'https://www.instagram.com/p/DfKdOldjCid/',
+        'https://www.instagram.com/p/DfKEg9-jGRq/',
+        'https://www.instagram.com/reel/De_gkvvuSsW/',
     ],
 
     /*

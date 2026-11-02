@@ -18,7 +18,7 @@
                 <p>Run &amp; Rave, a flag football scrimmage and a prostate cancer awareness talk at The Law Hub.</p>
             </article>
             <article class="tile tile-pink tile-wide">
-                <div class="tile-top"><span class="tile-date">31 Oct</span><span class="tile-tag" data-until="2026-10-31T23:59:00+01:00">Coming up</span></div>
+                <div class="tile-top"><span class="tile-date">31 Oct</span><span class="tile-tag">All tribes</span></div>
                 <h3>Breast Cancer Awareness Run</h3>
                 <p>Every tribe at The Law Hub to close out the month, then the community hangout.</p>
             </article>

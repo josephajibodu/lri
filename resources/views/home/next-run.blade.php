@@ -12,9 +12,13 @@
                     <ul class="next-meta">
                         <li>{{ $nextRun['starts_at']->format('D j M Y') }}</li>
                         <li>{{ $nextRun['starts_at']->format('g:i A') }}</li>
-                        <li>{{ $nextRun['venue'] }}, {{ $nextRun['address'] }}</li>
+                        <li>{{ $nextRun['venue'] }}@if ($nextRun['address']), {{ $nextRun['address'] }}@endif</li>
                     </ul>
-                    <a class="btn btn-yellow btn-sm" href="{{ $nextRun['map_url'] }}" target="_blank" rel="noopener">Open in Maps ↗</a>
+                    @if ($nextRun['map_url'])
+                        <a class="btn btn-yellow btn-sm" href="{{ $nextRun['map_url'] }}" target="_blank" rel="noopener">Open in Maps ↗</a>
+                    @else
+                        <a class="btn btn-yellow btn-sm" href="#tribes">Find your tribe ↓</a>
+                    @endif
                 </div>
                 <div class="clock" id="countdown" role="timer" aria-label="Countdown to the run" data-starts-at="{{ $nextRun['starts_at']->toIso8601String() }}">
                     <div class="clock-unit"><span class="clock-num" id="c-d">00</span><span class="clock-lbl">Days</span></div>

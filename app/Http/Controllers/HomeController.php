@@ -25,7 +25,7 @@ class HomeController extends Controller
      * Describe the club, the site and the next run in schema.org terms for search engines.
      * The run is only listed while it is still to come.
      *
-     * @param  array{title: string, starts_at: CarbonImmutable, venue: string, address: string, note: string}  $nextRun
+     * @param  array{title: string, starts_at: CarbonImmutable, venue: string, address: ?string, note: string}  $nextRun
      * @return array{'@context': string, '@graph': list<array<string, mixed>>}
      */
     private function structuredData(array $nextRun): array
@@ -85,7 +85,7 @@ class HomeController extends Controller
                 'location' => [
                     '@type' => 'Place',
                     'name' => $nextRun['venue'],
-                    'address' => ['streetAddress' => $nextRun['address'], ...$address],
+                    'address' => array_filter(['streetAddress' => $nextRun['address'], ...$address]),
                 ],
                 'organizer' => ['@id' => $clubId],
                 'offers' => [
