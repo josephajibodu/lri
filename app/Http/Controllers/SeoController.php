@@ -27,7 +27,7 @@ class SeoController extends Controller
     public function sitemap(): Response
     {
         return response()
-            ->view('seo.sitemap', ['urls' => [route('home')]])
+            ->view('seo.sitemap', ['urls' => [route('home'), route('founders'), route('pace-setters'), route('disco-run')]])
             ->header('Content-Type', 'application/xml; charset=UTF-8');
     }
 }

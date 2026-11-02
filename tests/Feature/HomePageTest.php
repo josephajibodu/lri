@@ -59,3 +59,21 @@ test('the Instagram section is hidden when no posts are configured', function ()
         ->assertDontSee('id="instagram"', false)
         ->assertDontSee('data-instgrm-permalink', false);
 });
+
+test('a run from each tribe’s meeting point links to the tribes instead of a map', function () {
+    config()->set('lri.next_run', [
+        'title' => 'Saturday Tribe Run',
+        'starts_at' => '2026-12-05 06:30',
+        'timezone' => 'Africa/Lagos',
+        'venue' => 'Your tribe’s meeting point',
+        'address' => null,
+        'map_url' => null,
+        'note' => 'Your tribe posts the route in its group.',
+    ]);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSeeText('Sat 5 Dec, 6:30 AM at Your tribe’s meeting point')
+        ->assertSee('href="#tribes"', false)
+        ->assertDontSeeText('Open in Maps');
+});

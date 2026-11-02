@@ -317,6 +317,144 @@ import.meta.glob("../fonts/*.woff2");
     }
     initFaq();
 
+    /* Founders start list: the founder's photo follows the pointer over their row, leaning into the movement */
+    function initFounderPeek() {
+        var roster = $("fd-roster");
+        var peek = $("fd-peek");
+        if (!roster || !peek || !window.matchMedia("(hover: hover)").matches) return;
+        var cards = [].slice.call(peek.querySelectorAll(".fd-peek-card"));
+        var x = 0, y = 0, lastX = 0, frame = 0, settle;
+        function place() {
+            frame = 0;
+            var tilt = reduce ? 0 : Math.max(-12, Math.min(12, (x - lastX) * .6));
+            lastX = x;
+            peek.style.setProperty("--px", x + "px");
+            peek.style.setProperty("--py", y + "px");
+            peek.style.setProperty("--tilt", tilt + "deg");
+            clearTimeout(settle);
+            settle = setTimeout(function () { peek.style.setProperty("--tilt", "0deg"); }, 120);
+        }
+        function follow(e) {
+            x = e.clientX; y = e.clientY;
+            if (!frame) frame = requestAnimationFrame(place);
+        }
+        roster.addEventListener("pointermove", follow);
+        roster.querySelectorAll(".fd-row").forEach(function (row) {
+            row.addEventListener("pointerenter", function (e) {
+                if (!peek.classList.contains("is-on")) { lastX = e.clientX; follow(e); }
+                cards.forEach(function (card) { card.classList.toggle("is-active", card.dataset.bib === row.dataset.bib); });
+                peek.classList.add("is-on");
+            });
+        });
+        roster.addEventListener("pointerleave", function () { peek.classList.remove("is-on"); });
+    }
+    initFounderPeek();
+
+    /* Founder profiles and story splits rise in on scroll, and the splits' track fills in as you read */
+    function initFounderReveal() {
+        var profiles = $("fd-profiles");
+        var splits = $("fd-splits");
+        if (!profiles || reduce || !("IntersectionObserver" in window)) return;
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (!e.isIntersecting) return;
+                e.target.classList.add("is-in");
+                observer.unobserve(e.target);
+            });
+        }, { rootMargin: "0px 0px -12% 0px" });
+        [profiles, splits].forEach(function (list) {
+            if (!list) return;
+            list.classList.add("fd-reveal");
+            [].forEach.call(list.children, function (item) { observer.observe(item); });
+        });
+        if (!splits) return;
+        var ticking = false;
+        function fill() {
+            ticking = false;
+            var rect = splits.getBoundingClientRect();
+            var progress = (window.innerHeight * .6 - rect.top) / rect.height;
+            splits.style.setProperty("--progress", Math.max(0, Math.min(1, progress)).toFixed(3));
+        }
+        window.addEventListener("scroll", function () {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(fill);
+        }, { passive: true });
+        fill();
+    }
+    initFounderReveal();
+
+    /* Pace setters: lane chips narrow the page to one group, and cards rise in a row at a time */
+    function initPaceSetters() {
+        var filter = $("ps-filter");
+        var list = $("ps-groups");
+        if (!filter || !list) return;
+        var chips = [].slice.call(filter.querySelectorAll(".ps-chip"));
+        var groups = [].slice.call(list.querySelectorAll(".ps-group"));
+        var cards = [].slice.call(list.querySelectorAll(".ps-card"));
+        var animate = !reduce && "IntersectionObserver" in window;
+        var observer;
+
+        function reveal(card) {
+            card.classList.add("is-in");
+            setTimeout(function () { card.style.removeProperty("--stagger"); }, 900);
+        }
+        if (animate) {
+            observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (!e.isIntersecting) return;
+                    reveal(e.target);
+                    observer.unobserve(e.target);
+                });
+            }, { rootMargin: "0px 0px -8% 0px" });
+            list.classList.add("ps-reveal");
+            groups.forEach(function (group) {
+                [].forEach.call(group.querySelectorAll(".ps-card"), function (card, i) {
+                    card.style.setProperty("--stagger", (i % 4) * .07 + "s");
+                    observer.observe(card);
+                });
+            });
+        }
+
+        function show(lane) {
+            chips.forEach(function (chip) { chip.setAttribute("aria-pressed", chip.dataset.lane === lane ? "true" : "false"); });
+            groups.forEach(function (group) { group.hidden = lane !== "all" && group.dataset.lane !== lane; });
+            if (!animate) return;
+            cards.forEach(function (card, i) {
+                if (card.closest(".ps-group").hidden) return;
+                card.classList.remove("is-in");
+                card.style.setProperty("--stagger", (i % 4) * .05 + "s");
+            });
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    cards.forEach(function (card) { if (!card.closest(".ps-group").hidden) reveal(card); });
+                });
+            });
+        }
+
+        filter.hidden = false;
+        chips.forEach(function (chip) {
+            chip.addEventListener("click", function () {
+                show(chip.dataset.lane);
+                filter.scrollTo({ left: chip.offsetLeft - 24, behavior: reduce ? "auto" : "smooth" });
+                var top = list.getBoundingClientRect().top;
+                if (top < 0) window.scrollTo({ top: window.scrollY + top - 170, behavior: reduce ? "auto" : "smooth" });
+            });
+        });
+
+        /* A lane picked from the hero board should never land on a hidden group */
+        function followHash() {
+            var target = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+            var group = target && target.closest ? target.closest(".ps-group") : null;
+            if (group && group.hidden) {
+                show("all");
+                target.scrollIntoView();
+            }
+        }
+        window.addEventListener("hashchange", followHash);
+    }
+    initPaceSetters();
+
     /* Footer wordmark stretches toward the pointer */
     function initFooterWord() {
         var word = $("foot-word");
@@ -354,5 +492,189 @@ import.meta.glob("../fonts/*.woff2");
         }
     }
     initFooterWord();
+
+    /* Birthday form: preview the chosen photos and stop more than the allowed number */
+    function initBirthdayPhotos() {
+        var input = $("photos");
+        var previews = $("bday-previews");
+        if (!input || !previews) return;
+        var max = Number(input.dataset.maxPhotos);
+        input.addEventListener("change", function () {
+            var files = [].slice.call(input.files);
+            input.setCustomValidity(files.length > max ? "Please choose no more than " + max + " photos." : "");
+            input.reportValidity();
+            previews.replaceChildren.apply(previews, files.slice(0, max).map(function (file) {
+                var img = document.createElement("img");
+                img.src = URL.createObjectURL(file);
+                img.alt = file.name;
+                return img;
+            }));
+        });
+    }
+    initBirthdayPhotos();
+
+    /* Barracks registration: upload the passport photograph as soon as it is chosen, with progress, and hold the form until it finishes */
+    function initPassportUpload() {
+        var input = $("passport");
+        var uploaded = $("passport_upload");
+        var status = $("passport-status");
+        if (!input || !uploaded || !status) return;
+        var form = input.form;
+        var submit = form.querySelector('[type="submit"]');
+        var submitLabel = submit.textContent;
+        var text = $("passport-status-text");
+        var bar = $("passport-progress");
+        var preview = $("passport-preview");
+        var request = null;
+
+        function show(state, message) {
+            status.hidden = false;
+            status.dataset.state = state;
+            text.textContent = message;
+            bar.hidden = state !== "uploading";
+        }
+        function setUploading(isUploading) {
+            submit.disabled = isUploading;
+            submit.textContent = isUploading ? "Uploading photo…" : submitLabel;
+            form.setAttribute("aria-busy", isUploading ? "true" : "false");
+        }
+        function fail(message) {
+            uploaded.value = "";
+            input.value = "";
+            input.required = true;
+            preview.hidden = true;
+            show("error", message);
+        }
+
+        input.addEventListener("change", function () {
+            var file = input.files[0];
+            if (request) request.abort();
+            if (!file) return;
+
+            /* The photo goes up now, so the form itself doesn't send it again */
+            input.removeAttribute("name");
+            uploaded.value = "";
+            preview.src = URL.createObjectURL(file);
+            preview.hidden = false;
+            bar.value = 0;
+            show("uploading", "Uploading… 0%");
+            setUploading(true);
+
+            var data = new FormData();
+            data.append("passport", file);
+            data.append("_token", form.querySelector('[name="_token"]').value);
+
+            var xhr = request = new XMLHttpRequest();
+            xhr.open("POST", status.dataset.uploadUrl);
+            xhr.setRequestHeader("Accept", "application/json");
+            xhr.upload.addEventListener("progress", function (e) {
+                if (!e.lengthComputable) return;
+                var percent = Math.round(e.loaded / e.total * 100);
+                bar.value = percent;
+                bar.textContent = percent + "%";
+                text.textContent = percent < 100 ? "Uploading… " + percent + "%" : "Finishing up…";
+            });
+            xhr.addEventListener("load", function () {
+                if (request !== xhr) return;
+                request = null;
+                setUploading(false);
+                var body = null;
+                try { body = JSON.parse(xhr.responseText); } catch (e) {}
+                if (xhr.status >= 200 && xhr.status < 300 && body && body.passport_upload) {
+                    uploaded.value = body.passport_upload;
+                    input.required = false;
+                    show("done", "Photo uploaded. Choose another to replace it.");
+                } else if (body && body.errors && body.errors.passport) {
+                    fail(body.errors.passport[0]);
+                } else if (xhr.status === 419) {
+                    fail("This page has expired. Refresh the page and try again.");
+                } else if (xhr.status === 429) {
+                    fail("Too many uploads. Wait a minute, then choose the photo again.");
+                } else {
+                    fail("The upload didn’t work. Choose the photo again.");
+                }
+            });
+            xhr.addEventListener("error", function () {
+                if (request !== xhr) return;
+                request = null;
+                setUploading(false);
+                fail("The upload didn’t work. Check your connection and choose the photo again.");
+            });
+            xhr.send(data);
+        });
+
+        form.addEventListener("submit", function (e) {
+            if (request) e.preventDefault();
+        });
+    }
+    initPassportUpload();
+
+    /* Silent Disco Run: tune the page to a channel, light follows the pointer, blocks fade in, the ticket tilts */
+    function initDiscoRun() {
+        var disco = $("disco");
+        if (!disco) return;
+
+        var buttons = [].slice.call(disco.querySelectorAll("[data-channel-button]"));
+        var headsets = [].slice.call(disco.querySelectorAll(".dr-headset"));
+        var nowPlaying = disco.querySelector("[data-channel-name]");
+        function tune(button) {
+            buttons.forEach(function (b) {
+                disco.classList.remove("dr-tone-" + b.dataset.tone);
+                b.setAttribute("aria-pressed", b === button ? "true" : "false");
+            });
+            disco.classList.add("dr-tone-" + button.dataset.tone);
+            nowPlaying.textContent = button.querySelector(".dr-tune-name").textContent;
+            headsets.forEach(function (h) {
+                h.classList.toggle("is-tuned", h.dataset.on === button.dataset.channelButton);
+            });
+        }
+        buttons.forEach(function (b) {
+            b.addEventListener("click", function () { tune(b); });
+        });
+        if (buttons.length) tune(buttons[0]);
+
+        var reveals = [].slice.call(disco.querySelectorAll("[data-reveal]"));
+        if (!reduce && "IntersectionObserver" in window) {
+            disco.classList.add("is-live");
+            var revealer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (!e.isIntersecting) return;
+                    e.target.classList.add("is-in");
+                    revealer.unobserve(e.target);
+                });
+            }, { rootMargin: "0px 0px -10% 0px" });
+            reveals.forEach(function (el) { revealer.observe(el); });
+        }
+
+        if (reduce || !window.matchMedia("(pointer: fine)").matches) return;
+
+        var hero = disco.querySelector(".dr-hero");
+        var frame;
+        hero.addEventListener("pointermove", function (e) {
+            var box = hero.getBoundingClientRect();
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(function () {
+                disco.style.setProperty("--mx", ((e.clientX - box.left) / box.width * 100) + "%");
+                disco.style.setProperty("--my", ((e.clientY - box.top) / box.height * 100) + "%");
+            });
+        });
+
+        var ticket = disco.querySelector("[data-tilt]");
+        if (!ticket) return;
+        ticket.addEventListener("pointermove", function (e) {
+            var box = ticket.getBoundingClientRect();
+            var x = (e.clientX - box.left) / box.width;
+            var y = (e.clientY - box.top) / box.height;
+            ticket.style.setProperty("--ty", ((x - .5) * 8) + "deg");
+            ticket.style.setProperty("--tx", ((.5 - y) * 8) + "deg");
+            ticket.style.setProperty("--gx", (x * 100) + "%");
+            ticket.style.setProperty("--gy", (y * 100) + "%");
+        });
+        ticket.addEventListener("pointerleave", function () {
+            ticket.style.setProperty("--tx", "0deg");
+            ticket.style.setProperty("--ty", "0deg");
+        });
+    }
+    initDiscoRun();
 
 })();
