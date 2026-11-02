@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BarracksRegistrationController;
 use App\Http\Controllers\BirthdayController;
+use App\Http\Controllers\DiscoRunController;
 use App\Http\Controllers\FoundersController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PaceSettersController;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', HomeController::class)->name('home');
 Route::get('/founders', FoundersController::class)->name('founders');
 Route::get('/pace-setters', PaceSettersController::class)->name('pace-setters');
+Route::get('/disco-run', DiscoRunController::class)->name('disco-run');
 
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');

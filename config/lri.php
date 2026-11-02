@@ -87,6 +87,47 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Silent Disco Run
+    |--------------------------------------------------------------------------
+    |
+    | The night run with wireless headsets: everyone runs on one of three
+    | DJ channels, then the run ends in a rave. Until the date is fixed,
+    | leave starts_at null and the page shows the date window instead.
+    |
+    | Payment: set checkout_url to any payment link (a Selar, Paystack or
+    | Flutterwave product page) for the "Get your ticket" button. To show
+    | a checkout widget on the page instead, set both embed_script and
+    | embed_product. With neither set, the page says tickets open soon.
+    |
+    */
+
+    'disco_run' => [
+        'title' => 'Ibadan Silent Disco Run',
+        'starts_at' => null,
+        'timezone' => 'Africa/Lagos',
+        'date_window' => 'First two weeks of December',
+        'distance' => '5 km',
+        'venue' => null,
+        'price' => null,
+        'includes' => [
+            'A wireless LED headset for the night',
+            'Three live DJ channels to switch between',
+            'Pacers and sweepers so nobody runs alone',
+            'Water on the route',
+            'The rave after the run',
+        ],
+        'channels' => [
+            ['name' => 'Afro Heat', 'genre' => 'Afrobeats · Street pop', 'tone' => 'coral'],
+            ['name' => 'Piano Hours', 'genre' => 'Amapiano · Log drums', 'tone' => 'green'],
+            ['name' => 'Rewind', 'genre' => 'Throwbacks · 2000s jams', 'tone' => 'sky'],
+        ],
+        'checkout_url' => env('DISCO_RUN_CHECKOUT_URL'),
+        'embed_script' => env('DISCO_RUN_EMBED_SCRIPT'),
+        'embed_product' => env('DISCO_RUN_EMBED_PRODUCT'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Community Links
     |--------------------------------------------------------------------------
     */

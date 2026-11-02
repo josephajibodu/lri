@@ -609,4 +609,72 @@ import.meta.glob("../fonts/*.woff2");
     }
     initPassportUpload();
 
+    /* Silent Disco Run: tune the page to a channel, light follows the pointer, blocks fade in, the ticket tilts */
+    function initDiscoRun() {
+        var disco = $("disco");
+        if (!disco) return;
+
+        var buttons = [].slice.call(disco.querySelectorAll("[data-channel-button]"));
+        var headsets = [].slice.call(disco.querySelectorAll(".dr-headset"));
+        var nowPlaying = disco.querySelector("[data-channel-name]");
+        function tune(button) {
+            buttons.forEach(function (b) {
+                disco.classList.remove("dr-tone-" + b.dataset.tone);
+                b.setAttribute("aria-pressed", b === button ? "true" : "false");
+            });
+            disco.classList.add("dr-tone-" + button.dataset.tone);
+            nowPlaying.textContent = button.querySelector(".dr-tune-name").textContent;
+            headsets.forEach(function (h) {
+                h.classList.toggle("is-tuned", h.dataset.on === button.dataset.channelButton);
+            });
+        }
+        buttons.forEach(function (b) {
+            b.addEventListener("click", function () { tune(b); });
+        });
+        if (buttons.length) tune(buttons[0]);
+
+        var reveals = [].slice.call(disco.querySelectorAll("[data-reveal]"));
+        if (!reduce && "IntersectionObserver" in window) {
+            disco.classList.add("is-live");
+            var revealer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (!e.isIntersecting) return;
+                    e.target.classList.add("is-in");
+                    revealer.unobserve(e.target);
+                });
+            }, { rootMargin: "0px 0px -10% 0px" });
+            reveals.forEach(function (el) { revealer.observe(el); });
+        }
+
+        if (reduce || !window.matchMedia("(pointer: fine)").matches) return;
+
+        var hero = disco.querySelector(".dr-hero");
+        var frame;
+        hero.addEventListener("pointermove", function (e) {
+            var box = hero.getBoundingClientRect();
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(function () {
+                disco.style.setProperty("--mx", ((e.clientX - box.left) / box.width * 100) + "%");
+                disco.style.setProperty("--my", ((e.clientY - box.top) / box.height * 100) + "%");
+            });
+        });
+
+        var ticket = disco.querySelector("[data-tilt]");
+        if (!ticket) return;
+        ticket.addEventListener("pointermove", function (e) {
+            var box = ticket.getBoundingClientRect();
+            var x = (e.clientX - box.left) / box.width;
+            var y = (e.clientY - box.top) / box.height;
+            ticket.style.setProperty("--ty", ((x - .5) * 8) + "deg");
+            ticket.style.setProperty("--tx", ((.5 - y) * 8) + "deg");
+            ticket.style.setProperty("--gx", (x * 100) + "%");
+            ticket.style.setProperty("--gy", (y * 100) + "%");
+        });
+        ticket.addEventListener("pointerleave", function () {
+            ticket.style.setProperty("--tx", "0deg");
+            ticket.style.setProperty("--ty", "0deg");
+        });
+    }
+    initDiscoRun();
+
 })();

@@ -11,6 +11,7 @@
                 <a href="{{ config('lri.links.member_form') }}" target="_blank" rel="noopener">Member form</a>
                 <a href="{{ route('founders') }}">Founders</a>
                 <a href="{{ route('pace-setters') }}">Pace setters</a>
+                <a href="{{ route('disco-run') }}">Silent Disco Run</a>
                 <a href="#top">Back to top ↑</a>
             </div>
         </div>
