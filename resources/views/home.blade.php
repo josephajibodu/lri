@@ -3,12 +3,11 @@
         <script type="application/ld+json">@json($structuredData)</script>
     </x-slot:head>
 
-    <x-site.topbar :next-run="$nextRun" />
+    <x-site.topbar :next-run="$nextRun" :disco-run="$discoRun" />
     <x-site.header />
 
     <main>
         @include('home.hero')
-        @includeWhen($discoRun, 'home.disco', ['discoRun' => $discoRun])
         @include('home.next-run', ['nextRun' => $nextRun])
         @include('home.marquee')
         @include('home.pace')

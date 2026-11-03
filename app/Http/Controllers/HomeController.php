@@ -38,7 +38,11 @@ class HomeController extends Controller
             return null;
         }
 
-        return [...$discoRun, 'starts_at' => $startsAt];
+        return [
+            ...$discoRun,
+            'starts_at' => $startsAt,
+            'days_to_go' => $startsAt ? (int) CarbonImmutable::now($startsAt->timezone)->startOfDay()->diffInDays($startsAt->startOfDay()) : null,
+        ];
     }
 
     /**

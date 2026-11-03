@@ -78,3 +78,14 @@ test('the site footer links to the disco run page', function () {
         ->assertOk()
         ->assertSee('href="'.route('disco-run').'"', false);
 });
+
+test('the disco run page lets people share the flyer on WhatsApp or download it', function () {
+    config()->set('lri.disco_run.starts_at', '2026-12-11 18:00');
+    config()->set('lri.disco_run.venue', 'Bodija, Ibadan');
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSee('src="'.asset('images/disco-run/flyer.jpg').'"', false)
+        ->assertSee('href="'.asset('images/disco-run/flyer-full.jpg').'" download', false)
+        ->assertSee('href="https://wa.me/?text='.rawurlencode('Silent Disco Run with Let’s Run Ibadan, Fri 11 Dec, 6 PM in Bodija, Ibadan. Headsets on, run and vibe, then rave. Get your ticket: '.route('disco-run')).'"', false);
+});

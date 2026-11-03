@@ -7,6 +7,7 @@
         @include('disco-run.how')
         @include('disco-run.channels')
         @include('disco-run.ticket')
+        @include('disco-run.share')
         @include('disco-run.faq')
     </main>
 

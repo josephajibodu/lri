@@ -5,6 +5,26 @@
             <h2>We run for something</h2>
             <p class="sec-lede">Some Saturdays are bigger than a run. We use our kilometres to raise awareness, back good causes and bring the city out together.</p>
         </div>
+        @if ($discoRun)
+            <a class="up-next" href="{{ route('disco-run') }}">
+                <img class="up-next-poster" src="{{ asset($discoRun['poster']) }}" width="800" height="1000" alt="" loading="lazy" decoding="async">
+                <span class="up-next-body">
+                    <span class="up-next-label"><span class="up-next-dot" aria-hidden="true"></span>Up next</span>
+                    <span class="up-next-title">Silent Disco Run</span>
+                    <span class="up-next-meta">
+                        @if ($discoRun['starts_at'])
+                            {{ $discoRun['starts_at']->format('D j M · g A') }}
+                        @else
+                            {{ $discoRun['date_window'] }}
+                        @endif
+                        @if ($discoRun['venue']) · {{ $discoRun['venue'] }}@endif
+                        @if ($discoRun['price']) · {{ $discoRun['price'] }}@endif
+                    </span>
+                    <span class="up-next-text">Headsets on, three live DJ channels, a night run through the city, then a rave at the finish.</span>
+                </span>
+                <span class="up-next-go">See the night →</span>
+            </a>
+        @endif
         <div class="events">
             <article class="tile tile-green tile-big">
                 <div class="tile-top"><span class="tile-date">10–15 Aug</span><span class="tile-tag">Ibadan host partner</span></div>
@@ -43,6 +63,6 @@
                 <p>5K and 10K loops from Osuntokun, then fruit, water and gist.</p>
             </article>
         </div>
-        <p class="next-note">In the works: a silent disco and the end-of-year party. Dates go out on <a href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">@@letsrunibadan</a>.</p>
+        <p class="next-note">In the works: {{ $discoRun ? 'the end-of-year party. The date goes' : 'a silent disco and the end-of-year party. Dates go' }} out on <a href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">@@letsrunibadan</a>.</p>
     </div>
 </section>

@@ -3,6 +3,7 @@
 use Carbon\CarbonImmutable;
 
 test('the home page shows the next community run from config', function () {
+    config()->set('lri.disco_run.starts_at', '2026-01-09 18:00');
     config()->set('lri.next_run', [
         'title' => 'Harmattan Hill Run',
         'starts_at' => '2026-12-05 06:30',
@@ -75,7 +76,7 @@ test('a run from each tribe’s meeting point links to the tribes instead of a m
 
     $this->get(route('home'))
         ->assertOk()
-        ->assertSeeText('Sat 5 Dec, 6:30 AM at Your tribe’s meeting point')
+        ->assertSeeText('Your tribe’s meeting point')
         ->assertSee('href="#tribes"', false)
         ->assertDontSeeText('Open in Maps');
 });
@@ -88,8 +89,11 @@ test('the home page features the silent disco run until it starts', function () 
 
     $this->get(route('home'))
         ->assertOk()
-        ->assertSee('id="silent-disco"', false)
-        ->assertSee('data-starts-at="2026-12-11T18:00:00+01:00"', false)
+        ->assertSee('class="up-next"', false)
+        ->assertSee('class="topbar topbar-disco"', false)
+        ->assertSeeText('Fri 11 Dec · 6 PM')
+        ->assertDontSee('<span class="topbar-pill">Next run</span>', false)
+        ->assertSeeText('38 days to go')
         ->assertSeeText('Bodija, Ibadan')
         ->assertSeeText('₦10,000')
         ->assertSee('href="'.route('disco-run').'#tickets"', false);
@@ -101,5 +105,7 @@ test('the home page drops the silent disco run once it has started', function ()
 
     $this->get(route('home'))
         ->assertOk()
-        ->assertDontSee('id="silent-disco"', false);
+        ->assertDontSee('class="up-next"', false)
+        ->assertDontSee('topbar-disco', false)
+        ->assertSee('<span class="topbar-pill">Next run</span>', false);
 });
