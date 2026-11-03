@@ -20,6 +20,7 @@
             <link rel="canonical" href="{{ $canonical }}">
         @endif
         <meta name="theme-color" content="#FEB203">
+        <meta name="checkout-events" content="{{ route('checkout-events.store') }}">
 
         <link rel="icon" href="/favicon.ico" sizes="48x48">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">

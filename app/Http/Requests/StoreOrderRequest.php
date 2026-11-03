@@ -2,8 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Actions\Checkout\RecordCheckoutStep;
+use App\Enums\CheckoutStep;
+use App\Http\Middleware\IdentifyVisitor;
 use App\Models\TicketType;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -51,6 +55,18 @@ class StoreOrderRequest extends FormRequest
             'channel.required' => 'Choose how you’d like to pay.',
             'channel.exists' => 'That way to pay isn’t available right now. Choose another one.',
         ];
+    }
+
+    /**
+     * Note which fields people stumble on (never what they typed), then send them back to fix it.
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        app(RecordCheckoutStep::class)->handle(CheckoutStep::FormInvalid, IdentifyVisitor::visitorId($this), properties: [
+            'fields' => array_keys($validator->errors()->messages()),
+        ]);
+
+        parent::failedValidation($validator);
     }
 
     /**

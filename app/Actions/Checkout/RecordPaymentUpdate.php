@@ -2,6 +2,7 @@
 
 namespace App\Actions\Checkout;
 
+use App\Enums\CheckoutStep;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentFailureReason;
 use App\Enums\PaymentStatus;
@@ -20,6 +21,8 @@ use Illuminate\Support\Str;
  */
 class RecordPaymentUpdate
 {
+    public function __construct(private RecordCheckoutStep $recordCheckoutStep) {}
+
     public function handle(Payment $payment, PaymentUpdate $update): Payment
     {
         $orderWasPaid = DB::transaction(function () use ($payment, $update): bool {
@@ -31,6 +34,9 @@ class RecordPaymentUpdate
 
                 return false;
             }
+
+            $previousStatus = $payment->status;
+            $previousFailure = $payment->failure_reason;
 
             $payment->update([
                 'status' => $status,
@@ -45,6 +51,8 @@ class RecordPaymentUpdate
                 'last_checked_at' => now(),
             ]);
 
+            $this->recordStep($payment, $previousStatus, $previousFailure);
+
             return $status === PaymentStatus::Succeeded
                 && $this->fulfil(Order::query()->lockForUpdate()->findOrFail($payment->order_id), $payment);
         });
@@ -56,6 +64,38 @@ class RecordPaymentUpdate
         }
 
         return $payment;
+    }
+
+    /**
+     * Note the step in the buyer's journey when the payment settles one way or another, or a try fails on a checkout
+     * that is still open. Repeats of the same news are not noted twice.
+     */
+    private function recordStep(Payment $payment, PaymentStatus $previousStatus, ?PaymentFailureReason $previousFailure): void
+    {
+        $isNewFailedTry = $payment->status === PaymentStatus::Open && $payment->failure_reason !== null && $payment->failure_reason !== $previousFailure;
+
+        if ($payment->status === $previousStatus && ! $isNewFailedTry) {
+            return;
+        }
+
+        $step = match ($payment->status) {
+            PaymentStatus::Succeeded => CheckoutStep::PaymentSucceeded,
+            PaymentStatus::Failed, PaymentStatus::Underpaid, PaymentStatus::Open => CheckoutStep::PaymentFailed,
+            PaymentStatus::Expired, PaymentStatus::Abandoned => CheckoutStep::CheckoutExpired,
+            default => null,
+        };
+
+        if ($step === null) {
+            return;
+        }
+
+        $order = $payment->order;
+
+        $this->recordCheckoutStep->handle($step, $order->visitor_id, $order, $payment, properties: [
+            'reason' => $payment->failure_reason?->value,
+            'can_retry' => $step === CheckoutStep::PaymentFailed ? $payment->status === PaymentStatus::Open : null,
+            'minutes_to_pay' => $step === CheckoutStep::PaymentSucceeded ? (int) round($payment->created_at->diffInMinutes($payment->paid_at ?? now())) : null,
+        ]);
     }
 
     /**

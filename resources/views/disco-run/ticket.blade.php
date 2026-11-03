@@ -26,7 +26,7 @@
                     @if ($ticketing['state'] === 'on_sale')
                         @php($ticketType = $ticketing['ticketType'])
 
-                        <form class="dr-checkout" method="POST" action="{{ route('orders.store') }}" data-checkout novalidate>
+                        <form class="dr-checkout" method="POST" action="{{ route('orders.store') }}" data-checkout data-checkout-form-start novalidate>
                             @csrf
                             <input type="hidden" name="ticket_type" value="{{ $ticketType->slug }}">
 

@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Checkout\PlaceOrder;
+use App\Actions\Checkout\RecordCheckoutStep;
 use App\Actions\Checkout\RefreshPayment;
 use App\Actions\Checkout\StartPayment;
+use App\Enums\CheckoutStep;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Exceptions\CheckoutUnavailable;
 use App\Exceptions\TicketsUnavailable;
+use App\Http\Middleware\IdentifyVisitor;
 use App\Http\Requests\StoreOrderRequest;
 use App\Models\Order;
 use App\Models\PaymentChannel;
@@ -23,6 +26,8 @@ use Illuminate\View\View;
 
 class OrderController extends Controller
 {
+    public function __construct(private RecordCheckoutStep $recordCheckoutStep) {}
+
     /**
      * How long the order page waits before asking the provider again about an open payment.
      */
@@ -41,11 +46,22 @@ class OrderController extends Controller
                 'email' => $request->validated('email'),
                 'phone' => $request->validated('phone'),
                 'marketing_consent' => $request->validated('marketing_consent'),
-            ]);
+            ], IdentifyVisitor::visitorId($request), IdentifyVisitor::attributionFor($request));
         } catch (TicketsUnavailable $exception) {
+            $this->recordCheckoutStep->handle(CheckoutStep::FormInvalid, IdentifyVisitor::visitorId($request), properties: [
+                'fields' => ['quantity'],
+                'reason' => 'tickets_unavailable',
+            ]);
+
             throw ValidationException::withMessages(['quantity' => $exception->getMessage()])
                 ->redirectTo(strtok(url()->previous(), '#').'#tickets');
         }
+
+        $this->recordCheckoutStep->handle(CheckoutStep::DetailsSubmitted, order: $order, properties: [
+            'quantity' => $order->quantity,
+            'marketing_consent' => $order->marketing_consent,
+            'phone_given' => $order->buyer_phone !== null,
+        ]);
 
         return $this->openCheckout($request, $order, PaymentChannel::query()->findOrFail($request->validated('channel')), $startPayment);
     }
@@ -56,11 +72,19 @@ class OrderController extends Controller
     public function show(Request $request, Order $order): View
     {
         $order->load(['ticketType', 'tickets', 'latestPayment']);
+        $from = $request->query('from');
+
+        if (in_array($from, ['checkout', 'cancelled'], true) && $order->latestPayment && ! $order->checkoutEvents()
+            ->where('step', CheckoutStep::ReturnedFromCheckout)->where('payment_id', $order->latestPayment->id)->exists()) {
+            $this->recordCheckoutStep->handle(CheckoutStep::ReturnedFromCheckout, IdentifyVisitor::visitorId($request), $order, $order->latestPayment, properties: [
+                'from' => $from,
+            ]);
+        }
 
         return view('orders.show', [
             'order' => $order,
             'state' => $this->state($order),
-            'from' => $request->query('from'),
+            'from' => $from,
             'channels' => PaymentChannel::query()->offeredIn($order->currency)->get(),
             'pollUrl' => $order->signedUrl('orders.status'),
             'payUrl' => $order->signedUrl('orders.pay'),
@@ -100,6 +124,11 @@ class OrderController extends Controller
             ['channel.required' => 'Choose how you’d like to pay.', 'channel.exists' => 'That way to pay isn’t available right now. Choose another one.'],
         );
 
+        $this->recordCheckoutStep->handle(CheckoutStep::CheckoutResumed, IdentifyVisitor::visitorId($request), $order, properties: [
+            'attempt' => $order->payments()->count() + 1,
+            'state' => $this->state($order),
+        ]);
+
         return $this->openCheckout($request, $order, PaymentChannel::query()->findOrFail($validated['channel']), $startPayment);
     }
 
@@ -109,9 +138,18 @@ class OrderController extends Controller
      */
     private function openCheckout(Request $request, Order $order, PaymentChannel $channel, StartPayment $startPayment): RedirectResponse|JsonResponse
     {
+        $visitorId = IdentifyVisitor::visitorId($request);
+        $this->recordCheckoutStep->handle(CheckoutStep::MethodChosen, $visitorId, $order, method: $channel->method, properties: [
+            'featured' => $channel->is_featured,
+        ]);
+
         try {
             $started = $startPayment->handle($order, $channel);
         } catch (CheckoutUnavailable|TicketsUnavailable $exception) {
+            $this->recordCheckoutStep->handle(CheckoutStep::CheckoutUnavailable, $visitorId, $order, $order->latestPayment()->first(), $channel->method, [
+                'reason' => $exception instanceof TicketsUnavailable ? 'tickets_unavailable' : 'provider_error',
+            ]);
+
             if ($request->expectsJson()) {
                 return response()->json(['message' => $exception->getMessage(), 'status_url' => $order->statusUrl()], 409);
             }
@@ -119,8 +157,14 @@ class OrderController extends Controller
             return redirect()->to($order->statusUrl())->with('checkout_error', $exception->getMessage());
         }
 
+        $this->recordCheckoutStep->handle(CheckoutStep::CheckoutOpened, $visitorId, $order, $started->payment, properties: [
+            'provider' => $started->payment->provider,
+            'overlay' => $request->expectsJson() && $started->session->overlay !== null,
+        ]);
+
         if ($request->expectsJson()) {
             return response()->json([
+                'order' => $order->reference,
                 'checkout_url' => $started->session->checkoutUrl,
                 'overlay' => $started->session->overlay,
                 'status_url' => $order->statusUrl(['from' => 'checkout']),

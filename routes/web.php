@@ -2,20 +2,23 @@
 
 use App\Http\Controllers\BarracksRegistrationController;
 use App\Http\Controllers\BirthdayController;
+use App\Http\Controllers\CheckoutEventController;
 use App\Http\Controllers\DiscoRunController;
 use App\Http\Controllers\FakeCheckoutController;
 use App\Http\Controllers\FoundersController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MailPreviewController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaceSettersController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SeoController;
+use App\Http\Middleware\IdentifyVisitor;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('/founders', FoundersController::class)->name('founders');
 Route::get('/pace-setters', PaceSettersController::class)->name('pace-setters');
-Route::get('/disco-run', DiscoRunController::class)->name('disco-run');
+Route::get('/disco-run', DiscoRunController::class)->middleware(IdentifyVisitor::class)->name('disco-run');
 
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
@@ -41,9 +44,12 @@ Route::middleware('auth.basic')->group(function () {
 });
 
 Route::post('/disco-run/tickets', [OrderController::class, 'store'])
-    ->middleware('throttle:10,1')
+    ->middleware(['throttle:10,1', IdentifyVisitor::class])
     ->name('orders.store');
-Route::middleware('signed:checkout_id')->group(function () {
+Route::post('/checkout-events', CheckoutEventController::class)
+    ->middleware(['throttle:60,1', IdentifyVisitor::class])
+    ->name('checkout-events.store');
+Route::middleware(['signed:checkout_id', IdentifyVisitor::class])->group(function () {
     Route::get('/orders/{order:reference}', [OrderController::class, 'show'])->name('orders.show');
     Route::get('/orders/{order:reference}/status', [OrderController::class, 'status'])
         ->middleware('throttle:30,1')
@@ -61,4 +67,7 @@ Route::post('/webhooks/payments/{provider}', PaymentWebhookController::class)
 if (! app()->isProduction()) {
     Route::get('/payments/fake/{checkoutId}', [FakeCheckoutController::class, 'show'])->name('payments.fake.show');
     Route::post('/payments/fake/{checkoutId}', [FakeCheckoutController::class, 'settle'])->name('payments.fake.settle');
+
+    Route::get('/mail-previews/{preview?}', [MailPreviewController::class, 'index'])->name('mail-previews.index');
+    Route::get('/mail-previews/{preview}/render', [MailPreviewController::class, 'show'])->name('mail-previews.show');
 }

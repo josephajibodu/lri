@@ -683,6 +683,19 @@ import.meta.glob("../fonts/*.woff2");
      * back to the payment page when it doesn't or can't load. Paid or not, the buyer ends on their order page.
      */
     var overlayScripts = { bachs: "https://checkout.bachs.io/bachs.js" };
+    var eventsUrl = document.querySelector("meta[name=checkout-events]");
+
+    /* Note a step only the browser sees. sendBeacon survives the page navigating away straight after. */
+    function track(form, step, details) {
+        if (!eventsUrl || !navigator.sendBeacon) return;
+        var data = new FormData();
+        data.set("_token", form.querySelector("input[name=_token]").value);
+        data.set("step", step);
+        Object.keys(details || {}).forEach(function (key) {
+            if (details[key]) data.set(key, String(details[key]).toLowerCase().replace(/[^a-z0-9_.-]+/g, "_").slice(0, 50));
+        });
+        navigator.sendBeacon(eventsUrl.content, data);
+    }
     var overlayLoads = {};
 
     function loadOverlay(name) {
@@ -699,7 +712,7 @@ import.meta.glob("../fonts/*.woff2");
         return overlayLoads[name];
     }
 
-    function openOverlay(checkout) {
+    function openOverlay(form, checkout) {
         if (checkout.overlay !== "bachs" || !overlayScripts[checkout.overlay]) return Promise.reject();
 
         return loadOverlay(checkout.overlay).then(function () {
@@ -715,6 +728,7 @@ import.meta.glob("../fonts/*.woff2");
                         finished = true;
                         window.location.assign(checkout.cancelled_url);
                     } else if (event.type === "checkout.closed" && !finished) {
+                        track(form, "checkout_closed", { order: checkout.order, reason: event.data && event.data.reason });
                         window.location.assign(checkout.cancelled_url);
                     } else if (event.type === "checkout.error") {
                         window.location.assign(checkout.checkout_url);
@@ -729,6 +743,13 @@ import.meta.glob("../fonts/*.woff2");
         var buttons = form.querySelectorAll("button[name=channel]");
         var quantity = form.querySelector("[data-checkout-quantity]");
         var total = form.querySelector("[data-checkout-total]");
+
+        if (form.hasAttribute("data-checkout-form-start")) {
+            form.addEventListener("focusin", function started() {
+                form.removeEventListener("focusin", started);
+                track(form, "form_started");
+            });
+        }
 
         if (quantity && total) {
             var format = new Intl.NumberFormat("en-NG", { style: "currency", currency: total.dataset.currency, minimumFractionDigits: 0 });
@@ -786,7 +807,7 @@ import.meta.glob("../fonts/*.woff2");
                     }
                     if (!result.json.checkout_url) throw new Error("No checkout");
 
-                    openOverlay(result.json)
+                    openOverlay(form, result.json)
                         .then(function () { busy(false); })
                         .catch(function () { window.location.assign(result.json.checkout_url); });
                 })

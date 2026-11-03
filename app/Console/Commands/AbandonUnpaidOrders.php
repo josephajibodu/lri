@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Actions\Checkout\RecordCheckoutStep;
 use App\Actions\Checkout\RefreshPayment;
+use App\Enums\CheckoutStep;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Events\OrderAbandoned;
@@ -25,7 +27,7 @@ class AbandonUnpaidOrders extends Command
      * Each order's open payment is checked with the provider one last time first; one that turns out paid is left alone.
      * A payment that lands after this still pays the order.
      */
-    public function handle(RefreshPayment $refreshPayment): int
+    public function handle(RefreshPayment $refreshPayment, RecordCheckoutStep $recordCheckoutStep): int
     {
         $abandoned = 0;
 
@@ -35,7 +37,7 @@ class AbandonUnpaidOrders extends Command
             ->with(['payments' => fn ($query) => $query->where('status', PaymentStatus::Open)])
             ->orderBy('id')
             ->lazyById(100)
-            ->each(function (Order $order) use ($refreshPayment, &$abandoned): void {
+            ->each(function (Order $order) use ($refreshPayment, $recordCheckoutStep, &$abandoned): void {
                 foreach ($order->payments as $payment) {
                     try {
                         $refreshPayment->handle($payment);
@@ -51,6 +53,9 @@ class AbandonUnpaidOrders extends Command
                 }
 
                 $order->update(['status' => OrderStatus::Abandoned, 'abandoned_at' => now()]);
+                $recordCheckoutStep->handle(CheckoutStep::OrderAbandoned, order: $order, properties: [
+                    'attempts' => $order->payments()->count(),
+                ]);
                 OrderAbandoned::dispatch($order);
                 $abandoned++;
             });
