@@ -1,9 +1,11 @@
 <?php
 
+use App\Enums\CheckoutStep;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentFailureReason;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Models\CheckoutEvent;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentChannel;
@@ -125,6 +127,41 @@ test('checking on a payment the provider says is paid issues the tickets', funct
     expect($order->status)->toBe(OrderStatus::Paid)
         ->and($order->tickets)->toHaveCount(2)
         ->and($order->latestPayment->status)->toBe(PaymentStatus::Succeeded);
+});
+
+test('checking on a paid payment records when the buyer paid, not when the checkout opened or when we asked', function () {
+    $this->travelTo('2026-11-03 22:00:00');
+    $order = orderAwaitingPayment();
+    $payment = $order->latestPayment;
+    Http::fake(['sandbox-api.bachs.io/v1/checkout-sessions/'.$payment->provider_checkout_id => Http::response(bachsCheckoutSession($payment, paidAt: '2026-11-03T22:10:00.864469Z'))]);
+    $this->travelTo('2026-11-03 22:10:30');
+
+    $this->getJson($order->signedUrl('orders.status'))
+        ->assertOk()
+        ->assertJson(['state' => 'paid']);
+
+    expect($payment->fresh()->paid_at->toDateTimeString())->toBe('2026-11-03 22:10:00')
+        ->and($order->fresh()->paid_at->toDateTimeString())->toBe('2026-11-03 22:10:00')
+        ->and(CheckoutEvent::query()->where('step', CheckoutStep::PaymentSucceeded)->sole()->properties['minutes_to_pay'])->toBe(10);
+});
+
+test('checking on a paid payment that has no completed time records when we found out', function () {
+    $this->travelTo('2026-11-03 22:00:00');
+    $order = orderAwaitingPayment();
+    $payment = $order->latestPayment;
+    Http::fake(['sandbox-api.bachs.io/v1/checkout-sessions/'.$payment->provider_checkout_id => Http::response([
+        ...bachsCheckoutSession($payment),
+        'completed_at' => null,
+        'charge' => ['payment_id' => 'pay_1', 'status' => 'succeeded'],
+    ])]);
+    $this->travelTo('2026-11-03 22:10:30');
+
+    $this->getJson($order->signedUrl('orders.status'))
+        ->assertOk()
+        ->assertJson(['state' => 'paid']);
+
+    expect($payment->fresh()->paid_at->toDateTimeString())->toBe('2026-11-03 22:10:30')
+        ->and($order->fresh()->paid_at->toDateTimeString())->toBe('2026-11-03 22:10:30');
 });
 
 test('the provider is not asked again within a few seconds of the last check', function () {

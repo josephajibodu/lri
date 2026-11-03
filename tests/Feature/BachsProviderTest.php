@@ -210,6 +210,40 @@ test('a paid checkout reports the method and the fee', function () {
         ->and($update->providerStatus)->toBe('completed/succeeded');
 });
 
+test('asking about a checkout takes its time from when it completed, not from the session’s updated_at', function (array $session, ?string $expected) {
+    Http::fake(['sandbox-api.bachs.io/v1/checkout-sessions/chk_123' => Http::response([
+        'checkout_id' => 'chk_123',
+        'created_at' => '2026-11-03T20:00:00Z',
+        'updated_at' => '2026-11-03T20:00:00Z',
+        ...$session,
+    ])]);
+
+    $update = bachs()->fetchCheckout('chk_123');
+
+    expect($update->occurredAt?->toIso8601ZuluString())->toBe($expected);
+})->with([
+    'the charge says when it completed' => [
+        ['status' => 'completed', 'completed_at' => '2026-11-03T20:05:30Z', 'charge' => ['payment_id' => 'pay_1', 'status' => 'succeeded', 'completed_at' => '2026-11-03T20:05:00Z']],
+        '2026-11-03T20:05:00Z',
+    ],
+    'only the session says when it completed' => [
+        ['status' => 'completed', 'completed_at' => '2026-11-03T20:05:30Z', 'charge' => null],
+        '2026-11-03T20:05:30Z',
+    ],
+    'paid, with no completed time' => [
+        ['status' => 'completed', 'charge' => ['payment_id' => 'pay_1', 'status' => 'succeeded']],
+        null,
+    ],
+    'a closed checkout whose charge failed, with no completed time' => [
+        ['status' => 'expired', 'charge' => ['payment_id' => 'pay_1', 'status' => 'failed', 'message' => 'Insufficient funds']],
+        null,
+    ],
+    'not paid yet' => [
+        ['status' => 'open', 'charge' => null],
+        null,
+    ],
+]);
+
 test('a webhook signed with our secret is trusted', function (bool $legacyHeaders) {
     expect(bachs()->verifyWebhook(signedBachsWebhook('{"id":"evt_1"}', legacyHeaders: $legacyHeaders)))->toBeTrue();
 })->with(['the V2 header' => false, 'the older headers' => true]);

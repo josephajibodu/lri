@@ -120,6 +120,10 @@ class BachsProvider implements PaymentProvider
         );
     }
 
+    /**
+     * A session's updated_at stays at its creation time even after the charge succeeds, so the time of a payment comes
+     * from completed_at. When Bachs gives no such time, the update has none and the time we found out is used instead.
+     */
     public function fetchCheckout(string $checkoutId): PaymentUpdate
     {
         $session = $this->send(fn (PendingRequest $http) => $http->get('/v1/checkout-sessions/'.rawurlencode($checkoutId)))->json();
@@ -150,7 +154,7 @@ class BachsProvider implements PaymentProvider
             fee: $this->money($charge['fees']['amount'] ?? null, $charge['fees']['currency'] ?? null),
             failureReason: $chargeStatus === 'failed' ? $this->failureReasonFrom($failureMessage) : null,
             failureMessage: $failureMessage,
-            occurredAt: $this->date($session['updated_at'] ?? null),
+            occurredAt: $this->date($charge['completed_at'] ?? $session['completed_at'] ?? null),
         );
     }
 

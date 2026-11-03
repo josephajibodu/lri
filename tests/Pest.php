@@ -75,11 +75,14 @@ function fakeBachs(): void
 
 /**
  * What Bachs answers when asked about a payment's checkout: paid in full by bank transfer, or not paid yet.
+ * As with the real API, the session's updated_at stays at its creation time after payment; completed_at says when it was paid.
  *
  * @return array<string, mixed>
  */
-function bachsCheckoutSession(Payment $payment, bool $paid = true): array
+function bachsCheckoutSession(Payment $payment, bool $paid = true, ?string $paidAt = null): array
 {
+    $completedAt = $paid ? ($paidAt ?? now()->toIso8601ZuluString()) : null;
+
     return [
         'checkout_id' => $payment->provider_checkout_id,
         'status' => $paid ? 'completed' : 'open',
@@ -87,8 +90,10 @@ function bachsCheckoutSession(Payment $payment, bool $paid = true): array
         'amount' => $payment->money()->toDecimal(),
         'currency' => $payment->currency,
         'payment_method' => 'NGN_BANK_TRANSFER',
-        'updated_at' => now()->toIso8601String(),
-        'charge' => $paid ? ['payment_id' => 'pay_'.$payment->reference, 'status' => 'succeeded'] : null,
+        'created_at' => $payment->created_at->toIso8601ZuluString(),
+        'updated_at' => $payment->created_at->toIso8601ZuluString(),
+        'completed_at' => $completedAt,
+        'charge' => $paid ? ['payment_id' => 'pay_'.$payment->reference, 'status' => 'succeeded', 'completed_at' => $completedAt] : null,
     ];
 }
 
