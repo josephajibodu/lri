@@ -1362,7 +1362,7 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-btn-ghost:hover { box-shadow: 4px 4px 0 var(--ch); }
 
 /* Hero: light beams, a spotlight that follows the pointer, and type that moves to the beat */
-.dr-hero { position: relative; isolation: isolate; overflow: hidden; min-height: min(100svh, 920px); display: grid; align-items: center; padding-block: clamp(56px, 9vw, 110px); }
+.dr-hero { position: relative; isolation: isolate; overflow: hidden; min-height: min(100svh, 920px); display: grid; align-items: center; padding-block: clamp(32px, 7vh, 96px); }
 .dr-beams { position: absolute; inset: -20% -10% auto; height: 140%; z-index: -2; pointer-events: none; }
 .dr-beams span {
     position: absolute;
@@ -1402,15 +1402,16 @@ textarea.input { resize: vertical; min-height: 3.2em; }
     mask-image: radial-gradient(ellipse at 50% 60%, #000 10%, transparent 70%);
     opacity: .16;
 }
-.dr-hero-inner { display: grid; justify-items: center; text-align: center; gap: 24px; }
+/* Sized by the screen's height as well as its width, so a short laptop screen still shows the dates, buttons and crowd */
+.dr-hero-inner { display: grid; justify-items: center; text-align: center; gap: clamp(14px, 2.6vh, 24px); }
 /* The crowd from the flyer rises out of the dark under the beams, LED headsets glowing */
 .dr-hero:has(.dr-hero-crowd) { grid-template-rows: 1fr auto; padding-bottom: 0; }
 .dr-hero-crowd { position: relative; z-index: -1; margin: clamp(-36px, -2.5vw, -12px) 0 0; pointer-events: none; }
-.dr-hero-crowd img { display: block; width: 100%; height: clamp(190px, 28vw, 380px); object-fit: cover; object-position: 50% 20%; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 38%, #000 80%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 38%, #000 80%, transparent); filter: saturate(1.15) contrast(1.05); }
+.dr-hero-crowd img { display: block; width: 100%; height: clamp(150px, min(26vw, 32vh), 360px); object-fit: cover; object-position: 50% 20%; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 38%, #000 80%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 38%, #000 80%, transparent); filter: saturate(1.15) contrast(1.05); }
 /* Two LED earcups from the flyer float beside the title */
-.dr-headphone { position: absolute; z-index: -1; width: clamp(90px, 13vw, 200px); height: auto; mix-blend-mode: screen; filter: drop-shadow(0 0 24px rgba(160, 80, 255, .7)); pointer-events: none; }
+.dr-headphone { position: absolute; z-index: -1; width: clamp(90px, min(13vw, 20vh), 200px); height: auto; mix-blend-mode: screen; filter: drop-shadow(0 0 24px rgba(160, 80, 255, .7)); pointer-events: none; }
 .dr-headphone-l { top: 16%; left: max(2%, calc(50% - 640px)); rotate: -16deg; }
-.dr-headphone-r { top: 30%; right: max(2%, calc(50% - 640px)); rotate: 14deg; width: clamp(70px, 10vw, 160px); }
+.dr-headphone-r { top: 30%; right: max(2%, calc(50% - 640px)); rotate: 14deg; width: clamp(70px, min(10vw, 16vh), 160px); }
 @media (prefers-reduced-motion: no-preference) {
     .dr-headphone { animation: dr-float 6s ease-in-out infinite alternate; }
     .dr-headphone-r { animation-duration: 7.5s; animation-delay: -3s; }
@@ -1423,13 +1424,18 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 }
 .dr-kicker { display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: .55em 1em; border: 1px solid var(--glass-line); border-radius: 999px; background: var(--glass); font: 400 .66rem/1.2 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .dr-live { width: 8px; height: 8px; border-radius: 50%; background: var(--ch); box-shadow: 0 0 0 0 var(--ch); }
-.dr-title { display: grid; justify-items: center; font-family: var(--display); font-weight: 900; font-stretch: 120%; font-size: clamp(3.4rem, 13vw, 11.5rem); line-height: .84; letter-spacing: -.03em; text-transform: uppercase; color: #fff; }
+.dr-title { display: grid; justify-items: center; font-family: var(--display); font-weight: 900; font-stretch: 120%; font-size: clamp(2.8rem, min(12vw, 12.5vh), 10rem); line-height: .84; letter-spacing: -.03em; text-transform: uppercase; color: #fff; }
 .dr-title-line { display: block; }
 .dr-outline { color: transparent; -webkit-text-stroke: 2px rgba(255, 255, 255, .85); font-style: italic; font-weight: 800; }
 .dr-beat { display: flex; color: var(--ch); text-shadow: 0 0 18px color-mix(in srgb, var(--ch) 80%, transparent), 0 0 60px color-mix(in srgb, var(--ch) 45%, transparent); transition: color .5s, text-shadow .5s; }
 .dr-beat span { display: inline-block; }
 .dr-dot { color: var(--yellow); }
-.dr-eq { display: flex; align-items: flex-end; gap: clamp(3px, .6vw, 6px); height: 46px; }
+.dr-eq { display: flex; align-items: flex-end; gap: clamp(3px, .6vw, 6px); height: clamp(26px, 4.5vh, 46px); }
+/* On short, wide screens (most laptops) keep the ticket button in view: drop the meter and let the intro run wider */
+@media (max-height: 640px) and (min-width: 700px) {
+    .dr-hero .dr-eq { display: none; }
+    .dr-hero .dr-lede { max-width: 46em; font-size: 1.02rem; }
+}
 .dr-eq span { width: clamp(4px, .7vw, 7px); height: calc(var(--h) * 100%); border-radius: 3px; background: linear-gradient(to top, var(--ch), color-mix(in srgb, var(--ch) 30%, #fff)); transform-origin: bottom; box-shadow: 0 0 10px color-mix(in srgb, var(--ch) 60%, transparent); transition: background .5s; }
 .dr-lede { margin: 0; max-width: 34em; color: #D9D4E3; font-size: clamp(1.05rem, 1.6vw, 1.25rem); }
 .dr-facts { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin: 0; padding: .65em 1.15em; border: 1px solid var(--glass-line); border-radius: 999px; background: var(--glass); list-style: none; font: 400 .68rem/1.3 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
