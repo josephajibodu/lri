@@ -667,8 +667,6 @@ import.meta.glob("../fonts/*.woff2");
             var y = (e.clientY - box.top) / box.height;
             ticket.style.setProperty("--ty", ((x - .5) * 8) + "deg");
             ticket.style.setProperty("--tx", ((.5 - y) * 8) + "deg");
-            ticket.style.setProperty("--gx", (x * 100) + "%");
-            ticket.style.setProperty("--gy", (y * 100) + "%");
         });
         ticket.addEventListener("pointerleave", function () {
             ticket.style.setProperty("--tx", "0deg");

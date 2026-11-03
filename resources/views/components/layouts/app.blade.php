@@ -5,6 +5,7 @@
     'robots' => 'index, follow',
     'image' => 'images/og-image.png',
     'imageAlt' => 'Let’s run, Ibadan. A run club for everyone, every pace, every Saturday at 6:30 AM.',
+    'themeColor' => '#FEB203',
 ])
 
 <!DOCTYPE html>
@@ -19,7 +20,7 @@
         @if ($canonical)
             <link rel="canonical" href="{{ $canonical }}">
         @endif
-        <meta name="theme-color" content="#FEB203">
+        <meta name="theme-color" content="{{ $themeColor }}">
         <meta name="checkout-events" content="{{ route('checkout-events.store') }}">
 
         <link rel="icon" href="/favicon.ico" sizes="48x48">

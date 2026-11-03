@@ -82,6 +82,32 @@ test('the ticket takes orders with the featured way to pay up front and the othe
         ->assertDontSeeText('Tickets open soon');
 });
 
+test('the header sends people to the ticket while tickets are on sale', function () {
+    TicketType::factory()->create();
+    PaymentChannel::factory()->create();
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSee('href="#tickets">Get your ticket</a>', false)
+        ->assertDontSeeText('Join LRI');
+});
+
+test('the header keeps its join link while tickets can’t be bought', function () {
+    PaymentChannel::factory()->create();
+    TicketType::factory()->inactive()->create();
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSeeText('Join LRI')
+        ->assertDontSee('href="#tickets">Get your ticket</a>', false);
+});
+
+test('the browser bar matches the dark page instead of the site’s yellow', function () {
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSee('<meta name="theme-color" content="#0B0A10">', false);
+});
+
 test('the ticket offers no more tickets than are left', function () {
     $ticketType = TicketType::factory()->limitedTo(5)->create(['max_per_order' => 10]);
     PaymentChannel::factory()->create();

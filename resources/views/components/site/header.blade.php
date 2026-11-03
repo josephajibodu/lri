@@ -1,4 +1,4 @@
-<header class="site-head">
+<header {{ $attributes->class('site-head') }}>
     <div class="wrap head-row">
         <a class="brand" href="{{ route('home') }}#top" aria-label="Let’s Run Ibadan, back to top">
             <x-logo-mark class="brand-logo" />
@@ -14,6 +14,10 @@
             <a href="{{ route('founders') }}">Founders</a>
             <a href="{{ route('pace-setters') }}">Pace setters</a>
         </nav>
-        <a class="btn btn-yellow btn-sm" href="{{ route('home') }}#join">Join LRI</a>
+        @isset($cta)
+            {{ $cta }}
+        @else
+            <a class="btn btn-yellow btn-sm" href="{{ route('home') }}#join">Join LRI</a>
+        @endisset
     </div>
 </header>
