@@ -1588,7 +1588,30 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-ticket-checkout .dr-includes { padding-top: 20px; border-top: 1px solid var(--glass-line); }
 .dr-ticket-photo { position: relative; min-height: 120px; margin-inline: calc(clamp(24px, 4vw, 44px) * -1); pointer-events: none; }
 .dr-ticket-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent); filter: saturate(1.15) contrast(1.05); }
-.dr-ticket-checkout .dr-ticket-stub { align-content: start; justify-items: stretch; text-align: left; background: linear-gradient(to bottom, color-mix(in srgb, var(--ch) 7%, transparent), transparent 45%); }
+/* The order form is a light tear-off stub: the one bright panel on the page, and easy to read outdoors */
+.dr-ticket-checkout .dr-ticket-stub {
+    --dim: #5B5666;
+    --glass: rgba(28, 25, 23, .04);
+    --glass-line: rgba(28, 25, 23, .16);
+    --field-line: rgba(28, 25, 23, .5);
+    color-scheme: light;
+    align-content: start;
+    justify-items: stretch;
+    text-align: left;
+    border-color: rgba(28, 25, 23, .3);
+    background: var(--paper);
+    color: var(--ink);
+}
+.dr-ticket-checkout .dr-ticket-stub :focus-visible { outline-color: var(--ink); }
+.dr-ticket-checkout :is(.dr-price, .dr-field label, .dr-input, .dr-stepper-input, .dr-stepper-btn, .dr-pay, .dr-checkout-alert) { color: var(--ink); }
+.dr-ticket-checkout :is(.dr-input, .dr-stepper, .dr-pay) { background: var(--card); }
+.dr-ticket-checkout .dr-input::placeholder { color: #6E6880; }
+.dr-ticket-checkout :is(.dr-input:hover, .dr-stepper:hover) { border-color: rgba(28, 25, 23, .75); }
+.dr-ticket-checkout :is(.dr-input:focus, .dr-stepper:has(.dr-stepper-input:focus)) { border-color: var(--ink); background: var(--card); }
+.dr-ticket-checkout :is(.dr-input[aria-invalid="true"], .dr-stepper:has([aria-invalid="true"])) { border-color: #B3261E; }
+.dr-ticket-checkout .dr-field-error { color: #B3261E; }
+.dr-ticket-checkout .dr-check { color: #3C3846; }
+.dr-ticket-checkout .dr-pay-more summary:hover { color: var(--ink); }
 .dr-checkout { display: grid; gap: 16px; width: 100%; }
 .dr-checkout-summary { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; padding-bottom: 18px; border-bottom: 1px solid var(--glass-line); }
 .dr-checkout-summary .dr-stub-note, .dr-checkout-summary .dr-field-error { flex-basis: 100%; order: 1; }
@@ -1632,6 +1655,7 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 /* Only the first featured way to pay is filled, so the form ends on one clear main action */
 .dr-pay-featured:first-of-type { border-color: var(--ch); background: var(--ch); color: var(--night); }
 .dr-pay-featured:first-of-type:hover { box-shadow: 0 0 32px color-mix(in srgb, var(--ch) 70%, transparent); }
+.dr-ticket-checkout .dr-pay-featured:first-of-type { border-color: var(--ink); }
 .dr-pay-name { grid-column: 1; font-weight: 700; font-size: 1.02rem; line-height: 1.25; }
 .dr-pay-note { grid-column: 1; font-size: .82rem; opacity: .8; }
 .dr-pay-more { border-top: 1px solid var(--glass-line); padding-top: 10px; }
