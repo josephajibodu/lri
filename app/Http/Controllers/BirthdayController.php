@@ -5,35 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreBirthdayRequest;
 use App\Models\Birthday;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class BirthdayController extends Controller
 {
-    /**
-     * List the birthdays in a month so they can be celebrated. Defaults to next month.
-     */
-    public function index(Request $request): View
-    {
-        $validated = $request->validate([
-            'month' => ['nullable', 'integer', 'between:1,12'],
-        ]);
-
-        $nextMonth = now()->startOfMonth()->addMonth();
-        $month = (int) ($validated['month'] ?? $nextMonth->month);
-        $year = $month < now()->month ? now()->year + 1 : now()->year;
-
-        return view('birthdays.index', [
-            'birthdays' => Birthday::query()->inMonth($month)->get(),
-            'month' => $month,
-            'year' => $year,
-            'monthName' => Carbon::create($year, $month)->format('F'),
-            'months' => $this->monthNames(),
-        ]);
-    }
-
     /**
      * Show the form for sharing a birthday.
      */

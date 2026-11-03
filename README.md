@@ -261,21 +261,30 @@ In production, set `APP_ENV=production`, `APP_DEBUG=false` and `APP_URL` to the 
 These only need doing once. `TICKET_PAYMENTS_PLAN.md` has the full checklist.
 
 1. Set the live details in `.env`: the MySQL `DB_*` settings, `BACHS_SECRET_KEY` (`sk_live_...`) and `BACHS_WEBHOOK_SECRET`.
-2. Choose a mail service and set `MAIL_MAILER` and its settings. Until then, ticket emails only go to the log file and buyers get nothing.
-3. Keep a queue worker running. It sends the ticket emails and the Mailchimp updates:
+2. Bring across the birthdays, barracks registrations and organiser logins saved before the switch, which are still in the old SQLite file. Keep a copy of the file first. Then, with `.env` already pointing at MySQL and the migrations run, see what would be copied and copy it:
+
+   ```bash
+   cp database/database.sqlite ~/lri-before-mysql.sqlite
+   php artisan signups:import-sqlite --dry-run
+   php artisan signups:import-sqlite
+   ```
+
+   The photos and passports stay where they are on disk; only their records move. Anyone already in MySQL (matched by email, or phone for barracks) is skipped, so running it twice is safe. Organisers then find both lists under **Club** in the admin.
+3. Choose a mail service and set `MAIL_MAILER` and its settings. Until then, ticket emails only go to the log file and buyers get nothing.
+4. Keep a queue worker running. It sends the ticket emails and the Mailchimp updates:
 
    ```bash
    php artisan queue:work
    ```
 
-4. Run the scheduler every minute, which runs the 5-minute payment checks:
+5. Run the scheduler every minute, which runs the 5-minute payment checks:
 
    ```bash
    * * * * * cd /path/to/lri && php artisan schedule:run >> /dev/null 2>&1
    ```
 
-5. Add the [webhook address](#bachs-webhooks) in the Bachs developer portal.
-6. Add the ticket and the ways to pay, then create the first organiser:
+6. Add the [webhook address](#bachs-webhooks) in the Bachs developer portal.
+7. Add the ticket and the ways to pay, then create the first organiser:
 
    ```bash
    php artisan db:seed --class=TicketTypeSeeder --force
@@ -284,8 +293,8 @@ These only need doing once. `TICKET_PAYMENTS_PLAN.md` has the full checklist.
    php artisan make:filament-user
    ```
 
-7. Set the ticket limit (the number of headsets) under **Ticket types** in the admin.
-8. If you're using follow-up emails, [connect Mailchimp](#follow-up-emails-with-mailchimp).
+8. Set the ticket limit (the number of headsets) under **Ticket types** in the admin.
+9. If you're using follow-up emails, [connect Mailchimp](#follow-up-emails-with-mailchimp).
 
 ## Community
 

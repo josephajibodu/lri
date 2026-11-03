@@ -1,10 +1,12 @@
 <?php
 
+use App\Filament\Resources\BarracksRegistrations\Pages\ManageBarracksRegistrations;
 use App\Models\BarracksRegistration;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
@@ -147,20 +149,21 @@ test('the same phone number cannot register twice', function () {
         ->assertSessionHasErrors('phone');
 });
 
-test('the registration list and print pages require signing in', function () {
-    $this->get(route('barracks.index'))->assertUnauthorized();
-    $this->get(route('barracks.print'))->assertUnauthorized();
+test('the registration list and print pages are behind the organiser sign-in', function () {
+    $this->get('/admin/barracks-registrations')->assertRedirect('/admin/login');
+    $this->get(route('barracks.print'))->assertRedirect('/admin/login');
+    $this->get('/akobo/barracks/registrations')->assertRedirect('/admin/barracks-registrations');
 });
 
 test('organisers see everyone who registered, oldest first', function () {
-    BarracksRegistration::factory()->create(['full_name' => 'First Runner', 'created_at' => now()->subDay()]);
-    BarracksRegistration::factory()->create(['full_name' => 'Second Runner']);
+    $first = BarracksRegistration::factory()->create(['created_at' => now()->subDay()]);
+    $second = BarracksRegistration::factory()->create();
 
-    $this->actingAs(User::factory()->create())
-        ->get(route('barracks.index'))
-        ->assertOk()
-        ->assertSeeText('2 runners have registered.')
-        ->assertSeeInOrder(['First Runner', 'Second Runner']);
+    $this->actingAs(User::factory()->create());
+
+    Livewire::test(ManageBarracksRegistrations::class)
+        ->assertCanSeeTableRecords([$first, $second], inOrder: true)
+        ->assertTableActionHasUrl('print', route('barracks.print', $first), $first);
 });
 
 test('organisers can print every permit form or just one', function () {

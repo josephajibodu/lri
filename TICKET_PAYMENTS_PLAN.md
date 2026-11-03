@@ -74,7 +74,7 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 
 ## Before going live
 
-- [ ] Move production's existing birthdays and barracks registrations from SQLite to MySQL
+- [ ] Move production's existing birthdays and barracks registrations from SQLite to MySQL: back up `database/database.sqlite`, then `php artisan signups:import-sqlite --dry-run` and `php artisan signups:import-sqlite` once `.env` points at MySQL
 - [ ] Production `.env`: `APP_URL` (the real address), `DB_*` for MySQL, `BACHS_SECRET_KEY` (`sk_live_…`), `BACHS_WEBHOOK_SECRET`
 - [ ] In the Bachs developer portal, add `https://<domain>/webhooks/payments/bachs` as a webhook destination
 - [ ] Run a queue worker (`php artisan queue:work`) for ticket emails

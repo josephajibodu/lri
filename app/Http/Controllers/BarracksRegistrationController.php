@@ -14,16 +14,6 @@ use Illuminate\View\View;
 class BarracksRegistrationController extends Controller
 {
     /**
-     * List everyone who has registered, newest last, for the organisers.
-     */
-    public function index(): View
-    {
-        return view('barracks.index', [
-            'registrations' => BarracksRegistration::query()->oldest()->get(),
-        ]);
-    }
-
-    /**
      * Show the Akobo Barracks permit form.
      */
     public function create(Request $request): View

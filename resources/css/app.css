@@ -1269,33 +1269,13 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .bday-consent input:checked + .box { background: var(--yellow); }
 .bday-consent input:checked + .box::after { transform: rotate(45deg) scale(1); }
 .bday-consent input:focus-visible + .box { outline: 3px solid var(--ink); outline-offset: 3px; }
-.bday-list-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px 32px; margin-bottom: clamp(28px, 4vw, 44px); }
-.bday-list-head .sec-head { margin-bottom: 0; }
-.bday-month { display: flex; align-items: center; gap: 10px; }
-.bday-month .input { width: auto; }
-.bday-month .btn { cursor: pointer; }
-.bday-list { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
-.bday-person { display: flex; gap: 20px; padding: 22px; border: 2px solid var(--ink); border-radius: var(--r); background: var(--card); box-shadow: var(--pop); }
-.bday-date { flex: none; display: grid; place-content: center; justify-items: center; gap: 6px; width: 76px; height: 84px; margin: 0; border: 2px solid var(--ink); border-radius: 14px; background: var(--yellow); color: var(--on-color); }
-.bday-date-day { font: italic 900 2.2rem/.85 var(--display); font-stretch: 115%; font-variant-numeric: tabular-nums; }
-.bday-date-week { font: 600 .62rem/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; }
-.bday-person-body { display: grid; gap: 8px; align-content: start; min-width: 0; }
-.bday-person-body h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 1.4rem; letter-spacing: -.02em; }
-.bday-person-body p { margin: 0; overflow-wrap: anywhere; }
-.bday-meta { color: var(--muted); font-size: .92rem; }
-.bday-notes { white-space: pre-line; }
-.bday-photos { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
-.bday-photos img { display: block; width: 96px; height: 96px; object-fit: cover; border: 2px solid var(--ink); border-radius: 12px; }
-.bday-empty { padding: 40px 22px; border: 2px dashed var(--line); border-radius: var(--r); color: var(--muted); text-align: center; }
 @media (max-width: 640px) {
     .bday-group { grid-template-columns: minmax(0, 1fr); }
     .bday-group-date { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); }
     .bday-group-date .field:last-child { grid-column: 1 / -1; }
-    .bday-person { flex-direction: column; }
-    .bday-date { width: 100%; height: auto; padding: 10px; grid-auto-flow: column; }
 }
 
-/* Akobo Barracks registration: the permit form and the organisers' list */
+/* Akobo Barracks registration: the permit form */
 .btn:disabled { opacity: .6; cursor: progress; transform: none; box-shadow: none; }
 .upload-status { display: flex; align-items: center; gap: 16px; padding: 14px; border: 2px solid var(--line); border-radius: 14px; background: var(--paper); }
 .upload-status[hidden] { display: none; }
@@ -1312,7 +1292,6 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .upload-bar::-webkit-progress-value { background: var(--yellow); transition: width .15s ease; }
 .upload-bar::-moz-progress-bar { background: var(--yellow); }
 .bday-span { grid-column: 1 / -1; }
-.barracks-passport { display: block; flex: none; width: 112px; aspect-ratio: 7 / 9; object-fit: cover; border: 2px solid var(--ink); border-radius: 12px; }
 
 @media (prefers-reduced-motion: reduce) {
     .ticket, .ticket:hover, .tile, .tile:hover, .perk, .perk:hover, .tribe, .tribe:hover, .error-bib, .error-bib:hover { transition: none; transform: none; }

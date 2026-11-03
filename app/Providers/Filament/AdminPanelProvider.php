@@ -40,18 +40,6 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('System'),
             ])
             ->navigationItems([
-                NavigationItem::make('Birthdays')
-                    ->url(fn (): string => route('birthdays.index'))
-                    ->openUrlInNewTab()
-                    ->icon(Heroicon::OutlinedCake)
-                    ->group('Club')
-                    ->sort(1),
-                NavigationItem::make('Barracks permits')
-                    ->url(fn (): string => route('barracks.index'))
-                    ->openUrlInNewTab()
-                    ->icon(Heroicon::OutlinedIdentification)
-                    ->group('Club')
-                    ->sort(2),
                 NavigationItem::make('Logs')
                     ->url(fn (): string => route('log-viewer.index'))
                     ->openUrlInNewTab()

@@ -26,9 +26,7 @@ Route::get('/birthdays/share', [BirthdayController::class, 'create'])->name('bir
 Route::post('/birthdays', [BirthdayController::class, 'store'])
     ->middleware('throttle:10,1')
     ->name('birthdays.store');
-Route::get('/birthdays', [BirthdayController::class, 'index'])
-    ->middleware('auth.basic')
-    ->name('birthdays.index');
+Route::get('/birthdays', fn () => redirect('/admin/birthdays'));
 
 Route::get('/akobo/barracks', [BarracksRegistrationController::class, 'create'])->name('barracks.create');
 Route::post('/akobo/barracks', [BarracksRegistrationController::class, 'store'])
@@ -37,10 +35,10 @@ Route::post('/akobo/barracks', [BarracksRegistrationController::class, 'store'])
 Route::post('/akobo/barracks/passport', [BarracksRegistrationController::class, 'uploadPassport'])
     ->middleware('throttle:20,1')
     ->name('barracks.passport');
-Route::middleware('auth.basic')->group(function () {
-    Route::get('/akobo/barracks/registrations', [BarracksRegistrationController::class, 'index'])->name('barracks.index');
-    Route::get('/akobo/barracks/registrations/print/{registration?}', [BarracksRegistrationController::class, 'print'])->name('barracks.print');
-});
+Route::get('/akobo/barracks/registrations', fn () => redirect('/admin/barracks-registrations'));
+Route::get('/akobo/barracks/registrations/print/{registration?}', [BarracksRegistrationController::class, 'print'])
+    ->middleware('auth')
+    ->name('barracks.print');
 
 Route::post('/disco-run/tickets', [OrderController::class, 'store'])
     ->middleware(['throttle:10,1', IdentifyVisitor::class])

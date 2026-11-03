@@ -79,6 +79,14 @@ class Birthday extends Model
     }
 
     /**
+     * The year of the next celebration of a birthday in the given month: this year, or next year once the month has passed.
+     */
+    public static function upcomingYearFor(int $month): int
+    {
+        return $month < now()->month ? now()->year + 1 : now()->year;
+    }
+
+    /**
      * Short-lived links to the private photos, so only the organiser page can show them.
      *
      * @return array<int, string>

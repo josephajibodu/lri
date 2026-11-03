@@ -1,10 +1,12 @@
 <?php
 
+use App\Filament\Resources\Birthdays\Pages\ManageBirthdays;
 use App\Models\Birthday;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
@@ -99,34 +101,35 @@ test('photo consent and a unique email are required', function () {
         ->assertSessionHasErrors(['email', 'photo_consent']);
 });
 
-test('the birthday list requires signing in', function () {
-    $this->get(route('birthdays.index'))->assertUnauthorized();
+test('the birthday list is in the admin, behind the organiser sign-in', function () {
+    $this->get('/admin/birthdays')->assertRedirect('/admin/login');
+    $this->get('/birthdays')->assertRedirect('/admin/birthdays');
 });
 
 test('the birthday list shows next month by default, in date order', function () {
     $this->travelTo(now()->setDate(2026, 10, 26));
 
-    Birthday::factory()->on(11, 20)->create(['full_name' => 'Later Person', 'preferred_name' => null]);
-    Birthday::factory()->on(11, 3)->create(['full_name' => 'Early Person', 'preferred_name' => null, 'notes' => 'Big 4-0, please mention it!']);
-    Birthday::factory()->on(12, 1)->create(['full_name' => 'December Person', 'preferred_name' => null]);
+    $later = Birthday::factory()->on(11, 20)->create(['full_name' => 'Later Person']);
+    $early = Birthday::factory()->on(11, 3)->create(['full_name' => 'Early Person', 'notes' => 'Big 4-0, please mention it!']);
+    $december = Birthday::factory()->on(12, 1)->create(['full_name' => 'December Person']);
 
-    $this->actingAs(User::factory()->create())
-        ->get(route('birthdays.index'))
-        ->assertOk()
-        ->assertSeeText('November 2026')
-        ->assertSeeInOrder(['Early Person', 'Later Person'])
-        ->assertSeeText('Big 4-0, please mention it!')
-        ->assertDontSee('December Person');
+    $this->actingAs(User::factory()->create());
+
+    Livewire::test(ManageBirthdays::class)
+        ->assertCanSeeTableRecords([$early, $later], inOrder: true)
+        ->assertCanNotSeeTableRecords([$december])
+        ->assertSeeText('Big 4-0, please mention it!');
 });
 
-test('the birthday list can show another month', function () {
+test('the birthday list can show another month, with the age turned at the next celebration', function () {
     $this->travelTo(now()->setDate(2026, 10, 26));
 
-    Birthday::factory()->on(1, 5)->create(['full_name' => 'January Person', 'preferred_name' => null]);
+    $january = Birthday::factory()->on(1, 5)->create(['birth_year' => 1990]);
 
-    $this->actingAs(User::factory()->create())
-        ->get(route('birthdays.index', ['month' => 1]))
-        ->assertOk()
-        ->assertSeeText('January 2027')
-        ->assertSee('January Person');
+    $this->actingAs(User::factory()->create());
+
+    Livewire::test(ManageBirthdays::class)
+        ->filterTable('birth_month', 1)
+        ->assertCanSeeTableRecords([$january])
+        ->assertTableColumnStateSet('turning', '37', $january);
 });
