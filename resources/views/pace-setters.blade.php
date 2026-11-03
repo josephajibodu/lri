@@ -1,4 +1,4 @@
-<x-layouts.app title="Pace Setters · Let’s Run Ibadan" description="Meet the pace setters of Let’s Run Ibadan: the club-wide leaders and the leaders of the Akobo, Bodija, UI / Eleyele and Oluyole / Akala tribes." :canonical="route('pace-setters')">
+<x-layouts.app title="Pace Setters · Let’s Run Ibadan" description="Meet the pace setters of Let’s Run Ibadan: the club leaders and the leads of the Akobo, Bodija, UI and Oluyole tribes." :canonical="route('pace-setters')">
     <x-site.header />
 
     <main>

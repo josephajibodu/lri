@@ -9,15 +9,15 @@ return [
     |
     | How the club appears in search results, link previews and the
     | structured data search engines read. Keep the title under about
-    | 60 characters and the description under about 160.
+    | 60 characters and the description under about 125.
     |
     */
 
     'site' => [
         'name' => "Let's Run Ibadan",
         'alternate_name' => 'LRI',
-        'title' => "Let's Run Ibadan | Run Club and Running Community in Ibadan",
-        'description' => 'A free run club for runners, joggers and walkers in Ibadan, Oyo State. Saturday runs at 6:30 AM from 5 km, with tribes in Akobo, Bodija, UI and Oluyole.',
+        'title' => 'Let’s Run Ibadan | Free Run Club in Ibadan, Oyo State',
+        'description' => 'A free Saturday run club in Ibadan for every pace. 6:30 AM runs from 5 km, with tribes in Akobo, Bodija, UI and Oluyole.',
         'slogan' => 'Everyone. Every pace. One community.',
         'locality' => 'Ibadan',
         'region' => 'Oyo State',
