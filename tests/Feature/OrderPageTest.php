@@ -5,18 +5,15 @@ use App\Enums\PaymentFailureReason;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
-use App\Models\Payment;
 use App\Models\PaymentChannel;
 use App\Models\TicketType;
-use App\Models\WebhookCall;
-use App\Payments\PaymentManager;
-use App\Payments\Providers\FakeProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    config()->set('payments.fake', true);
+    fakeBachs();
 
     $this->ticketType = TicketType::factory()->create(['price' => 1_000_000]);
     $this->transfer = PaymentChannel::factory()->method(PaymentMethod::BankTransfer)->featured()->create();
@@ -24,7 +21,7 @@ beforeEach(function () {
 });
 
 /**
- * An order with an open fake checkout, the way the ticket form leaves it.
+ * An order with an open Bachs checkout, the way the ticket form leaves it.
  */
 function orderAwaitingPayment(int $quantity = 1): Order
 {
@@ -37,11 +34,6 @@ function orderAwaitingPayment(int $quantity = 1): Order
     ]);
 
     return Order::query()->latest('id')->firstOrFail();
-}
-
-function fakeCheckouts(): FakeProvider
-{
-    return app(PaymentManager::class)->driver('fake');
 }
 
 test('the order page only opens from its signed link', function () {
@@ -68,7 +60,7 @@ test('coming back from the checkout, the page waits for the payment and checks o
 
 test('checking on a payment the provider says is paid issues the tickets', function () {
     $order = orderAwaitingPayment(quantity: 2);
-    fakeCheckouts()->simulate($order->latestPayment->provider_checkout_id, PaymentStatus::Succeeded, PaymentMethod::BankTransfer);
+    fakePaidBachsCheckout($order->latestPayment);
 
     $this->getJson($order->signedUrl('orders.status'))
         ->assertOk()
@@ -89,8 +81,11 @@ test('checking on a payment the provider says is paid issues the tickets', funct
 
 test('the provider is not asked again within a few seconds of the last check', function () {
     $order = orderAwaitingPayment();
+    $payment = $order->latestPayment;
+    Http::fake(['sandbox-api.bachs.io/v1/checkout-sessions/'.$payment->provider_checkout_id => Http::sequence()
+        ->push(bachsCheckoutSession($payment, paid: false))
+        ->push(bachsCheckoutSession($payment))]);
     $this->getJson($order->signedUrl('orders.status'))->assertJson(['state' => 'waiting']);
-    fakeCheckouts()->simulate($order->latestPayment->provider_checkout_id, PaymentStatus::Succeeded);
 
     $this->getJson($order->signedUrl('orders.status'))->assertJson(['state' => 'waiting']);
 
@@ -101,7 +96,13 @@ test('the provider is not asked again within a few seconds of the last check', f
 
 test('a failed payment explains what happened and offers every way to pay again', function () {
     $order = orderAwaitingPayment();
-    fakeCheckouts()->simulate($order->latestPayment->provider_checkout_id, PaymentStatus::Failed, PaymentMethod::Card, PaymentFailureReason::InsufficientFunds);
+    deliverBachsWebhook(bachsEvent('collection.failed', [
+        'checkout_id' => $order->latestPayment->provider_checkout_id,
+        'amount' => '10000.00',
+        'status' => 'FAILED',
+        'reason' => 'Insufficient funds',
+        'payment_method_details' => ['type' => 'card'],
+    ]))->assertOk();
     $this->getJson($order->signedUrl('orders.status'))->assertJson(['state' => 'failed']);
 
     $this->get($order->statusUrl())
@@ -148,27 +149,4 @@ test('a paid order can’t be paid again', function () {
     $this->postJson($order->signedUrl('orders.pay'), ['channel' => $this->transfer->id])
         ->assertConflict()
         ->assertJsonPath('message', 'This order is already paid for.');
-});
-
-test('the fake checkout pays and returns the buyer to their order', function () {
-    $order = orderAwaitingPayment();
-    $payment = $order->latestPayment;
-
-    $this->get('/payments/fake/'.$payment->provider_checkout_id)->assertOk()->assertSeeText('₦10,000');
-
-    $response = $this->post('/payments/fake/'.$payment->provider_checkout_id, ['outcome' => 'paid']);
-
-    expect($response->headers->get('Location'))->toContain('/orders/'.$order->reference)->toContain('checkout_id=')
-        ->and($order->fresh()->status)->toBe(OrderStatus::Paid)
-        ->and(WebhookCall::query()->where('provider', 'fake')->sole()->processed_at)->not->toBeNull();
-});
-
-test('leaving the fake checkout returns the buyer to their order without paying', function () {
-    $order = orderAwaitingPayment();
-    $payment = $order->latestPayment;
-
-    $response = $this->post('/payments/fake/'.$payment->provider_checkout_id, ['outcome' => 'left']);
-    $this->get($response->headers->get('Location'))->assertOk()->assertSeeText('You haven’t paid yet');
-
-    expect(Payment::query()->sole()->status)->toBe(PaymentStatus::Open);
 });

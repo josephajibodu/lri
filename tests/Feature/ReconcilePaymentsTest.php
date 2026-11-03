@@ -8,8 +8,6 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentChannel;
 use App\Models\TicketType;
-use App\Payments\PaymentManager;
-use App\Payments\Providers\FakeProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
@@ -18,14 +16,14 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Mail::fake();
-    config()->set('payments.fake', true);
+    fakeBachs();
 
     $this->ticketType = TicketType::factory()->create();
     $this->channel = PaymentChannel::factory()->method(PaymentMethod::BankTransfer)->create();
 });
 
 /**
- * An order with an open fake checkout, placed the given number of minutes ago.
+ * An order with an open Bachs checkout, placed the given number of minutes ago.
  */
 function orderPlacedMinutesAgo(int $minutes): Order
 {
@@ -42,14 +40,9 @@ function orderPlacedMinutesAgo(int $minutes): Order
     return Order::query()->latest('id')->firstOrFail();
 }
 
-function fakeGateway(): FakeProvider
-{
-    return app(PaymentManager::class)->driver('fake');
-}
-
 test('an open payment whose webhook never came is settled by asking the provider', function () {
     $order = orderPlacedMinutesAgo(10);
-    fakeGateway()->simulate($order->latestPayment->provider_checkout_id, PaymentStatus::Succeeded);
+    fakePaidBachsCheckout($order->latestPayment);
 
     $this->artisan('payments:reconcile')->expectsOutputToContain('Checked 1 open payments; 1 have now settled.')->assertSuccessful();
 
@@ -90,7 +83,7 @@ test('an order whose payment turns out to be paid is fulfilled instead of abando
     $order = orderPlacedMinutesAgo(90);
     $order->update(['expires_at' => now()->subMinutes(30)]);
     $order->latestPayment->update(['expires_at' => now()->subMinutes(30)]);
-    fakeGateway()->simulate($order->latestPayment->provider_checkout_id, PaymentStatus::Succeeded);
+    fakePaidBachsCheckout($order->latestPayment);
 
     $this->artisan('orders:abandon-unpaid')->assertSuccessful();
 

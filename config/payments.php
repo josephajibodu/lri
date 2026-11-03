@@ -12,14 +12,9 @@ return [
     | providers. The default is used where no channel decides, such as
     | when syncing channels without naming a provider.
     |
-    | Set PAYMENTS_FAKE=true locally to send every channel through the fake
-    | provider, which needs no keys. It is never used in production.
-    |
     */
 
     'default' => env('PAYMENTS_PROVIDER', 'bachs'),
-
-    'fake' => (bool) env('PAYMENTS_FAKE', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -49,10 +44,6 @@ return [
             'webhook_tolerance' => 300,
             'connect_timeout' => 5,
             'timeout' => 15,
-        ],
-
-        'fake' => [
-            'webhook_secret' => env('FAKE_PAYMENTS_WEBHOOK_SECRET', 'fake-webhook-secret'),
         ],
 
     ],

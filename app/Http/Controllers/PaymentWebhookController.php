@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
-use LogicException;
 use Throwable;
 
 class PaymentWebhookController extends Controller
@@ -21,7 +20,7 @@ class PaymentWebhookController extends Controller
     {
         try {
             $gateway = $payments->driver($provider);
-        } catch (InvalidArgumentException|LogicException) {
+        } catch (InvalidArgumentException) {
             abort(404);
         }
 

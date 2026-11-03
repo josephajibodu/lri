@@ -4,7 +4,6 @@ use App\Http\Controllers\BarracksRegistrationController;
 use App\Http\Controllers\BirthdayController;
 use App\Http\Controllers\CheckoutEventController;
 use App\Http\Controllers\DiscoRunController;
-use App\Http\Controllers\FakeCheckoutController;
 use App\Http\Controllers\FoundersController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MailPreviewController;
@@ -60,14 +59,11 @@ Route::middleware(['signed:checkout_id', IdentifyVisitor::class])->group(functio
 });
 
 Route::post('/webhooks/payments/{provider}', PaymentWebhookController::class)
-    ->whereIn('provider', ['bachs', 'fake'])
+    ->whereIn('provider', ['bachs'])
     ->middleware('throttle:240,1')
     ->name('webhooks.payments');
 
 if (! app()->isProduction()) {
-    Route::get('/payments/fake/{checkoutId}', [FakeCheckoutController::class, 'show'])->name('payments.fake.show');
-    Route::post('/payments/fake/{checkoutId}', [FakeCheckoutController::class, 'settle'])->name('payments.fake.settle');
-
     Route::get('/mail-previews/{preview?}', [MailPreviewController::class, 'index'])->name('mail-previews.index');
     Route::get('/mail-previews/{preview}/render', [MailPreviewController::class, 'show'])->name('mail-previews.show');
 }

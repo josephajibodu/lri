@@ -7,16 +7,13 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\PaymentChannel;
 use App\Models\TicketType;
-use App\Payments\PaymentManager;
-use App\Payments\Providers\FakeProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    config()->set('payments.fake', true);
-
     $this->ticketType = TicketType::factory()->create(['slug' => 'disco-run-standard', 'price' => 1_000_000]);
     $this->transfer = PaymentChannel::factory()->method(PaymentMethod::BankTransfer)->featured()->create();
 });
@@ -35,12 +32,9 @@ function orderForm(array $overrides = []): array
     ];
 }
 
-function fakeProvider(): FakeProvider
-{
-    return app(PaymentManager::class)->driver('fake');
-}
-
 test('ordering holds the tickets and sends the buyer to a checkout for the chosen method', function () {
+    fakeBachs();
+
     $response = $this->post(route('orders.store'), orderForm());
 
     $order = Order::query()->sole();
@@ -57,37 +51,29 @@ test('ordering holds the tickets and sends the buyer to a checkout for the chose
         ->marketing_consent->toBeTrue()
         ->and($order->expires_at->isFuture())->toBeTrue()
         ->and($payment)
-        ->provider->toBe('fake')
+        ->provider->toBe('bachs')
         ->method->toBe(PaymentMethod::BankTransfer)
         ->status->toBe(PaymentStatus::Open)
         ->amount->toBe(2_000_000)
         ->and($payment->provider_checkout_id)->not->toBeNull();
 
-    $request = fakeProvider()->requests()[0];
-
-    expect($request->methods)->toBe([PaymentMethod::BankTransfer])
-        ->and($request->reference)->toBe($payment->reference)
-        ->and($request->amount->format())->toBe('₦20,000')
-        ->and($request->successUrl)->toContain('/orders/'.$order->reference)
-        ->and($request->customerPhone)->toBe('+2348031234567');
+    Http::assertSent(fn (ClientRequest $request): bool => $request->url() === 'https://sandbox-api.bachs.io/v1/checkout-sessions'
+        && $request['payment_method_types'] === ['NGN_BANK_TRANSFER']
+        && $request['reference'] === $payment->reference
+        && $request['pricing'] === ['currency' => 'NGN', 'amount' => '20000.00']
+        && str_contains($request['success_url'], '/orders/'.$order->reference)
+        && $request['customer']['phone_number'] === '+2348031234567');
 });
 
-test('the page’s own checkout gets the checkout as JSON to open over the page', function () {
-    $this->postJson(route('orders.store'), orderForm())
+test('the page’s own checkout gets the Bachs checkout as JSON, to open as a pop-up over the page', function () {
+    fakeBachs();
+
+    $response = $this->postJson(route('orders.store'), orderForm())
         ->assertOk()
         ->assertJsonStructure(['checkout_url', 'overlay', 'status_url', 'cancelled_url'])
-        ->assertJsonPath('overlay', null);
-});
-
-test('a Bachs checkout is opened as a pop-up over the page', function () {
-    config()->set('payments.fake', false);
-    config()->set('payments.providers.bachs.secret_key', 'sk_sandbox_test');
-    Http::fake(['sandbox-api.bachs.io/v1/checkout-sessions' => Http::response(['checkout_id' => 'chk_1', 'checkout_url' => 'https://checkout.bachs.io/c/chk_1', 'expires_at' => now()->addHour()->toIso8601String()], 201)]);
-
-    $this->postJson(route('orders.store'), orderForm())
-        ->assertOk()
-        ->assertJsonPath('checkout_url', 'https://checkout.bachs.io/c/chk_1')
         ->assertJsonPath('overlay', 'bachs');
+
+    expect($response->json('checkout_url'))->toStartWith('https://checkout.bachs.io/c/chk_');
 });
 
 test('the form explains what needs fixing', function (array $overrides, string $field) {
@@ -123,6 +109,7 @@ test('ordering more tickets than are left is refused', function () {
 });
 
 test('tickets held by an unpaid order whose checkout closed go back on sale', function () {
+    fakeBachs();
     $this->ticketType->update(['capacity' => 2]);
     Order::factory()->for($this->ticketType)->create(['quantity' => 2, 'expires_at' => now()->subMinute()]);
 
@@ -130,7 +117,6 @@ test('tickets held by an unpaid order whose checkout closed go back on sale', fu
 });
 
 test('when the payment page can’t be opened, the buyer lands on their order to try again', function () {
-    config()->set('payments.fake', false);
     config()->set('payments.providers.bachs.secret_key', 'sk_sandbox_test');
     Http::fake(['*' => Http::response(['detail' => 'Down', 'error_code' => 'SERVICE_UNAVAILABLE'], 503)]);
 

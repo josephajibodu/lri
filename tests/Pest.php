@@ -1,6 +1,10 @@
 <?php
 
+use App\Models\Payment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request as ClientRequest;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /*
@@ -47,4 +51,85 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Point payments at Bachs's sandbox with its API faked, so no request leaves the test. Each checkout opened
+ * gets an id made from the attempt's reference, so every attempt has its own.
+ */
+function fakeBachs(): void
+{
+    config()->set('payments.providers.bachs.secret_key', 'sk_sandbox_test');
+    config()->set('payments.providers.bachs.webhook_secret', 'whsec_test');
+    config()->set('payments.providers.bachs.base_url', null);
+
+    Http::preventStrayRequests();
+    Http::fake(['sandbox-api.bachs.io/v1/checkout-sessions' => fn (ClientRequest $request) => Http::response([
+        'checkout_id' => 'chk_'.$request['reference'],
+        'checkout_url' => 'https://checkout.bachs.io/c/chk_'.$request['reference'],
+        'status' => 'open',
+        'expires_at' => now()->addMinutes($request['expires_in_minutes'])->toIso8601String(),
+        'created_at' => now()->toIso8601String(),
+    ], 201)]);
+}
+
+/**
+ * What Bachs answers when asked about a payment's checkout: paid in full by bank transfer, or not paid yet.
+ *
+ * @return array<string, mixed>
+ */
+function bachsCheckoutSession(Payment $payment, bool $paid = true): array
+{
+    return [
+        'checkout_id' => $payment->provider_checkout_id,
+        'status' => $paid ? 'completed' : 'open',
+        'reference' => $payment->reference,
+        'amount' => $payment->money()->toDecimal(),
+        'currency' => $payment->currency,
+        'payment_method' => 'NGN_BANK_TRANSFER',
+        'updated_at' => now()->toIso8601String(),
+        'charge' => $paid ? ['payment_id' => 'pay_'.$payment->reference, 'status' => 'succeeded'] : null,
+    ];
+}
+
+/**
+ * Have Bachs say a payment's checkout is paid whenever it is asked.
+ */
+function fakePaidBachsCheckout(Payment $payment): void
+{
+    Http::fake(['sandbox-api.bachs.io/v1/checkout-sessions/'.$payment->provider_checkout_id => Http::response(bachsCheckoutSession($payment))]);
+}
+
+/**
+ * A Bachs webhook event, about checkout chk_123 for ₦20,000 unless the data says otherwise.
+ *
+ * @param  array<string, mixed>  $data
+ * @return array<string, mixed>
+ */
+function bachsEvent(string $type, array $data = [], string $id = 'evt_1'): array
+{
+    return [
+        'id' => $id,
+        'type' => $type,
+        'created_at' => now()->toIso8601String(),
+        'organization_id' => 'acct_1',
+        'data' => ['checkout_id' => 'chk_123', 'amount' => '20000.00', 'currency' => 'NGN', ...$data],
+    ];
+}
+
+/**
+ * Send a webhook event to the site, signed the way Bachs signs them.
+ *
+ * @param  array<string, mixed>  $event
+ */
+function deliverBachsWebhook(array $event, string $secret = 'whsec_test'): TestResponse
+{
+    $body = json_encode($event);
+    $timestamp = now()->getTimestamp();
+    $signature = hash_hmac('sha256', "{$timestamp}.{$body}", $secret);
+
+    return test()->call('POST', route('webhooks.payments', 'bachs'), server: [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_X_BACHS_SIGNATURE_V2' => "t={$timestamp},v1={$signature}",
+    ], content: $body);
 }

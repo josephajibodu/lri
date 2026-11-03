@@ -13,7 +13,7 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 
 ## How it's built
 
-- **Provider layer** ([app/Payments](app/Payments)): one contract every provider follows ([PaymentProvider.php](app/Payments/Contracts/PaymentProvider.php)). Each provider translates its own statuses, methods and failure reasons into ours. A fake provider stands in locally and in tests.
+- **Provider layer** ([app/Payments](app/Payments)): one contract every provider follows ([PaymentProvider.php](app/Payments/Contracts/PaymentProvider.php)). Each provider translates its own statuses, methods and failure reasons into ours. There is no fake provider: locally the site uses Bachs's sandbox (`sk_sandbox_` keys), and tests fake Bachs's API so they never reach it.
 - **Payment methods are database rows** (`payment_channels`). Each row says the method, the currency, which provider handles it, whether it's on, whether it's featured, and its position in the list.
 - **Every payment attempt is kept**, failed ones included. That history is what makes the per-method numbers honest.
 - **Bachs's webhooks are what confirm payment.** A webhook is the notification Bachs sends our server when something happens to a payment. The page a buyer lands on after paying proves nothing on its own. Our own checks with Bachs back the webhooks up.
@@ -28,7 +28,7 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 - [x] Seeded the ₦10,000 Disco Run ticket, plus naira bank transfer (featured) and card through Bachs
 
 ### ✅ Phase 2: Provider layer and Bachs (`cc33217`)
-- [x] Provider contract and manager; the fake provider is refused in production
+- [x] Provider contract and manager
 - [x] Bachs: open a checkout limited to one method, ask where a checkout stands, list the methods switched on for our account
 - [x] Each Bachs request carries an "idempotency key", a unique tag that stops a retry from opening a second checkout, so brief outages can be retried safely
 - [x] Webhooks are only trusted if their HMAC signature checks out and they're under 5 minutes old; both secrets work while Bachs rotates to a new one
@@ -75,7 +75,7 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 ## Before going live
 
 - [ ] Move production's existing birthdays and barracks registrations from SQLite to MySQL
-- [ ] Production `.env`: `DB_*` for MySQL, `BACHS_SECRET_KEY` (`sk_live_…`), `BACHS_WEBHOOK_SECRET`, `PAYMENTS_FAKE=false`
+- [ ] Production `.env`: `DB_*` for MySQL, `BACHS_SECRET_KEY` (`sk_live_…`), `BACHS_WEBHOOK_SECRET`
 - [ ] In the Bachs developer portal, add `https://<domain>/webhooks/payments/bachs` as a webhook destination
 - [ ] Run a queue worker (`php artisan queue:work`) for ticket emails
 - [ ] Run the scheduler (`php artisan schedule:run` every minute) for the 5-minute checks
@@ -83,7 +83,7 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 - [ ] Run `php artisan db:seed --class=TicketTypeSeeder` and `--class=PaymentChannelSeeder`, then `php artisan payments:sync-channels`
 - [ ] Create the first organiser with `php artisan make:filament-user`
 - [ ] Set the Disco Run ticket limit (number of headsets) in the admin
-- [ ] Do a real test purchase on the Bachs sandbox (needs `sk_sandbox_` keys)
+- [ ] Do a real test purchase on the Bachs sandbox (the sandbox keys in the local `.env` work)
 
 ## Open questions
 
@@ -96,5 +96,6 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 ## Known gaps
 
 - **Untested against real Bachs:** the webhook payloads and failure-reason wording come from Bachs's docs and haven't been checked against a real sandbox.
+- **No webhooks locally:** Bachs can't reach `lri.test`, so a local test purchase is confirmed by the order page asking Bachs directly. To try webhooks locally, share the site at a public address (`herd share`) and add that address as a webhook destination in the Bachs portal.
 - **No follow-up before submit:** someone who leaves before submitting the form can't be followed up by email, because we don't have their email yet. They only appear in the funnel.
 - **PHPUnit advisory:** `composer audit` reports a medium-severity issue in PHPUnit 13.4.3, which is only used for tests. It was already there before this work.

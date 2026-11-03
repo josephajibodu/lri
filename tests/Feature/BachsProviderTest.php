@@ -17,7 +17,6 @@ beforeEach(function () {
     Http::preventStrayRequests();
     Sleep::fake();
 
-    config()->set('payments.fake', false);
     config()->set('payments.providers.bachs.secret_key', 'sk_sandbox_test');
     config()->set('payments.providers.bachs.webhook_secret', 'whsec_test');
     config()->set('payments.providers.bachs.base_url', null);

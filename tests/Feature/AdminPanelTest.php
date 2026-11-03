@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\PaymentMethod;
-use App\Enums\PaymentStatus;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
@@ -23,7 +22,6 @@ use App\Models\Ticket;
 use App\Models\TicketType;
 use App\Models\User;
 use App\Models\WebhookCall;
-use App\Payments\PaymentManager;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -111,12 +109,12 @@ test('an order shows its payments and the buyer’s journey', function () {
 
 test('an organiser can check an open payment with the provider', function () {
     $this->actingAs($this->admin);
-    config()->set('payments.fake', true);
+    fakeBachs();
     $ticketType = TicketType::factory()->create();
     $channel = PaymentChannel::factory()->method(PaymentMethod::BankTransfer)->create();
     $this->post(route('orders.store'), ['ticket_type' => $ticketType->slug, 'quantity' => 1, 'name' => 'Ada', 'email' => 'ada@example.com', 'channel' => $channel->id]);
     $order = Order::query()->sole();
-    app(PaymentManager::class)->driver('fake')->simulate($order->latestPayment->provider_checkout_id, PaymentStatus::Succeeded);
+    fakePaidBachsCheckout($order->latestPayment);
 
     Livewire::test(ViewOrder::class, ['record' => $order->getRouteKey()])
         ->callAction('checkWithProvider')
@@ -172,8 +170,7 @@ test('a way to pay can be featured from the list', function () {
 
 test('a failed webhook can be handled again from the admin', function () {
     $this->actingAs($this->admin);
-    config()->set('payments.fake', true);
-    $call = WebhookCall::factory()->create(['provider' => 'fake', 'type' => 'customer.created', 'payload' => ['id' => 'x', 'type' => 'customer.created'], 'failed_at' => now(), 'error' => 'Boom']);
+    $call = WebhookCall::factory()->create(['type' => 'customer.created', 'payload' => ['id' => 'x', 'type' => 'customer.created'], 'failed_at' => now(), 'error' => 'Boom']);
 
     Livewire::test(ManageWebhookCalls::class)
         ->callAction(TestAction::make('replay')->table($call))

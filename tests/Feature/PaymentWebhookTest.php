@@ -9,41 +9,16 @@ use App\Models\Payment;
 use App\Models\WebhookCall;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Testing\TestResponse;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Mail::fake();
-    config()->set('payments.fake', false);
     config()->set('payments.providers.bachs.webhook_secret', 'whsec_test');
 
     $this->order = Order::factory()->create(['quantity' => 2, 'unit_price' => 1_000_000, 'amount' => 2_000_000]);
     $this->payment = Payment::factory()->for($this->order)->create(['amount' => 2_000_000, 'provider_checkout_id' => 'chk_123']);
 });
-
-function bachsEvent(string $type, array $data = [], string $id = 'evt_1'): array
-{
-    return [
-        'id' => $id,
-        'type' => $type,
-        'created_at' => now()->toIso8601String(),
-        'organization_id' => 'acct_1',
-        'data' => ['checkout_id' => 'chk_123', 'amount' => '20000.00', 'currency' => 'NGN', ...$data],
-    ];
-}
-
-function deliverBachsWebhook(array $event, string $secret = 'whsec_test'): TestResponse
-{
-    $body = json_encode($event);
-    $timestamp = now()->getTimestamp();
-    $signature = hash_hmac('sha256', "{$timestamp}.{$body}", $secret);
-
-    return test()->call('POST', route('webhooks.payments', 'bachs'), server: [
-        'CONTENT_TYPE' => 'application/json',
-        'HTTP_X_BACHS_SIGNATURE_V2' => "t={$timestamp},v1={$signature}",
-    ], content: $body);
-}
 
 test('a signed collection.succeeded webhook pays the order, issues its tickets and emails them', function () {
     deliverBachsWebhook(bachsEvent('collection.succeeded', ['charge_id' => 'ch_1', 'status' => 'SUCCEEDED', 'payment_method_details' => ['type' => 'bank_transfer']]))

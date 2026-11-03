@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\CheckoutStep;
-use App\Enums\PaymentFailureReason;
 use App\Enums\PaymentMethod;
 use App\Http\Middleware\IdentifyVisitor;
 use App\Models\CheckoutEvent;
@@ -15,7 +14,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Mail::fake();
-    config()->set('payments.fake', true);
+    fakeBachs();
 
     $this->visitorId = '9d7c3c52-1f0e-4a5e-9a51-3b9a3a0a6f10';
     $this->ticketType = TicketType::factory()->create(['event' => 'disco-run']);
@@ -89,7 +88,13 @@ test('a paid order leaves the whole journey under one visitor and order', functi
     $order = placeOrderAsVisitor();
     $payment = $order->latestPayment;
 
-    $this->post('/payments/fake/'.$payment->provider_checkout_id, ['outcome' => 'paid']);
+    deliverBachsWebhook(bachsEvent('collection.succeeded', [
+        'checkout_id' => $payment->provider_checkout_id,
+        'amount' => '10000.00',
+        'charge_id' => 'ch_1',
+        'status' => 'SUCCEEDED',
+        'payment_method_details' => ['type' => 'bank_transfer'],
+    ]))->assertOk();
     $this->withCookie(IdentifyVisitor::VisitorCookie, $this->visitorId)->get($order->statusUrl(['from' => 'checkout']));
     $this->withCookie(IdentifyVisitor::VisitorCookie, $this->visitorId)->get($order->statusUrl(['from' => 'checkout']));
 
@@ -106,7 +111,12 @@ test('a paid order leaves the whole journey under one visitor and order', functi
 
 test('a failed payment is noted with its reason, and paying again is noted as a comeback', function () {
     $order = placeOrderAsVisitor();
-    $this->post('/payments/fake/'.$order->latestPayment->provider_checkout_id.'?outcome=failed', ['reason' => PaymentFailureReason::InsufficientFunds->value]);
+    deliverBachsWebhook(bachsEvent('collection.failed', [
+        'checkout_id' => $order->latestPayment->provider_checkout_id,
+        'amount' => '10000.00',
+        'status' => 'FAILED',
+        'reason' => 'Insufficient funds',
+    ]))->assertOk();
 
     $this->withCookie(IdentifyVisitor::VisitorCookie, $this->visitorId)->post($order->signedUrl('orders.pay'), ['channel' => $this->transfer->id]);
 
@@ -136,7 +146,6 @@ test('a form sent with mistakes notes which fields, never what was typed', funct
 });
 
 test('a checkout that couldn’t open is noted against the method', function () {
-    config()->set('payments.fake', false);
     config()->set('payments.providers.bachs.secret_key', null);
 
     placeOrderAsVisitor();
