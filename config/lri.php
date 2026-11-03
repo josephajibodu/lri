@@ -99,10 +99,10 @@ return [
     | The home page features the run, with the poster (a path under
     | public/, portrait 4:5), until it starts.
     |
-    | Payment: set checkout_url to any payment link (a Selar, Paystack or
-    | Flutterwave product page) for the "Get your ticket" button. To show
-    | a checkout widget on the page instead, set both embed_script and
-    | embed_product. With neither set, the page says tickets open soon.
+    | Tickets are sold on the page itself: the ticket card takes orders while
+    | a "disco-run" ticket type is on sale and at least one way to pay is
+    | switched on (see the ticket_types and payment_channels tables). The
+    | price here is only the marketing line used on the home page and flyer.
     |
     */
 
@@ -128,9 +128,6 @@ return [
             ['name' => 'Piano Hours', 'genre' => 'Amapiano · Log drums', 'tone' => 'green'],
             ['name' => 'Rewind', 'genre' => 'Throwbacks · 2000s jams', 'tone' => 'sky'],
         ],
-        'checkout_url' => env('DISCO_RUN_CHECKOUT_URL'),
-        'embed_script' => env('DISCO_RUN_EMBED_SCRIPT'),
-        'embed_product' => env('DISCO_RUN_EMBED_PRODUCT'),
     ],
 
     /*

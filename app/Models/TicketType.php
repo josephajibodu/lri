@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrderStatus;
 use App\Support\Money;
 use Database\Factories\TicketTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -81,5 +82,33 @@ class TicketType extends Model
     public function unitPrice(): Money
     {
         return Money::of($this->price, $this->currency);
+    }
+
+    /**
+     * Tickets taken: those on paid orders, plus those held for orders whose checkout is still open.
+     */
+    public function ticketsTaken(): int
+    {
+        return (int) $this->orders()
+            ->where(fn (Builder $query) => $query
+                ->where('status', OrderStatus::Paid)
+                ->orWhere(fn (Builder $query) => $query->where('status', OrderStatus::Pending)->where('expires_at', '>', now())))
+            ->sum('quantity');
+    }
+
+    /**
+     * How many tickets are left, or null when there is no limit.
+     */
+    public function ticketsLeft(): ?int
+    {
+        return $this->capacity === null ? null : max(0, $this->capacity - $this->ticketsTaken());
+    }
+
+    /**
+     * The most tickets one order can take right now.
+     */
+    public function maxQuantity(): int
+    {
+        return min($this->max_per_order, $this->ticketsLeft() ?? PHP_INT_MAX);
     }
 }

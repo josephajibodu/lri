@@ -116,6 +116,7 @@ class BachsProvider implements PaymentProvider
             checkoutId: $session['checkout_id'],
             checkoutUrl: $session['checkout_url'],
             expiresAt: $this->date($session['expires_at'] ?? null),
+            overlay: 'bachs',
         );
     }
 

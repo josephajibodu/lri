@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\URL;
 
 /**
  * A buyer's ticket order. It can have several payment attempts, and its tickets are issued once one succeeds.
@@ -143,5 +144,25 @@ class Order extends Model
     public function total(): Money
     {
         return Money::of($this->amount, $this->currency);
+    }
+
+    /**
+     * The buyer's link to their order, signed so only someone who was given it can open it.
+     *
+     * @param  array<string, string>  $query
+     */
+    public function statusUrl(array $query = []): string
+    {
+        return $this->signedUrl('orders.show', $query);
+    }
+
+    /**
+     * A signed link to one of the order's own routes.
+     *
+     * @param  array<string, string>  $query
+     */
+    public function signedUrl(string $route, array $query = []): string
+    {
+        return URL::signedRoute($route, ['order' => $this->reference, ...$query]);
     }
 }

@@ -677,4 +677,150 @@ import.meta.glob("../fonts/*.woff2");
     }
     initDiscoRun();
 
+    /*
+     * Checkout. Without JavaScript the form posts and the server sends the buyer to the payment page.
+     * With it, the checkout opens over this page when the provider has a pop-up (an overlay), and falls
+     * back to the payment page when it doesn't or can't load. Paid or not, the buyer ends on their order page.
+     */
+    var overlayScripts = { bachs: "https://checkout.bachs.io/bachs.js" };
+    var overlayLoads = {};
+
+    function loadOverlay(name) {
+        if (!overlayLoads[name]) {
+            overlayLoads[name] = new Promise(function (resolve, reject) {
+                var script = document.createElement("script");
+                script.src = overlayScripts[name];
+                script.async = true;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        return overlayLoads[name];
+    }
+
+    function openOverlay(checkout) {
+        if (checkout.overlay !== "bachs" || !overlayScripts[checkout.overlay]) return Promise.reject();
+
+        return loadOverlay(checkout.overlay).then(function () {
+            if (!window.Bachs || !window.Bachs.Checkout) throw new Error("Bachs checkout did not load");
+            var finished = false;
+            return window.Bachs.Checkout.open({
+                checkoutUrl: checkout.checkout_url,
+                onEvent: function (event) {
+                    if (event.type === "checkout.completed") {
+                        finished = true;
+                        window.location.assign(checkout.status_url);
+                    } else if (event.type === "checkout.expired") {
+                        finished = true;
+                        window.location.assign(checkout.cancelled_url);
+                    } else if (event.type === "checkout.closed" && !finished) {
+                        window.location.assign(checkout.cancelled_url);
+                    } else if (event.type === "checkout.error") {
+                        window.location.assign(checkout.checkout_url);
+                    }
+                }
+            });
+        });
+    }
+
+    document.querySelectorAll("form[data-checkout]").forEach(function (form) {
+        var status = form.querySelector("[data-checkout-status]");
+        var buttons = form.querySelectorAll("button[name=channel]");
+        var quantity = form.querySelector("[data-checkout-quantity]");
+        var total = form.querySelector("[data-checkout-total]");
+
+        if (quantity && total) {
+            var format = new Intl.NumberFormat("en-NG", { style: "currency", currency: total.dataset.currency, minimumFractionDigits: 0 });
+            quantity.addEventListener("change", function () {
+                total.textContent = format.format(Number(total.dataset.unitPrice) * Number(quantity.value) / 100);
+            });
+        }
+
+        function busy(isBusy, message) {
+            buttons.forEach(function (button) { button.disabled = isBusy; });
+            if (status) {
+                status.hidden = !message;
+                status.textContent = message || "";
+            }
+        }
+
+        function showErrors(errors) {
+            form.querySelectorAll("[data-error-for]").forEach(function (el) { el.textContent = ""; });
+            form.querySelectorAll("[aria-invalid]").forEach(function (el) { el.removeAttribute("aria-invalid"); });
+            var first;
+            Object.keys(errors).forEach(function (field) {
+                var slot = form.querySelector('[data-error-for="' + field + '"]');
+                var input = form.querySelector('[name="' + field + '"]:not(button)');
+                if (slot) slot.textContent = errors[field][0];
+                if (input) {
+                    input.setAttribute("aria-invalid", "true");
+                    first = first || input;
+                }
+            });
+            if (first) first.focus();
+        }
+
+        form.addEventListener("submit", function (event) {
+            var button = event.submitter;
+            if (!button || button.name !== "channel" || !window.fetch) return;
+            event.preventDefault();
+
+            var data = new FormData(form);
+            data.set("channel", button.value);
+            busy(true, "Opening the payment page…");
+
+            fetch(form.action, { method: "POST", body: data, headers: { Accept: "application/json" }, credentials: "same-origin" })
+                .then(function (response) {
+                    return response.json().then(function (json) { return { status: response.status, json: json }; });
+                })
+                .then(function (result) {
+                    if (result.status === 422) {
+                        busy(false);
+                        showErrors(result.json.errors || {});
+                        return;
+                    }
+                    if (result.json.status_url && !result.json.checkout_url) {
+                        window.location.assign(result.json.status_url);
+                        return;
+                    }
+                    if (!result.json.checkout_url) throw new Error("No checkout");
+
+                    openOverlay(result.json)
+                        .then(function () { busy(false); })
+                        .catch(function () { window.location.assign(result.json.checkout_url); });
+                })
+                .catch(function () {
+                    var channel = document.createElement("input");
+                    channel.type = "hidden";
+                    channel.name = "channel";
+                    channel.value = button.value;
+                    form.appendChild(channel);
+                    form.submit();
+                });
+        });
+    });
+
+    /* Order page: while a payment is being confirmed, check every few seconds and reload when it settles */
+    var poll = document.querySelector("[data-order-poll]");
+    if (poll) {
+        var started = Date.now();
+        (function check() {
+            var waited = Date.now() - started;
+            if (waited > 15 * 60000) return;
+            setTimeout(function () {
+                fetch(poll.dataset.orderPoll, { headers: { Accept: "application/json" }, credentials: "same-origin" })
+                    .then(function (response) { return response.json(); })
+                    .then(function (json) {
+                        if (json.state && json.state !== poll.dataset.state) {
+                            window.location.reload();
+                        } else {
+                            check();
+                        }
+                    })
+                    .catch(check);
+            }, waited < 120000 ? 4000 : 10000);
+        })();
+    }
+
 })();

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PaymentChannel;
+use App\Models\TicketType;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
@@ -22,29 +25,30 @@ class DiscoRunController extends Controller
             'discoRun' => $discoRun,
             'startsAt' => $startsAt,
             'when' => $startsAt?->format('D j M · g:i A') ?? $discoRun['date_window'],
-            'checkout' => $this->checkout($discoRun),
+            'ticketing' => $this->ticketing(),
         ]);
     }
 
     /**
-     * Work out how people pay: an embedded checkout, a payment link, or nothing yet.
+     * What the ticket card offers: the ticket on sale and the ways to pay for it, or why it can't be bought yet.
      *
-     * @param  array<string, mixed>  $discoRun
-     * @return array{type: 'embed'|'link'|'soon', url: ?string, script: ?string, product: ?string}
+     * @return array{state: 'soon'|'sold_out'|'on_sale', ticketType: ?TicketType, channels: Collection<int, PaymentChannel>, maxQuantity: int}
      */
-    private function checkout(array $discoRun): array
+    private function ticketing(): array
     {
-        $type = match (true) {
-            filled($discoRun['embed_script']) && filled($discoRun['embed_product']) => 'embed',
-            filled($discoRun['checkout_url']) => 'link',
-            default => 'soon',
-        };
+        $ticketType = TicketType::query()->onSale()->where('event', 'disco-run')->orderBy('sort_order')->first();
+        $channels = $ticketType ? PaymentChannel::query()->offeredIn($ticketType->currency)->get() : new Collection;
+        $maxQuantity = $ticketType?->maxQuantity() ?? 0;
 
         return [
-            'type' => $type,
-            'url' => $discoRun['checkout_url'],
-            'script' => $discoRun['embed_script'],
-            'product' => $discoRun['embed_product'],
+            'state' => match (true) {
+                $ticketType === null, $channels->isEmpty() => 'soon',
+                $maxQuantity < 1 => 'sold_out',
+                default => 'on_sale',
+            },
+            'ticketType' => $ticketType,
+            'channels' => $channels,
+            'maxQuantity' => $maxQuantity,
         ];
     }
 }

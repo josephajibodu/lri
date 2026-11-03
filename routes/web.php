@@ -3,8 +3,10 @@
 use App\Http\Controllers\BarracksRegistrationController;
 use App\Http\Controllers\BirthdayController;
 use App\Http\Controllers\DiscoRunController;
+use App\Http\Controllers\FakeCheckoutController;
 use App\Http\Controllers\FoundersController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaceSettersController;
 use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
@@ -36,3 +38,21 @@ Route::middleware('auth.basic')->group(function () {
     Route::get('/akobo/barracks/registrations', [BarracksRegistrationController::class, 'index'])->name('barracks.index');
     Route::get('/akobo/barracks/registrations/print/{registration?}', [BarracksRegistrationController::class, 'print'])->name('barracks.print');
 });
+
+Route::post('/disco-run/tickets', [OrderController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('orders.store');
+Route::middleware('signed:checkout_id')->group(function () {
+    Route::get('/orders/{order:reference}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order:reference}/status', [OrderController::class, 'status'])
+        ->middleware('throttle:30,1')
+        ->name('orders.status');
+    Route::post('/orders/{order:reference}/payments', [OrderController::class, 'pay'])
+        ->middleware('throttle:10,1')
+        ->name('orders.pay');
+});
+
+if (! app()->isProduction()) {
+    Route::get('/payments/fake/{checkoutId}', [FakeCheckoutController::class, 'show'])->name('payments.fake.show');
+    Route::post('/payments/fake/{checkoutId}', [FakeCheckoutController::class, 'settle'])->name('payments.fake.settle');
+}
