@@ -98,3 +98,15 @@ test('the founders page points visitors to the member form', function () {
         ->assertOk()
         ->assertSee('href="https://forms.example.com/join-lri"', false);
 });
+
+test('a founder bio can run to several paragraphs and the tribe can be left out', function () {
+    config()->set('lri.founders.people', [
+        founder(['tribe' => null, 'bio' => "First paragraph.\n\nSecond paragraph."]),
+    ]);
+
+    $this->get(route('founders'))
+        ->assertOk()
+        ->assertSee('<p>First paragraph.</p>', false)
+        ->assertSee('<p>Second paragraph.</p>', false)
+        ->assertDontSee('class="fd-tribe"', false);
+});

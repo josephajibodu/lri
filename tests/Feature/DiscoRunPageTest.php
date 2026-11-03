@@ -23,6 +23,22 @@ test('the disco run page shows the start time once a date is set', function () {
         ->assertDontSeeText('First two weeks of December');
 });
 
+test('the faq gives the date, time and venue once a date is set', function () {
+    config()->set('lri.disco_run.starts_at', '2026-12-11 18:00');
+    config()->set('lri.disco_run.venue', 'Bodija, Ibadan');
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSeeText('Friday 11 December at 6 PM in Bodija, Ibadan.');
+});
+
+test('the disco run page uses the flyer for link previews', function () {
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSee('<meta property="og:image" content="'.asset('images/disco-run/og-image.jpg').'">', false)
+        ->assertSee('<meta name="twitter:image" content="'.asset('images/disco-run/og-image.jpg').'">', false);
+});
+
 test('the ticket says tickets open soon when no payment is set up', function () {
     config()->set('lri.disco_run.checkout_url', null);
     config()->set('lri.disco_run.embed_script', null);

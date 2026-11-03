@@ -452,7 +452,7 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
 .pace-times dt { font: 400 .64rem/1 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
 .pace-times dd { margin: 8px 0 0; font: 800 1.5rem/1 var(--mono); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .pace-msg { margin: 16px 0 0; color: var(--muted); min-height: 3.1em; }
-.track { margin-top: 16px; padding: 8px 0; border-radius: 14px; background: var(--track); }
+.track { margin-top: 16px; padding: 8px 0; border-radius: 14px; background: var(--track); overflow: hidden; overflow: clip; }
 .lane { position: relative; display: flex; align-items: center; height: 32px; margin: 0 22px 0 60px; border-bottom: 2px dashed var(--card); }
 .lane:last-child { border-bottom: 0; }
 .lane-name { position: absolute; right: calc(100% + 10px); font: 600 .6rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
@@ -911,6 +911,7 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
 .fd-profile-no { position: absolute; top: 0; right: clamp(14px, 3vw, 36px); font: italic 900 clamp(6rem, 16vw, 13rem)/1 var(--display); font-stretch: 130%; color: var(--bg); pointer-events: none; }
 .fd-profile:nth-child(even) .fd-profile-no { right: auto; left: clamp(14px, 3vw, 36px); }
 .fd-photo { position: relative; z-index: 1; justify-self: center; width: min(100%, 360px); margin: 0; padding: 12px 12px 0; border: 2px solid var(--ink); border-radius: 18px; background: var(--card); box-shadow: var(--pop); rotate: -3deg; transition: rotate .45s cubic-bezier(.2, .8, .2, 1); }
+.fd-profile:nth-child(even) { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); }
 .fd-profile:nth-child(even) .fd-photo { order: 2; rotate: 3deg; }
 .fd-profile:hover .fd-photo { rotate: 0deg; }
 .fd-photo .fd-portrait { border: 2px solid var(--ink); border-radius: 10px; }
@@ -923,16 +924,18 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
 .fd-name { font-size: clamp(2.2rem, 4.6vw, 3.8rem); line-height: 1; letter-spacing: -.045em; }
 .fd-quote { margin: 0; padding-left: clamp(16px, 2vw, 24px); border-left: 6px solid var(--tone); }
 .fd-quote p { margin: 0; font: italic 800 clamp(1.3rem, 2.4vw, 1.95rem)/1.15 var(--display); font-stretch: 95%; }
+.fd-quote-long p { font-size: clamp(1.1rem, 1.7vw, 1.4rem); line-height: 1.25; }
 .fd-quote p::before { content: "“"; }
 .fd-quote p::after { content: "”"; }
-.fd-bio { margin: 0; max-width: 36em; color: var(--muted); }
+.fd-bio { display: grid; gap: .8em; max-width: 36em; color: var(--muted); }
+.fd-bio p { margin: 0; }
 .fd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; width: 100%; margin: 4px 0 0; }
 .fd-stats div { padding: 14px 16px; border-radius: 14px; background: var(--bg); }
 .fd-stats dt { font: 400 .62rem/1.3 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .fd-stats dd { margin: 8px 0 0; font-weight: 600; font-size: 1.05rem; letter-spacing: -.01em; }
 .fd-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
 @media (max-width: 860px) {
-    .fd-profile { grid-template-columns: minmax(0, 1fr); }
+    .fd-profile, .fd-profile:nth-child(even) { grid-template-columns: minmax(0, 1fr); }
     .fd-profile:nth-child(even) .fd-photo { order: 0; }
     .fd-photo { width: min(100%, 320px); }
     .fd-profile-no, .fd-profile:nth-child(even) .fd-profile-no { top: auto; bottom: -.12em; right: clamp(14px, 3vw, 36px); left: auto; }
@@ -1485,3 +1488,193 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-q[open] summary::after { transform: rotate(45deg); }
 .dr-q p { margin: 0; padding: 0 20px 20px; color: var(--dim); }
 @media (max-width: 900px) { .dr-faq { grid-template-columns: 1fr; } }
+
+/*
+ * Silent Disco Run on the home page.
+ * A slice of the night poster: the flyer's hot pink to orange type, LED headphone glow and
+ * sparkles. Tapping a headset tunes the glow to that DJ channel's colour (--ch).
+ */
+.hd {
+    --ch: var(--tone, #FF3EA5);
+    --night: #0A0710;
+    --dim: #B7AEC4;
+    --glass: rgba(255, 255, 255, .06);
+    --glass-line: rgba(255, 255, 255, .14);
+    --hot: linear-gradient(180deg, #FF5FD2 0%, #FF2E8A 42%, #FF6A2B 78%, #FFB14A 100%);
+    --flame: linear-gradient(100deg, #FF2E8A, #FF6A2B 60%, #FFA531);
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding-block: clamp(72px, 10vw, 128px) 0;
+    background: var(--night);
+    color: #F7F2FA;
+}
+.hd ::selection { background: var(--ch); color: var(--night); }
+.hd :focus-visible { outline-color: var(--ch); }
+.hd-glow {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+        radial-gradient(60vmax 40vmax at 82% 30%, color-mix(in srgb, var(--ch) 30%, transparent), transparent 60%),
+        radial-gradient(50vmax 40vmax at 8% 0%, rgba(160, 60, 255, .28), transparent 60%),
+        radial-gradient(60vmax 30vmax at 40% 110%, rgba(255, 106, 43, .3), transparent 60%);
+    transition: background .6s;
+}
+.hd::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(255, 255, 255, .55) 1px, transparent 1.5px);
+    background-size: 24px 24px;
+    -webkit-mask-image: radial-gradient(ellipse at 30% 40%, #000 0%, transparent 65%);
+    mask-image: radial-gradient(ellipse at 30% 40%, #000 0%, transparent 65%);
+    opacity: .14;
+}
+
+/* Four-point sparkles, like the flyer's */
+.hd-stars span {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    z-index: -1;
+    width: calc(var(--s) * 34px);
+    aspect-ratio: 1;
+    background: #fff;
+    clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, .9));
+}
+
+.hd-grid { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: clamp(40px, 6vw, 88px); align-items: center; }
+.hd-copy { display: grid; justify-items: start; gap: 22px; }
+.hd-kicker { display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: .55em 1em; border: 1px solid var(--glass-line); border-radius: 999px; background: var(--glass); font: 400 .66rem/1.2 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.hd-live { width: 8px; height: 8px; border-radius: 50%; background: var(--ch); box-shadow: 0 0 10px var(--ch); transition: background .5s, box-shadow .5s; }
+
+/* SILENT DISCO in hot gradient, Run as a neon sign switched on across it */
+.hd-title { position: relative; display: grid; margin: 0; padding-bottom: .35em; font-family: var(--display); font-weight: 900; font-stretch: 125%; font-size: clamp(3.4rem, 9.4vw, 8.6rem); line-height: .82; letter-spacing: -.035em; text-transform: uppercase; }
+.hd-silent, .hd-disco { display: block; width: fit-content; background: var(--hot); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 22px rgba(255, 46, 138, .45)) drop-shadow(0 6px 0 rgba(0, 0, 0, .5)); }
+.hd-disco { font-style: italic; }
+.hd-run {
+    position: absolute;
+    right: 4%;
+    bottom: -.02em;
+    font: italic 800 .62em/1 var(--display);
+    font-stretch: 75%;
+    letter-spacing: -.02em;
+    text-transform: none;
+    color: #FFF4FB;
+    rotate: -9deg;
+    text-shadow: 0 0 6px #fff, 0 0 18px #FF5FD2, 0 0 42px #FF2E8A, 0 0 80px color-mix(in srgb, var(--ch) 80%, transparent);
+}
+.hd-lede { margin: 0; max-width: 32em; color: #DCD3E6; font-size: clamp(1.02rem, 1.5vw, 1.2rem); }
+
+/* Date and place, styled after the flyer's orange pills */
+.hd-when { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+.hd-time { font: italic 900 clamp(1.8rem, 3.6vw, 2.6rem)/1 var(--display); font-stretch: 115%; color: #fff; }
+.hd-date { padding: .3em .6em .34em; border-radius: 14px; background: var(--flame); color: #fff; font: italic 900 clamp(1.5rem, 3vw, 2.2rem)/1 var(--display); font-stretch: 115%; text-transform: uppercase; box-shadow: 0 10px 30px rgba(255, 74, 60, .35), inset 0 -3px 0 rgba(0, 0, 0, .18); }
+.hd-date b { color: #FFE27A; font-weight: 900; }
+.hd-place { display: inline-flex; align-items: center; gap: 6px; font: 700 .8rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.hd-place svg { width: 18px; height: 18px; fill: #FF4F6A; }
+.hd-place svg circle { fill: var(--night); }
+
+/* Countdown on LED panels */
+.hd-clock { display: flex; gap: 8px; }
+.hd-cell { display: grid; justify-items: center; gap: 6px; min-width: 64px; padding: 12px 10px 10px; border: 1px solid var(--glass-line); border-radius: 14px; background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .02)); }
+.hd-num { font: 800 clamp(1.5rem, 2.8vw, 2.1rem)/1 var(--mono); letter-spacing: -.04em; font-variant-numeric: tabular-nums; color: #fff; text-shadow: 0 0 14px color-mix(in srgb, var(--ch) 80%, transparent); transition: text-shadow .5s; }
+.hd-lbl { font: 400 .56rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+
+/* Headset buttons: each glows in its channel colour, the tuned one lights up */
+.hd-tuner { display: flex; flex-wrap: wrap; gap: 10px; }
+.hd-tune { display: inline-flex; align-items: center; gap: 10px; padding: .6em 1em .6em .7em; border: 1px solid var(--glass-line); border-radius: 999px; background: var(--glass); color: #fff; font: 600 .9rem/1 var(--sans); cursor: pointer; transition: border-color .3s, box-shadow .3s, transform .15s; }
+.hd-tune svg { width: 26px; height: 26px; fill: none; stroke: var(--tone); stroke-width: 2; filter: drop-shadow(0 0 4px var(--tone)); }
+.hd-tune svg rect { fill: color-mix(in srgb, var(--tone) 35%, transparent); }
+.hd-tune:hover { transform: translateY(-2px); border-color: var(--tone); }
+.hd-tune[aria-pressed="true"] { border-color: var(--tone); background: color-mix(in srgb, var(--tone) 18%, transparent); box-shadow: 0 0 0 1px var(--tone), 0 0 28px color-mix(in srgb, var(--tone) 55%, transparent); }
+.hd-now { margin: -8px 0 0; font: 400 .68rem/1.4 var(--mono); letter-spacing: .08em; color: var(--dim); }
+.hd-now strong { color: var(--ch); font-weight: 700; transition: color .5s; }
+
+.hd-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 22px; margin-top: 6px; }
+.hd-cta .cta-row { justify-content: flex-start; }
+.hd-price { display: grid; margin: 0; padding-left: 14px; border-left: 3px solid #FF6A2B; }
+.hd-price span { font: 400 .6rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+.hd-price b { font: italic 900 2rem/1.05 var(--display); font-stretch: 110%; background: var(--flame); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hd-price small { font-size: .78rem; color: var(--dim); }
+.hd-btn { border-color: transparent; background: var(--flame); color: #fff; box-shadow: 0 0 0 0 transparent; }
+.hd-btn:hover { box-shadow: 0 0 34px rgba(255, 74, 120, .7); }
+.hd-btn-ghost { border-color: var(--glass-line); background: var(--glass); color: #fff; }
+.hd-btn-ghost:hover { box-shadow: 4px 4px 0 var(--ch); }
+
+/* The poster on stage, with an LED ring glowing behind it */
+.hd-stage { position: relative; display: grid; place-items: center; padding: 28px 10px 70px; }
+.hd-halo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(118%, 560px);
+    aspect-ratio: 1;
+    translate: -50% -52%;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #FF2E8A, #8B3DFF, var(--ch), #FF6A2B, #FF2E8A);
+    -webkit-mask: radial-gradient(closest-side, transparent 72%, #000 74%, #000 84%, transparent 86%);
+    mask: radial-gradient(closest-side, transparent 72%, #000 74%, #000 84%, transparent 86%);
+    filter: blur(6px) drop-shadow(0 0 30px #FF2E8A);
+    opacity: .9;
+}
+.hd-poster {
+    --tx: 0deg;
+    --ty: 0deg;
+    position: relative;
+    display: block;
+    width: min(100%, 400px);
+    border: 2px solid rgba(255, 255, 255, .85);
+    border-radius: 18px;
+    transform: perspective(900px) rotate(3deg) rotateX(var(--tx)) rotateY(var(--ty));
+    box-shadow: 0 30px 80px rgba(255, 46, 138, .35), 0 0 0 8px rgba(0, 0, 0, .35);
+    transition: transform .4s cubic-bezier(.2, .8, .2, 1), box-shadow .4s;
+}
+.hd-poster img { display: block; width: 100%; height: auto; border-radius: 16px; }
+.hd-poster:hover { box-shadow: 0 40px 100px color-mix(in srgb, var(--ch) 55%, transparent), 0 0 0 8px rgba(0, 0, 0, .35); }
+.hd-tape { position: absolute; top: -14px; left: 50%; z-index: 1; width: 110px; height: 30px; translate: -50% 0; rotate: -5deg; background: rgba(255, 241, 204, .85); border: 1px solid rgba(28, 25, 23, .14); }
+.hd-sticker { position: absolute; left: max(0px, calc(50% - 250px)); bottom: 36px; width: clamp(104px, 12vw, 136px); rotate: -12deg; filter: drop-shadow(0 10px 24px rgba(0, 0, 0, .5)); }
+.hd-sticker svg { display: block; width: 100%; height: auto; }
+.hd-sticker-disc { fill: #FF6A2B; stroke: #0A0710; stroke-width: 2; }
+.hd-sticker-ring { font: 700 10px var(--mono); fill: #fff; text-transform: uppercase; }
+.hd-sticker-spin { transform-origin: 68px 68px; }
+.hd-sticker-icon { fill: none; stroke: #0A0710; stroke-width: 5; stroke-linecap: round; }
+.hd-sticker-cup { fill: #0A0710; }
+.hd-eq { position: absolute; right: max(0px, calc(50% - 240px)); bottom: 18px; display: flex; align-items: flex-end; gap: 4px; height: 44px; }
+.hd-eq span { width: 5px; height: calc(var(--h) * 100%); border-radius: 3px; background: linear-gradient(to top, var(--ch), #fff); transform-origin: bottom; box-shadow: 0 0 10px color-mix(in srgb, var(--ch) 70%, transparent); transition: background .5s; }
+
+/* The flyer's sign-off, sliding along a hot ribbon */
+.hd-ribbon { margin-top: clamp(40px, 6vw, 72px); padding-block: 14px; background: var(--flame); color: #0A0710; transform: rotate(-1.5deg); margin-inline: -2%; border-block: 2px solid #0A0710; }
+.hd-ribbon-track { display: flex; align-items: center; gap: 28px; width: max-content; font: italic 900 clamp(1.3rem, 3vw, 2.3rem)/1 var(--display); font-stretch: 120%; text-transform: uppercase; white-space: nowrap; }
+.hd-ribbon-track i { font-style: normal; color: #fff; }
+
+@media (prefers-reduced-motion: no-preference) {
+    .hd-live { animation: dr-ping 1.6s ease-out infinite; }
+    .hd-stars span { animation: hd-twinkle 3.2s ease-in-out infinite; animation-delay: calc(var(--i) * -.45s); }
+    .hd-run { animation: hd-flicker 6s linear infinite; }
+    .hd-halo { animation: hd-spin 14s linear infinite; }
+    .hd-sticker-spin { animation: hd-spin 16s linear infinite; }
+    .hd-eq span { animation: dr-eq calc(.45s + var(--h) * .5s) ease-in-out infinite alternate; animation-delay: calc(var(--b) * -.07s); }
+    .hd-ribbon-track { animation: dr-slide 24s linear infinite; }
+}
+@keyframes hd-twinkle { 0%, 100% { opacity: .2; transform: scale(.5) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(45deg); } }
+@keyframes hd-spin { to { rotate: 360deg; } }
+@keyframes hd-flicker {
+    0%, 7%, 9%, 11%, 60%, 62%, 100% { opacity: 1; }
+    8%, 10%, 61% { opacity: .35; }
+}
+
+@media (max-width: 900px) {
+    .hd-grid { grid-template-columns: minmax(0, 1fr); }
+    .hd-stage { padding-bottom: 80px; }
+}
+@media (max-width: 480px) {
+    .hd-clock { gap: 6px; }
+    .hd-cell { min-width: 0; flex: 1; padding-inline: 4px; }
+    .hd-tune { font-size: .82rem; }
+}

@@ -2,7 +2,7 @@
     <div class="wrap">
         <div class="sec-head">
             <p class="label">Start list</p>
-            <h2>Meet the <em>pacesetters.</em></h2>
+            <h2>Meet the <em>founders.</em></h2>
             <p class="sec-lede">The first names on the LRI start list. Pick one to read their story.</p>
         </div>
 
@@ -12,7 +12,7 @@
                     <a class="fd-row" href="#{{ $person['anchor'] }}" data-bib="{{ $person['bib'] }}">
                         <span class="fd-row-bib">{{ $person['bib'] }}</span>
                         <span class="fd-row-name">{{ $person['name'] }}</span>
-                        <span class="fd-row-meta">{{ $person['role'] }} · {{ $person['tribe'] }}</span>
+                        <span class="fd-row-meta">{{ $person['role'] }}{{ $person['tribe'] ? ' · '.$person['tribe'] : '' }}</span>
                         <span class="fd-row-go" aria-hidden="true">↘</span>
                     </a>
                 </li>

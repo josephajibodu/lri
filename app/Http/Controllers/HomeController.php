@@ -17,8 +17,28 @@ class HomeController extends Controller
 
         return view('home', [
             'nextRun' => $nextRun,
+            'discoRun' => $this->upcomingDiscoRun(),
             'structuredData' => $this->structuredData($nextRun),
         ]);
+    }
+
+    /**
+     * The Silent Disco Run to feature on the home page, or null once it has started.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function upcomingDiscoRun(): ?array
+    {
+        $discoRun = config('lri.disco_run');
+        $startsAt = $discoRun['starts_at']
+            ? CarbonImmutable::parse($discoRun['starts_at'], $discoRun['timezone'])
+            : null;
+
+        if ($startsAt?->isPast()) {
+            return null;
+        }
+
+        return [...$discoRun, 'starts_at' => $startsAt];
     }
 
     /**

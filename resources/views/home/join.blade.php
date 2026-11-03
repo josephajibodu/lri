@@ -13,7 +13,7 @@
             </li>
             <li class="step">
                 <h3>Pick your home tribe</h3>
-                <p>Akobo, Bodija, UI / Eleyele or Oluyole / Akala. Choose the one closest to where you live.</p>
+                <p>Akobo, Bodija, Eleyele, UI or Oluyole / Akala. Choose the one closest to where you live.</p>
             </li>
             <li class="step">
                 <h3>Show up on Saturday</h3>

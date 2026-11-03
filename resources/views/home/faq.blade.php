@@ -11,7 +11,7 @@
             </details>
             <details name="faq">
                 <summary>Is there a running group near me in Ibadan?</summary>
-                <p>LRI has tribes across the city in Akobo, Bodija, UI / Eleyele and Oluyole / Akala. Join the one closest to you, and on the first Saturday of the month every tribe runs together.</p>
+                <p>LRI has five tribes across the city in Akobo, Bodija, Eleyele, UI and Oluyole / Akala. Join the one closest to you, and on the first Saturday of the month every tribe runs together.</p>
             </details>
             <details name="faq">
                 <summary>Does it cost anything?</summary>

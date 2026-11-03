@@ -2,7 +2,7 @@
     <div class="wrap fd-story">
         <div class="sec-head fd-story-head">
             <p class="label">The story so far</p>
-            <h2>From one run to <em>four tribes.</em></h2>
+            <h2>From one run to <em>five tribes.</em></h2>
             <p class="sec-lede">Every race has its splits. These are ours, from the first Saturday to the latest start line.</p>
         </div>
 

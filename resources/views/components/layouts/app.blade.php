@@ -3,6 +3,8 @@
     'description' => config('lri.site.description'),
     'canonical' => null,
     'robots' => 'index, follow',
+    'image' => 'images/og-image.png',
+    'imageAlt' => 'Let’s run, Ibadan. A run club for everyone, every pace, every Saturday at 6:30 AM.',
 ])
 
 <!DOCTYPE html>
@@ -30,14 +32,14 @@
         <meta property="og:title" content="{{ $title }}">
         <meta property="og:description" content="{{ $description }}">
         <meta property="og:url" content="{{ $canonical ?? url()->current() }}">
-        <meta property="og:image" content="{{ asset('images/og-image.png') }}">
+        <meta property="og:image" content="{{ asset($image) }}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
-        <meta property="og:image:alt" content="Let’s run, Ibadan. A run club for everyone, every pace, every Saturday at 6:30 AM.">
+        <meta property="og:image:alt" content="{{ $imageAlt }}">
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $title }}">
         <meta name="twitter:description" content="{{ $description }}">
-        <meta name="twitter:image" content="{{ asset('images/og-image.png') }}">
+        <meta name="twitter:image" content="{{ asset($image) }}">
 
         <link rel="preload" href="{{ Vite::asset('resources/fonts/instrument-sans-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
         @vite(['resources/css/app.css', 'resources/js/app.js'])

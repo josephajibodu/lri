@@ -8,6 +8,7 @@
 
     <main>
         @include('home.hero')
+        @includeWhen($discoRun, 'home.disco', ['discoRun' => $discoRun])
         @include('home.next-run', ['nextRun' => $nextRun])
         @include('home.marquee')
         @include('home.pace')

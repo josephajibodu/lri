@@ -1,5 +1,7 @@
 <?php
 
+use Carbon\CarbonImmutable;
+
 test('the home page shows the next community run from config', function () {
     config()->set('lri.next_run', [
         'title' => 'Harmattan Hill Run',
@@ -76,4 +78,28 @@ test('a run from each tribe’s meeting point links to the tribes instead of a m
         ->assertSeeText('Sat 5 Dec, 6:30 AM at Your tribe’s meeting point')
         ->assertSee('href="#tribes"', false)
         ->assertDontSeeText('Open in Maps');
+});
+
+test('the home page features the silent disco run until it starts', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-03 12:00', 'Africa/Lagos'));
+    config()->set('lri.disco_run.starts_at', '2026-12-11 18:00');
+    config()->set('lri.disco_run.venue', 'Bodija, Ibadan');
+    config()->set('lri.disco_run.price', '₦10,000');
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('id="silent-disco"', false)
+        ->assertSee('data-starts-at="2026-12-11T18:00:00+01:00"', false)
+        ->assertSeeText('Bodija, Ibadan')
+        ->assertSeeText('₦10,000')
+        ->assertSee('href="'.route('disco-run').'#tickets"', false);
+});
+
+test('the home page drops the silent disco run once it has started', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-12-11 18:01', 'Africa/Lagos'));
+    config()->set('lri.disco_run.starts_at', '2026-12-11 18:00');
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertDontSee('id="silent-disco"', false);
 });

@@ -1,4 +1,4 @@
-<x-layouts.app title="Founders · Let’s Run Ibadan" description="Meet the people who started Let’s Run Ibadan, the free Saturday run club, and the story from the first run to four tribes." :canonical="route('founders')">
+<x-layouts.app title="Founders · Let’s Run Ibadan" description="Meet the people who started Let’s Run Ibadan, the free Saturday run club, and the story from the first run to five tribes." :canonical="route('founders')">
     <x-site.header />
 
     <main>

@@ -13,11 +13,17 @@
                 <div class="fd-body">
                     <p class="fd-role">
                         <span class="fd-role-pill">{{ $person['role'] }}</span>
-                        <span class="fd-tribe">{{ $person['tribe'] }} tribe</span>
+                        @if ($person['tribe'])
+                            <span class="fd-tribe">{{ $person['tribe'] }} tribe</span>
+                        @endif
                     </p>
                     <h3 class="fd-name">{{ $person['name'] }}</h3>
-                    <blockquote class="fd-quote"><p>{{ $person['quote'] }}</p></blockquote>
-                    <p class="fd-bio">{{ $person['bio'] }}</p>
+                    <blockquote @class(['fd-quote', 'fd-quote-long' => Str::length($person['quote']) > 90])><p>{{ $person['quote'] }}</p></blockquote>
+                    <div class="fd-bio">
+                        @foreach (preg_split('/\n\s*\n/', $person['bio']) as $paragraph)
+                            <p>{{ $paragraph }}</p>
+                        @endforeach
+                    </div>
 
                     @if ($person['facts'])
                         <dl class="fd-stats">

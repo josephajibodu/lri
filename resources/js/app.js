@@ -677,4 +677,60 @@ import.meta.glob("../fonts/*.woff2");
     }
     initDiscoRun();
 
+    /* Silent Disco Run on the home page: tap a headset to retune the glow, count down to the night, tilt the poster */
+    function initHomeDisco() {
+        var section = $("silent-disco");
+        if (!section) return;
+
+        var tunes = [].slice.call(section.querySelectorAll("[data-hd-tone]"));
+        var nowPlaying = section.querySelector("[data-hd-now]");
+        tunes.forEach(function (button) {
+            button.addEventListener("click", function () {
+                tunes.forEach(function (b) {
+                    section.classList.remove("dr-tone-" + b.dataset.hdTone);
+                    b.setAttribute("aria-pressed", b === button ? "true" : "false");
+                });
+                section.classList.add("dr-tone-" + button.dataset.hdTone);
+                nowPlaying.textContent = button.querySelector(".hd-tune-name").textContent;
+            });
+        });
+
+        var clock = section.querySelector("[data-hd-clock]");
+        if (clock) {
+            var startsAt = new Date(clock.dataset.startsAt).getTime();
+            var units = {};
+            [].slice.call(clock.querySelectorAll("[data-unit]")).forEach(function (el) { units[el.dataset.unit] = el; });
+            var timer;
+            var tickDisco = function () {
+                var s = Math.max(0, Math.floor((startsAt - Date.now()) / 1000));
+                var d = Math.floor(s / 86400); s -= d * 86400;
+                var h = Math.floor(s / 3600); s -= h * 3600;
+                var m = Math.floor(s / 60); s -= m * 60;
+                units.days.textContent = pad(d);
+                units.hours.textContent = pad(h);
+                units.minutes.textContent = pad(m);
+                units.seconds.textContent = pad(s);
+                if (d + h + m + s === 0) clearInterval(timer);
+            };
+            whenNear(clock, function () {
+                tickDisco();
+                timer = setInterval(tickDisco, 1000);
+            });
+        }
+
+        if (reduce || !window.matchMedia("(pointer: fine)").matches) return;
+
+        var poster = section.querySelector("[data-hd-tilt]");
+        poster.addEventListener("pointermove", function (e) {
+            var box = poster.getBoundingClientRect();
+            poster.style.setProperty("--ty", (((e.clientX - box.left) / box.width - .5) * 14) + "deg");
+            poster.style.setProperty("--tx", ((.5 - (e.clientY - box.top) / box.height) * 14) + "deg");
+        });
+        poster.addEventListener("pointerleave", function () {
+            poster.style.setProperty("--tx", "0deg");
+            poster.style.setProperty("--ty", "0deg");
+        });
+    }
+    initHomeDisco();
+
 })();

@@ -17,7 +17,7 @@ return [
         'name' => "Let's Run Ibadan",
         'alternate_name' => 'LRI',
         'title' => 'Let’s Run Ibadan | Free Run Club in Ibadan, Oyo State',
-        'description' => 'A free Saturday run club in Ibadan for every pace. 6:30 AM runs from 5 km, with tribes in Akobo, Bodija, UI and Oluyole.',
+        'description' => 'A free Saturday run club in Ibadan for every pace. 6:30 AM runs from 5 km, with five tribes across the city.',
         'slogan' => 'Everyone. Every pace. One community.',
         'locality' => 'Ibadan',
         'region' => 'Oyo State',
@@ -60,7 +60,8 @@ return [
     'tribes' => [
         'Akobo',
         'Bodija',
-        'UI / Eleyele',
+        'Eleyele',
+        'UI',
         'Oluyole / Akala',
     ],
 
@@ -95,6 +96,8 @@ return [
     | The night run with wireless headsets: everyone runs on one of three
     | DJ channels, then the run ends in a rave. Until the date is fixed,
     | leave starts_at null and the page shows the date window instead.
+    | The home page features the run, with the poster (a path under
+    | public/, portrait 4:5), until it starts.
     |
     | Payment: set checkout_url to any payment link (a Selar, Paystack or
     | Flutterwave product page) for the "Get your ticket" button. To show
@@ -105,12 +108,14 @@ return [
 
     'disco_run' => [
         'title' => 'Ibadan Silent Disco Run',
-        'starts_at' => null,
+        'starts_at' => '2026-12-11 18:00',
         'timezone' => 'Africa/Lagos',
         'date_window' => 'First two weeks of December',
         'distance' => '5 km',
-        'venue' => null,
-        'price' => null,
+        'venue' => 'Bodija, Ibadan',
+        'price' => '₦10,000',
+        'price_note' => 'Includes silent disco headphones',
+        'poster' => 'images/disco-run/flyer.jpg',
         'includes' => [
             'A wireless LED headset for the night',
             'Three live DJ channels to switch between',
@@ -175,40 +180,38 @@ return [
     | founders page in this order. A photo is a path under public/, such as
     | images/founders/name.jpg (portrait, about 4:5); leave it null to show
     | the founder's initials instead. Facts and links are label => value
-    | pairs and can be left empty. Milestones run oldest first.
+    | pairs and can be left empty. The tribe can be null, and a blank line
+    | in a bio starts a new paragraph. Milestones run oldest first.
     |
-    | PLACEHOLDER: both founders and the first two milestones below are
-    | stand-ins until the real names, photos, bios and dates arrive.
+    | PLACEHOLDER: the first two milestones below are stand-ins until the
+    | real dates arrive.
     |
     */
 
     'founders' => [
-        'founded' => '20XX',
+        'founded' => '2025',
 
         'people' => [
             [
-                'name' => 'Founder One',
+                'name' => 'Nancy Damhindi',
                 'role' => 'Co-founder',
-                'tribe' => 'Bodija',
-                'photo' => null,
-                'quote' => 'Placeholder quote. One line on why they started LRI.',
-                'bio' => 'Placeholder bio. Two or three sentences on who they are, how they started running and what they look after in the club today.',
-                'facts' => [
-                    'Saturday pace' => '6:30 /km',
-                    'Favourite route' => 'Ring Road loop',
-                ],
+                'tribe' => null,
+                'photo' => 'images/founders/nancy.jpg',
+                'quote' => 'I started running alone, but I wanted to create a space where no one had to. A community where people can show up as they are, find their pace, build meaningful connections and discover that running is so much better together.',
+                'bio' => "Nancy Damhindi is the Co-Founder of Let’s Run Ibadan, a passionate runner, lawyer, yoga instructor and community builder with a love for health, wellness and meaningful connections.\n\nInspired by her own running journey, she co-founded LRI to make running more accessible, social and enjoyable, creating a welcoming space where people can connect, grow and find their pace together.\n\nShe plays an active role in shaping the community’s goals, establishing partnerships and creating experiences that keep people moving and connected.",
+                'facts' => [],
                 'links' => [],
             ],
             [
-                'name' => 'Founder Two',
+                'name' => 'Priscilla Adedeji',
                 'role' => 'Co-founder',
-                'tribe' => 'Akobo',
+                'tribe' => 'Oluyole / Akala',
                 'photo' => null,
-                'quote' => 'Placeholder quote. One line on why they started LRI.',
-                'bio' => 'Placeholder bio. Two or three sentences on who they are, how they started running and what they look after in the club today.',
+                'quote' => 'We didn’t just set out to build a running club. We wanted to create a community where everyone feels they belong, where every pace matters, and where people inspire each other to become better versions of themselves.',
+                'bio' => "Priscilla is the Co-Founder of Let’s Run Ibadan, a passionate runner, community builder and advocate for health, wellness and meaningful connections.\n\nWhat began as a shared vision to bring people together through running has grown into a thriving community that encourages movement, friendship and personal growth.\n\nWith a passion for creating experiences that bring people together, Priscilla plays an active role in shaping LRI’s vision, building partnerships, organising events and creating a culture where everyone feels welcome, supported and motivated to keep showing up.",
                 'facts' => [
-                    'Saturday pace' => '7:00 /km',
-                    'Favourite route' => 'Bodija 10K',
+                    'Saturday pace' => '6:35 /km',
+                    'Favourite route' => 'Akala Express',
                 ],
                 'links' => [],
             ],
@@ -222,8 +225,8 @@ return [
             ],
             [
                 'date' => 'Placeholder date',
-                'title' => 'Four tribes',
-                'text' => 'Placeholder. When Akobo, Bodija, UI / Eleyele and Oluyole / Akala became tribes so members could run close to home.',
+                'title' => 'Five tribes',
+                'text' => 'Placeholder. When Akobo, Bodija, Eleyele, UI and Oluyole / Akala became tribes so members could run close to home.',
             ],
             [
                 'date' => 'Aug 2026',
@@ -238,7 +241,7 @@ return [
             [
                 'date' => 'Oct 2026',
                 'title' => 'Breast Cancer Awareness Run',
-                'text' => 'All four tribes together at The Law Hub, running for a cause.',
+                'text' => 'Every tribe together at The Law Hub, running for a cause.',
             ],
         ],
     ],
@@ -263,10 +266,11 @@ return [
 
     'pace_setters' => [
         'groups' => [
-            'Club-wide' => 'Lead the community runs, plan the hangouts and keep all four tribes moving together.',
+            'Club-wide' => 'Lead the community runs, plan the hangouts and keep all five tribes moving together.',
             'Akobo' => 'Saturday mornings from the Barracks gate.',
             'Bodija' => 'Loops past Bodija Market, Sango and the Secretariat.',
-            'UI / Eleyele' => 'Home of the Thursday track session.',
+            'Eleyele' => 'The west side tribe.',
+            'UI' => 'Home of the Thursday track session.',
             'Oluyole / Akala' => 'The south side, carpools included.',
         ],
 
@@ -338,7 +342,7 @@ return [
             [
                 'name' => 'Leader I',
                 'role' => 'Tribe lead',
-                'group' => 'UI / Eleyele',
+                'group' => 'UI',
                 'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
                 'photo' => null,
                 'instagram' => null,
@@ -346,7 +350,7 @@ return [
             [
                 'name' => 'Leader J',
                 'role' => 'Track coach',
-                'group' => 'UI / Eleyele',
+                'group' => 'UI',
                 'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
                 'photo' => null,
                 'instagram' => null,
@@ -354,7 +358,7 @@ return [
             [
                 'name' => 'Leader K',
                 'role' => 'Pacer',
-                'group' => 'UI / Eleyele',
+                'group' => 'UI',
                 'bio' => 'Placeholder line. One sentence on how they lead the tribe.',
                 'photo' => null,
                 'instagram' => null,

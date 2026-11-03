@@ -3,11 +3,11 @@
         <div>
             <div class="sec-head">
                 <p class="label">Tribes</p>
-                <h2>Four tribes. One city.</h2>
+                <h2>Five tribes. One city.</h2>
                 <p class="sec-lede">Your tribe is your local crew, with its own leaders, its own group chat and its own Saturday route.</p>
             </div>
             <div class="compass" id="compass">
-                <svg viewBox="0 0 420 420" role="img" aria-label="Rough directions of the four tribes from the city centre">
+                <svg viewBox="0 0 420 420" role="img" aria-label="Rough directions of the five tribes from the city centre">
                     <circle class="ring" cx="210" cy="210" r="180"></circle>
                     <circle class="ring ring-dash" cx="210" cy="210" r="120"></circle>
                     <circle class="ring ring-dash" cx="210" cy="210" r="60"></circle>
@@ -20,7 +20,8 @@
                     <circle class="centre-dot" cx="210" cy="210" r="5"></circle>
                     <text class="centre-label" x="218" y="232">City centre</text>
                     <g class="pin-g" id="pin-bodija"><circle class="halo" cx="242" cy="94" r="30"></circle><circle class="dot" cx="242" cy="94" r="11"></circle><text x="262" y="82">Bodija</text></g>
-                    <g class="pin-g" id="pin-ui"><circle class="halo" cx="96" cy="124" r="30"></circle><circle class="dot" cx="96" cy="124" r="11"></circle><text x="84" y="102" text-anchor="middle">UI / Eleyele</text></g>
+                    <g class="pin-g" id="pin-ui"><circle class="halo" cx="150" cy="84" r="30"></circle><circle class="dot" cx="150" cy="84" r="11"></circle><text x="150" y="62" text-anchor="middle">UI</text></g>
+                    <g class="pin-g" id="pin-eleyele"><circle class="halo" cx="76" cy="182" r="30"></circle><circle class="dot" cx="76" cy="182" r="11"></circle><text x="76" y="160" text-anchor="middle">Eleyele</text></g>
                     <g class="pin-g" id="pin-akobo"><circle class="halo" cx="334" cy="134" r="30"></circle><circle class="dot" cx="334" cy="134" r="11"></circle><text x="334" y="112" text-anchor="middle">Akobo</text></g>
                     <g class="pin-g" id="pin-oluyole"><circle class="halo" cx="140" cy="322" r="30"></circle><circle class="dot" cx="140" cy="322" r="11"></circle><text x="140" y="356" text-anchor="middle">Oluyole / Akala</text></g>
                 </svg>
@@ -39,9 +40,14 @@
                     <h3>Bodija</h3>
                     <p>Loops past Bodija Market, Sango and the Secretariat. Hosted September’s community hangout from Osuntokun.</p>
                 </li>
+                <li class="tribe" tabindex="0" data-pin="pin-eleyele">
+                    <span class="dir">W</span>
+                    <h3>Eleyele</h3>
+                    <p>The west side tribe, running from Eleyele.</p>
+                </li>
                 <li class="tribe" tabindex="0" data-pin="pin-ui">
                     <span class="dir">NW</span>
-                    <h3>UI / Eleyele</h3>
+                    <h3>UI</h3>
                     <p>Home of the Thursday track session. On one July morning, more than 10 runners here set new 5K and 10K personal records.</p>
                 </li>
                 <li class="tribe" tabindex="0" data-pin="pin-oluyole">
@@ -50,7 +56,7 @@
                     <p>The south side tribe. Sets up carpools so members can get to community runs on the other side of the city.</p>
                 </li>
             </ol>
-            <p class="rule-line"><strong>One runner, one tribe.</strong> Join one home tribe’s group chat, then run with any tribe, any week.</p>
+            <p class="rule-line"><strong>Everyone. Every Pace. One Community.</strong></p>
         </div>
     </div>
 </section>

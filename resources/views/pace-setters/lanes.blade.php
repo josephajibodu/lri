@@ -3,7 +3,7 @@
         <div class="sec-head">
             <p class="label">Lane by lane</p>
             <h2>Find your <em>pacer.</em></h2>
-            <p class="sec-lede">Every tribe has its own leaders, and a club-wide crew ties the four together. Pick a lane, or see everyone at once.</p>
+            <p class="sec-lede">Every tribe has its own leaders, and a club-wide crew ties all five together. Pick a lane, or see everyone at once.</p>
         </div>
 
         <div class="ps-filter" id="ps-filter" role="group" aria-label="Show pace setters from" hidden>

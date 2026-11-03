@@ -7,7 +7,7 @@
             <ul class="hero-facts">
                 <li>Est. {{ $founded }}</li>
                 <li>{{ $people->count() }} {{ Str::plural('founder', $people->count()) }}</li>
-                <li>4 tribes</li>
+                <li>{{ count(config('lri.tribes')) }} tribes</li>
             </ul>
             <div class="cta-row fd-cta">
                 <a class="btn btn-yellow" href="#start-list">Meet the founders ↓</a>
