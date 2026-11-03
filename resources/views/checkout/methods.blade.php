@@ -11,7 +11,7 @@
 <div class="dr-pay-list">
     @foreach ($featured as $channel)
         <button class="dr-pay dr-pay-featured" type="submit" name="channel" value="{{ $channel->id }}" data-method="{{ $channel->method->value }}">
-            <span class="dr-pay-eyebrow">Pay with</span>
+            <span class="sr-only">Pay with</span>
             <span class="dr-pay-name">{{ $channel->display_label }}</span>
             @if ($channel->description)
                 <span class="dr-pay-note">{{ $channel->description }}</span>

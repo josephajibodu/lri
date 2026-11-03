@@ -88,6 +88,8 @@ test('the form explains what needs fixing', function (array $overrides, string $
     'a bad email' => [['email' => 'ada@'], 'email'],
     'a bad phone' => [['phone' => '12345'], 'phone'],
     'too many tickets' => [['quantity' => 11], 'quantity'],
+    'no tickets' => [['quantity' => 0], 'quantity'],
+    'part of a ticket' => [['quantity' => 1.5], 'quantity'],
     'no way to pay' => [['channel' => null], 'channel'],
 ]);
 

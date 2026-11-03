@@ -760,9 +760,30 @@ import.meta.glob("../fonts/*.woff2");
 
         if (quantity && total) {
             var format = new Intl.NumberFormat("en-NG", { style: "currency", currency: total.dataset.currency, minimumFractionDigits: 0 });
-            quantity.addEventListener("change", function () {
-                total.textContent = format.format(Number(total.dataset.unitPrice) * Number(quantity.value) / 100);
+            var minQuantity = Number(quantity.min);
+            var maxQuantity = Number(quantity.max);
+            var stepButtons = form.querySelectorAll("[data-checkout-step]");
+
+            /* Keep the quantity a whole number the ticket allows, with the total and the − and + buttons to match. */
+            var setQuantity = function (value) {
+                var count = Math.min(Math.max(Math.round(value) || minQuantity, minQuantity), maxQuantity);
+                quantity.value = count;
+                total.textContent = format.format(Number(total.dataset.unitPrice) * count / 100);
+                stepButtons.forEach(function (button) {
+                    var isAtLimit = Number(button.dataset.checkoutStep) < 0 ? count <= minQuantity : count >= maxQuantity;
+                    button.setAttribute("aria-disabled", String(isAtLimit));
+                });
+            };
+
+            quantity.addEventListener("change", function () { setQuantity(Number(quantity.value)); });
+            /* The buttons start hidden, so without JavaScript the form only shows a number box that still works. */
+            stepButtons.forEach(function (button) {
+                button.hidden = false;
+                button.addEventListener("click", function () {
+                    setQuantity(Number(quantity.value) + Number(button.dataset.checkoutStep));
+                });
             });
+            setQuantity(Number(quantity.value));
         }
 
         function busy(isBusy, message) {

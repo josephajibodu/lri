@@ -10,6 +10,11 @@
                 <div class="dr-ticket-main">
                     <p class="dr-ticket-brand">LRI · Admit one</p>
                     <p class="dr-ticket-title">{{ $discoRun['title'] }}</p>
+                    @if ($ticketing['state'] === 'on_sale')
+                        <div class="dr-ticket-photo">
+                            <img src="{{ asset('images/disco-run/crowd.jpg') }}" width="1080" height="305" alt="" aria-hidden="true" loading="lazy" decoding="async">
+                        </div>
+                    @endif
                     <dl class="dr-ticket-meta">
                         <div><dt>When</dt><dd>{{ $when }}</dd></div>
                         <div><dt>Distance</dt><dd>{{ $discoRun['distance'] }} + rave</dd></div>
@@ -30,24 +35,23 @@
                             @csrf
                             <input type="hidden" name="ticket_type" value="{{ $ticketType->slug }}">
 
-                            <div class="dr-checkout-price">
-                                <p class="dr-price" data-checkout-total data-unit-price="{{ $ticketType->price }}" data-currency="{{ $ticketType->currency }}">{{ $ticketType->unitPrice()->times((int) old('quantity', 1))->format() }}</p>
+                            <div class="dr-checkout-summary">
+                                <p class="dr-price" aria-live="polite" data-checkout-total data-unit-price="{{ $ticketType->price }}" data-currency="{{ $ticketType->currency }}">{{ $ticketType->unitPrice()->times((int) old('quantity', 1))->format() }}</p>
                                 <p class="dr-stub-note">{{ $ticketType->unitPrice()->format() }} a ticket · {{ $ticketType->description ?? $discoRun['price_note'] }}</p>
+                                <div class="dr-field dr-field-quantity">
+                                    <label for="quantity">Tickets</label>
+                                    <div class="dr-stepper">
+                                        <button class="dr-stepper-btn" type="button" data-checkout-step="-1" aria-label="One ticket fewer" hidden>−</button>
+                                        <input class="dr-stepper-input" id="quantity" name="quantity" type="number" inputmode="numeric" min="1" max="{{ $ticketing['maxQuantity'] }}" value="{{ old('quantity', 1) }}" data-checkout-quantity>
+                                        <button class="dr-stepper-btn" type="button" data-checkout-step="1" aria-label="One ticket more" hidden>+</button>
+                                    </div>
+                                </div>
+                                <p class="dr-field-error" data-error-for="quantity">@error('quantity'){{ $message }}@enderror</p>
                             </div>
 
                             @if ($errors->any())
                                 <p class="dr-checkout-alert" role="alert">Something needs fixing. Check the fields marked below.</p>
                             @endif
-
-                            <div class="dr-field">
-                                <label for="quantity">Tickets</label>
-                                <select class="dr-input" id="quantity" name="quantity" data-checkout-quantity>
-                                    @foreach (range(1, $ticketing['maxQuantity']) as $count)
-                                        <option value="{{ $count }}" @selected((int) old('quantity', 1) === $count)>{{ $count }}</option>
-                                    @endforeach
-                                </select>
-                                <p class="dr-field-error" data-error-for="quantity">@error('quantity'){{ $message }}@enderror</p>
-                            </div>
 
                             <div class="dr-field">
                                 <label for="name">Your name</label>
@@ -74,6 +78,7 @@
                                 <span>Email me about LRI runs and events. You can stop any time.</span>
                             </label>
 
+                            <p class="dr-pay-heading" aria-hidden="true">Pay with</p>
                             @include('checkout.methods', ['channels' => $ticketing['channels']])
                             <p class="dr-field-error" data-error-for="channel">@error('channel'){{ $message }}@enderror</p>
                         </form>

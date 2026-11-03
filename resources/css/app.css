@@ -1334,9 +1334,11 @@ textarea.input { resize: vertical; min-height: 3.2em; }
     --night-2: #15131D;
     --glass: rgba(255, 255, 255, .06);
     --glass-line: rgba(255, 255, 255, .12);
+    --field-line: rgba(255, 255, 255, .34);
     --dim: #A39DB0;
     --mx: 50%;
     --my: 30%;
+    color-scheme: dark;
     position: relative;
     overflow-x: hidden;
     overflow-x: clip;
@@ -1540,7 +1542,7 @@ textarea.input { resize: vertical; min-height: 3.2em; }
     border-radius: 26px;
     background: linear-gradient(135deg, #1E1B29, #121019);
     border: 1px solid var(--glass-line);
-    box-shadow: 0 40px 80px -30px color-mix(in srgb, var(--ch) 45%, transparent);
+    box-shadow: 0 30px 70px -40px color-mix(in srgb, var(--ch) 30%, transparent);
     transform: perspective(1200px) rotateX(var(--tx)) rotateY(var(--ty));
     transition: box-shadow .5s;
 }
@@ -1554,8 +1556,8 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 }
 .dr-ticket-main { display: grid; gap: 20px; padding: clamp(24px, 4vw, 44px); }
 .dr-ticket-brand { margin: 0; color: var(--ch); font: 600 .7rem/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; transition: color .5s; }
-.dr-ticket-title { margin: 0; font: 900 clamp(2rem, 4.6vw, 3.4rem)/.92 var(--display); font-stretch: 125%; text-transform: uppercase; letter-spacing: -.02em; }
-.dr-ticket-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; }
+.dr-ticket-title { margin: 0; font: 900 clamp(2rem, 4.6vw, 3.4rem)/.92 var(--display); font-stretch: 125%; text-transform: uppercase; letter-spacing: -.02em; text-wrap: balance; }
+.dr-ticket-meta { display: flex; flex-wrap: wrap; gap: 16px clamp(24px, 3vw, 40px); margin: 0; }
 .dr-ticket-meta dt { color: var(--dim); font: 400 .64rem/1.3 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
 .dr-ticket-meta dd { margin: 4px 0 0; font-weight: 600; }
 .dr-includes { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
@@ -1570,55 +1572,78 @@ textarea.input { resize: vertical; min-height: 3.2em; }
     padding: clamp(24px, 4vw, 40px);
     text-align: center;
     border-left: 2px dashed var(--glass-line);
+    border-radius: 0 25px 25px 0;
     background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--ch) 20%, transparent), transparent 70%);
 }
-.dr-ticket-stub::before, .dr-ticket-stub::after { content: ""; position: absolute; left: -15px; width: 28px; height: 28px; border-radius: 50%; background: var(--night); }
-.dr-ticket-stub::before { top: -15px; }
-.dr-ticket-stub::after { bottom: -15px; }
+/* The punched holes: only the half inside the ticket is drawn, so each reads as a cut-out and not a ball on the edge */
+.dr-ticket-stub::before, .dr-ticket-stub::after { content: ""; position: absolute; left: -13px; width: 24px; height: 24px; border: 1px solid; border-color: transparent transparent var(--glass-line) var(--glass-line); border-radius: 50%; background: var(--night); clip-path: polygon(0 0, 100% 100%, 0 100%); }
+.dr-ticket-stub::before { top: -13px; rotate: -45deg; }
+.dr-ticket-stub::after { bottom: -13px; rotate: 135deg; }
 .dr-price { margin: 0; font: 900 clamp(2rem, 4vw, 3rem)/1 var(--display); font-stretch: 110%; color: #fff; }
 .dr-stub-note { margin: 0; color: var(--dim); font-size: .88rem; }
 
 /* Checkout: the ticket stub becomes the order form, with the featured ways to pay up front */
-.dr-ticket-checkout { grid-template-columns: minmax(0, 1.2fr) minmax(300px, 1fr); }
-.dr-ticket-checkout .dr-ticket-stub { align-content: start; justify-items: stretch; text-align: left; }
+.dr-ticket-checkout { grid-template-columns: minmax(0, 1.2fr) minmax(300px, 1fr); max-width: none; }
+.dr-ticket-checkout .dr-ticket-main { grid-template-rows: auto auto 1fr auto auto; }
+.dr-ticket-checkout .dr-includes { padding-top: 20px; border-top: 1px solid var(--glass-line); }
+.dr-ticket-photo { position: relative; min-height: 120px; margin-inline: calc(clamp(24px, 4vw, 44px) * -1); pointer-events: none; }
+.dr-ticket-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent); filter: saturate(1.15) contrast(1.05); }
+.dr-ticket-checkout .dr-ticket-stub { align-content: start; justify-items: stretch; text-align: left; background: linear-gradient(to bottom, color-mix(in srgb, var(--ch) 7%, transparent), transparent 45%); }
 .dr-checkout { display: grid; gap: 16px; width: 100%; }
-.dr-checkout-price { display: grid; gap: 6px; }
+.dr-checkout-summary { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; padding-bottom: 18px; border-bottom: 1px solid var(--glass-line); }
+.dr-checkout-summary .dr-stub-note, .dr-checkout-summary .dr-field-error { flex-basis: 100%; order: 1; }
+.dr-field-quantity { flex: 0 1 160px; }
+@media (max-width: 480px) {
+    .dr-checkout-summary .dr-stub-note { order: 0; }
+    .dr-field-quantity { flex-basis: 100%; }
+}
 .dr-checkout-alert { margin: 0; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--ch) 60%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--ch) 12%, transparent); color: #fff; font-weight: 500; font-size: .92rem; }
 .dr-field { display: grid; gap: 6px; }
 .dr-field label { font-weight: 600; font-size: .9rem; color: #fff; }
 .dr-optional { margin-left: 6px; color: var(--dim); font: 400 .58rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
-.dr-input { width: 100%; padding: .7em .85em; border: 1px solid var(--glass-line); border-radius: 12px; background: rgba(255, 255, 255, .05); color: #fff; font: inherit; font-size: 1rem; transition: border-color .15s ease, background-color .15s ease; }
-.dr-input::placeholder { color: #6E6880; }
-.dr-input:hover { border-color: rgba(255, 255, 255, .28); }
+.dr-input { width: 100%; padding: .7em .85em; border: 1px solid var(--field-line); border-radius: 12px; background: rgba(255, 255, 255, .05); color: #fff; font: inherit; font-size: 1rem; transition: border-color .15s ease, background-color .15s ease; }
+.dr-input::placeholder { color: #8F8A9C; }
+.dr-input:hover { border-color: rgba(255, 255, 255, .5); }
 .dr-input:focus { outline: none; border-color: var(--ch); background: rgba(255, 255, 255, .08); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ch) 25%, transparent); }
 .dr-input[aria-invalid="true"] { border-color: #FF8A7A; }
-select.dr-input { appearance: none; padding-right: 2.4em; background-image: linear-gradient(45deg, transparent 50%, #fff 50%), linear-gradient(135deg, #fff 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%; background-size: 6px 6px; background-repeat: no-repeat; }
-select.dr-input option { background: var(--night-2); color: #fff; }
+.dr-stepper { display: flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--field-line); border-radius: 12px; background: rgba(255, 255, 255, .05); transition: border-color .15s ease, background-color .15s ease; }
+.dr-stepper:hover { border-color: rgba(255, 255, 255, .5); }
+.dr-stepper:has(.dr-stepper-input:focus) { border-color: var(--ch); background: rgba(255, 255, 255, .08); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ch) 25%, transparent); }
+.dr-stepper:has([aria-invalid="true"]) { border-color: #FF8A7A; }
+.dr-stepper-input { flex: 1; min-width: 0; height: 44px; border: 0; background: none; color: #fff; font: inherit; font-size: 1.05rem; font-weight: 600; text-align: center; appearance: textfield; }
+.dr-stepper-input:focus { outline: none; }
+.dr-stepper-input::-webkit-outer-spin-button, .dr-stepper-input::-webkit-inner-spin-button { appearance: none; margin: 0; }
+.dr-stepper-btn { flex: none; width: 44px; height: 44px; border: 0; border-radius: 9px; background: var(--glass); color: #fff; font: 500 1.35rem/1 var(--sans); cursor: pointer; transition: background-color .15s ease, color .15s ease, opacity .15s ease; }
+@media (hover: hover) { .dr-stepper-btn:hover { background: var(--ch); color: var(--night); } }
+.dr-stepper-btn[aria-disabled="true"] { background: var(--glass); color: #fff; opacity: .35; cursor: not-allowed; }
 .dr-field-hint { margin: 0; color: var(--dim); font-size: .8rem; }
 .dr-field-error { margin: 0; color: #FF8A7A; font-size: .85rem; font-weight: 500; }
 .dr-field-error:empty { display: none; }
 .dr-check { display: flex; align-items: flex-start; gap: 10px; color: #D9D4E3; font-size: .86rem; line-height: 1.4; cursor: pointer; }
 .dr-check input { flex: none; width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--ch); }
 .dr-pay-list { display: grid; gap: 10px; }
-.dr-pay { display: grid; gap: 3px; width: 100%; padding: 14px 16px; border: 1px solid var(--glass-line); border-radius: 14px; background: var(--glass); color: #fff; font: inherit; text-align: left; cursor: pointer; transition: border-color .2s ease, box-shadow .2s ease, transform .15s ease, background .5s; }
+.dr-pay-heading { margin: 6px 0 -6px; color: var(--dim); font: 400 .64rem/1.3 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.dr-pay { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px; width: 100%; padding: 13px 16px; border: 1px solid var(--field-line); border-radius: 14px; background: var(--glass); color: #fff; font: inherit; text-align: left; cursor: pointer; transition: border-color .2s ease, box-shadow .2s ease, transform .15s ease, background .5s; }
+.dr-pay::after { content: "→"; grid-column: 2; grid-row: 1 / span 2; font-size: 1.15rem; transition: translate .15s ease; }
 .dr-pay:hover { border-color: var(--ch); box-shadow: 0 0 24px color-mix(in srgb, var(--ch) 35%, transparent); }
+.dr-pay:hover::after { translate: 3px 0; }
 .dr-pay:active { transform: scale(.99); }
 .dr-pay:disabled { opacity: .55; cursor: progress; box-shadow: none; }
-.dr-pay-featured { border-color: var(--ch); background: var(--ch); color: var(--night); }
-.dr-pay-featured:hover { box-shadow: 0 0 32px color-mix(in srgb, var(--ch) 70%, transparent); }
-.dr-pay-eyebrow { font: 600 .6rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
-.dr-pay-name { font: 800 1.15rem/1.1 var(--display); font-stretch: 110%; }
-.dr-pay-note { font-size: .82rem; opacity: .8; }
+/* Only the first featured way to pay is filled, so the form ends on one clear main action */
+.dr-pay-featured:first-of-type { border-color: var(--ch); background: var(--ch); color: var(--night); }
+.dr-pay-featured:first-of-type:hover { box-shadow: 0 0 32px color-mix(in srgb, var(--ch) 70%, transparent); }
+.dr-pay-name { grid-column: 1; font-weight: 700; font-size: 1.02rem; line-height: 1.25; }
+.dr-pay-note { grid-column: 1; font-size: .82rem; opacity: .8; }
 .dr-pay-more { border-top: 1px solid var(--glass-line); padding-top: 10px; }
 .dr-pay-more summary { padding: 4px 0 10px; color: var(--dim); font-size: .88rem; font-weight: 600; cursor: pointer; }
 .dr-pay-more summary:hover { color: #fff; }
 .dr-checkout-status { margin: 0; color: var(--dim); font-size: .88rem; }
 .dr-checkout-status[hidden] { display: none; }
-@media (prefers-reduced-motion: reduce) { .dr-pay, .dr-pay:active { transition: none; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .dr-pay, .dr-pay:active, .dr-pay::after { transition: none; transform: none; } .dr-pay:hover::after { translate: none; } }
 
 /* Order page: confirming, paid with ticket codes, or ways to try again */
 .dr-order-sec { min-height: 70vh; }
-.dr-order { display: grid; gap: 20px; max-width: 620px; margin-inline: auto; padding: clamp(24px, 4vw, 44px); border: 1px solid var(--glass-line); border-radius: 26px; background: linear-gradient(135deg, #1E1B29, #121019); box-shadow: 0 40px 80px -30px color-mix(in srgb, var(--ch) 45%, transparent); }
+.dr-order { display: grid; gap: 20px; max-width: 620px; margin-inline: auto; padding: clamp(24px, 4vw, 44px); border: 1px solid var(--glass-line); border-radius: 26px; background: linear-gradient(135deg, #1E1B29, #121019); box-shadow: 0 30px 70px -40px color-mix(in srgb, var(--ch) 30%, transparent); }
 .dr-order-title { font: 900 clamp(2rem, 5vw, 3.2rem)/.95 var(--display); font-stretch: 120%; text-transform: uppercase; letter-spacing: -.02em; color: #fff; }
 .dr-order-title em { font-style: normal; color: var(--ch); text-shadow: 0 0 28px color-mix(in srgb, var(--ch) 60%, transparent); }
 .dr-order-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 0; padding: 16px 0; border-block: 1px dashed var(--glass-line); }
@@ -1642,11 +1667,11 @@ select.dr-input option { background: var(--night-2); color: #fff; }
 @media (max-width: 420px) { .dr-order-summary { grid-template-columns: 1fr; } }
 @media (max-width: 760px) {
     .dr-ticket { grid-template-columns: 1fr; }
-    .dr-ticket-stub { border-left: 0; border-top: 2px dashed var(--glass-line); }
-    .dr-ticket-stub::before, .dr-ticket-stub::after { top: -15px; bottom: auto; }
-    .dr-ticket-stub::before { left: -15px; }
-    .dr-ticket-stub::after { left: auto; right: -15px; }
-    .dr-ticket-meta { grid-template-columns: 1fr 1fr; }
+    .dr-ticket-stub { border-left: 0; border-top: 2px dashed var(--glass-line); border-radius: 0 0 25px 25px; }
+    .dr-ticket-stub::before, .dr-ticket-stub::after { top: -13px; bottom: auto; }
+    .dr-ticket-stub::before { left: -13px; rotate: 225deg; }
+    .dr-ticket-stub::after { left: auto; right: -13px; rotate: 45deg; }
+    .dr-ticket-photo { display: none; }
 }
 
 /* Spread the word: the flyer pinned up under its own glow */

@@ -87,9 +87,9 @@ test('the ticket offers no more tickets than are left', function () {
     PaymentChannel::factory()->create();
     Order::factory()->for($ticketType)->paid()->create(['quantity' => 3]);
 
-    $response = $this->get(route('disco-run'))->assertOk();
-
-    expect(substr_count($response->getContent(), '<option value='))->toBe(2);
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSee('name="quantity" type="number" inputmode="numeric" min="1" max="2"', false);
 });
 
 test('the ticket says sold out once every ticket is taken', function () {
