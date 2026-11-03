@@ -60,35 +60,36 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 - [x] Ticket types (prices in naira), ways to pay (on/off, featured, drag to reorder), webhooks (replay)
 - [x] The opcodes log viewer at `/log-viewer`, behind the admin sign-in
 
-### ⏳ Phase 7: Email tool connections (not started)
-- [ ] One shared contract for email tools, with a driver per tool. Which one comes first is still to be decided:
-  - Mailchimp
-  - Mailtrap
-  - a generic webhook, which lets Zapier, Make or anything else plug in
-- [ ] Send the tool three things:
-  - **Checkout started:** the buyer's contact details
-  - **Checkout abandoned:** includes a resume link, a signed link that reopens checkout with their details already filled in
-  - **Paid:** so the tool stops the follow-up emails
-- [ ] Only send people who ticked the consent box, as Nigeria's Data Protection Act requires
-- [ ] Send in the background with retries, so a slow tool never affects checkout
-- [ ] Show in the admin what was sent and anything that failed
+### ✅ Phase 7: Email tool connections, with Mailchimp first
+- [x] One shared contract for email tools ([EmailTool.php](app/EmailTools/Contracts/EmailTool.php)), with a driver per tool. Mailchimp is the first ([MailchimpProvider.php](app/EmailTools/Providers/MailchimpProvider.php))
+- [x] The tool gets three things. Each sets the contact's name, order number and one tag, and takes off the other two tags:
+  - **Checkout started** (tag `checkout-started`): adds or updates the contact, with a resume link
+  - **Checkout abandoned** (tag `checkout-abandoned`): the same, for the follow-up emails to use
+  - **Paid** (tag `ticket-paid`): so the tool stops the follow-up emails. It also clears the resume link, which by then leads to the receipt
+- [x] The resume link (audience field `RESUMEURL`) is the buyer's signed order page, which keeps their details and offers every way to pay
+- [x] Only people who ticked the consent box are sent, as Nigeria's Data Protection Act requires. Someone already in the audience keeps their subscription status, so anyone who unsubscribed isn't signed back up
+- [x] Phone numbers aren't sent: follow-up emails don't need them, and Mailchimp's phone field can refuse Nigerian numbers
+- [x] Sent in the background: outages are retried, refusals fail straight away, and news that's no longer true (such as "abandoned" for someone who has since paid) is skipped
+- [x] The admin shows what was sent and anything that failed, under System > Email tool, with "Send again"
 
 ## Before going live
 
 - [ ] Move production's existing birthdays and barracks registrations from SQLite to MySQL
-- [ ] Production `.env`: `DB_*` for MySQL, `BACHS_SECRET_KEY` (`sk_live_…`), `BACHS_WEBHOOK_SECRET`
+- [ ] Production `.env`: `APP_URL` (the real address), `DB_*` for MySQL, `BACHS_SECRET_KEY` (`sk_live_…`), `BACHS_WEBHOOK_SECRET`
 - [ ] In the Bachs developer portal, add `https://<domain>/webhooks/payments/bachs` as a webhook destination
 - [ ] Run a queue worker (`php artisan queue:work`) for ticket emails
 - [ ] Run the scheduler (`php artisan schedule:run` every minute) for the 5-minute checks
 - [ ] Choose and set up a mail service; mail currently only goes to the log file
 - [ ] Run `php artisan db:seed --class=TicketTypeSeeder` and `--class=PaymentChannelSeeder`, then `php artisan payments:sync-channels`
 - [ ] Create the first organiser with `php artisan make:filament-user`
+- [ ] Connect Mailchimp: set `EMAIL_TOOL=mailchimp`, `MAILCHIMP_API_KEY` and `MAILCHIMP_AUDIENCE_ID`, then run `php artisan email-tools:prepare` once to add the audience fields
+- [ ] In Mailchimp, build the follow-up flow: start it on the tag `checkout-abandoned`, link to `*|RESUMEURL|*`, and stop it for anyone who gets the tag `ticket-paid`
 - [ ] Set the Disco Run ticket limit (number of headsets) in the admin
 - [ ] Do a real test purchase on the Bachs sandbox (the sandbox keys in the local `.env` work)
 
 ## Open questions
 
-- **Email tool:** which one first for phase 7, and should it also send the ticket emails?
+- **Ticket emails:** should Mailchimp also send them, or the mail service chosen above?
 - **QR codes:** do you want a QR code on tickets for check-in?
 - **Ticket types:** more than one, such as early bird or group? Do you need each attendee's name?
 - **OPay:** Bachs offers only card and bank transfer for naira. Ask Bachs whether OPay is coming, or add a second provider?
@@ -97,6 +98,7 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 ## Known gaps
 
 - **Untested against real Bachs:** the webhook payloads and failure-reason wording come from Bachs's docs and haven't been checked against a real sandbox.
+- **Untested against real Mailchimp:** there's no API key yet, so phase 7 has only run against a stand-in for Mailchimp's API, built from its docs.
 - **No webhooks locally:** Bachs can't reach `lri.test`, so a local test purchase is confirmed by the order page asking Bachs directly. To try webhooks locally, share the site at a public address (`herd share`) and add that address as a webhook destination in the Bachs portal.
 - **No follow-up before submit:** someone who leaves before submitting the form can't be followed up by email, because we don't have their email yet. They only appear in the funnel.
 - **PHPUnit advisory:** `composer audit` reports a medium-severity issue in PHPUnit 13.4.3, which is only used for tests. It was already there before this work.

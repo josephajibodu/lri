@@ -1,7 +1,9 @@
 <?php
 
+use App\Enums\EmailToolSendStatus;
 use App\Enums\PaymentMethod;
 use App\Filament\Pages\Dashboard;
+use App\Filament\Resources\EmailToolSends\Pages\ManageEmailToolSends;
 use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\CheckoutEventsRelationManager;
@@ -13,8 +15,10 @@ use App\Filament\Widgets\PaymentMethodsTable;
 use App\Filament\Widgets\SalesBySourceTable;
 use App\Filament\Widgets\SalesChart;
 use App\Filament\Widgets\SalesOverview;
+use App\Jobs\SendToEmailTool;
 use App\Mail\TicketsMail;
 use App\Models\CheckoutEvent;
+use App\Models\EmailToolSend;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentChannel;
@@ -25,6 +29,7 @@ use App\Models\WebhookCall;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
@@ -186,4 +191,37 @@ test('a failed webhook can be handled again from the admin', function () {
         ->assertNotified();
 
     expect($call->fresh())->processed_at->not->toBeNull()->failed_at->toBeNull();
+});
+
+test('organisers can see what went to the email tool and why anything failed', function () {
+    $this->actingAs($this->admin);
+    $sent = EmailToolSend::factory()->sent()->create();
+    $failed = EmailToolSend::factory()->failed('Mailchimp returned 400: Your merge fields were invalid.')->create();
+
+    Livewire::test(ManageEmailToolSends::class)
+        ->assertOk()
+        ->assertCanSeeTableRecords([$sent, $failed])
+        ->assertSee($failed->order->reference)
+        ->assertSee('Your merge fields were invalid.')
+        ->filterTable('status', EmailToolSendStatus::Failed->value)
+        ->assertCanSeeTableRecords([$failed])
+        ->assertCanNotSeeTableRecords([$sent]);
+});
+
+test('a failed send can be sent again from the admin, but one that went out can’t', function () {
+    Queue::fake([SendToEmailTool::class]);
+    $this->actingAs($this->admin);
+    $sent = EmailToolSend::factory()->sent()->create();
+    $failed = EmailToolSend::factory()->failed()->create();
+
+    Livewire::test(ManageEmailToolSends::class)
+        ->assertActionHidden(TestAction::make('sendAgain')->table($sent))
+        ->callAction(TestAction::make('sendAgain')->table($failed))
+        ->assertNotified();
+
+    expect($failed->fresh())
+        ->status->toBe(EmailToolSendStatus::Waiting)
+        ->failed_at->toBeNull()
+        ->error->toBeNull();
+    Queue::assertPushed(SendToEmailTool::class, fn (SendToEmailTool $job): bool => $job->send->is($failed));
 });

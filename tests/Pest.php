@@ -101,6 +101,18 @@ function fakePaidBachsCheckout(Payment $payment): void
 }
 
 /**
+ * Connect Mailchimp with a test key, in the us21 data center. No request can leave the test: fake each one it expects.
+ */
+function connectMailchimp(): void
+{
+    config()->set('email_tools.default', 'mailchimp');
+    config()->set('email_tools.tools.mailchimp.api_key', 'testkey-us21');
+    config()->set('email_tools.tools.mailchimp.audience_id', 'aud_1');
+
+    Http::preventStrayRequests();
+}
+
+/**
  * A Bachs webhook event, about checkout chk_123 for ₦20,000 unless the data says otherwise.
  *
  * @param  array<string, mixed>  $data

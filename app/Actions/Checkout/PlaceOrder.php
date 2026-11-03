@@ -2,6 +2,7 @@
 
 namespace App\Actions\Checkout;
 
+use App\Events\OrderPlaced;
 use App\Exceptions\TicketsUnavailable;
 use App\Models\Order;
 use App\Models\TicketType;
@@ -21,7 +22,7 @@ class PlaceOrder
      */
     public function handle(TicketType $ticketType, int $quantity, array $buyer, ?string $visitorId = null, ?array $attribution = null): Order
     {
-        return DB::transaction(function () use ($ticketType, $quantity, $buyer, $visitorId, $attribution): Order {
+        $order = DB::transaction(function () use ($ticketType, $quantity, $buyer, $visitorId, $attribution): Order {
             $ticketType = TicketType::query()->onSale()->lockForUpdate()->find($ticketType->id)
                 ?? throw TicketsUnavailable::notOnSale();
 
@@ -43,5 +44,9 @@ class PlaceOrder
                 'expires_at' => now()->addMinutes(config('payments.checkout_expires_in_minutes')),
             ]);
         });
+
+        OrderPlaced::dispatch($order);
+
+        return $order;
     }
 }
