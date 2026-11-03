@@ -97,7 +97,9 @@ return [
     | DJ channels, then the run ends in a rave. Until the date is fixed,
     | leave starts_at null and the page shows the date window instead.
     | The home page features the run, with the poster (a path under
-    | public/, portrait 4:5), until it starts.
+    | public/, portrait 4:5), until it starts. The tickets email leads with
+    | email_banner (a path under public/, wide, about 5:2) and outlines the
+    | ticket codes in email_accent.
     |
     | Tickets are sold on the page itself: the ticket card takes orders while
     | a "disco-run" ticket type is on sale and at least one way to pay is
@@ -116,6 +118,8 @@ return [
         'price' => '₦10,000',
         'price_note' => 'Includes silent disco headphones',
         'poster' => 'images/disco-run/flyer.jpg',
+        'email_banner' => 'images/disco-run/email-banner.jpg',
+        'email_accent' => '#FF6B57',
         'includes' => [
             'A wireless LED headset for the night',
             'Three live DJ channels to switch between',

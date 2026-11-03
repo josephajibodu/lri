@@ -67,11 +67,13 @@ class OrderController extends Controller
     }
 
     /**
-     * The buyer's order: confirming, paid with their tickets, or not paid yet with ways to try again.
+     * The buyer's order while it isn't paid: confirming, or not paid yet with ways to try again. This is also where
+     * the checkout sends the buyer back to; coming back, the payment is checked with the provider straight away,
+     * and a paid order moves on to its receipt.
      */
-    public function show(Request $request, Order $order): View
+    public function show(Request $request, Order $order, RefreshPayment $refreshPayment): View|RedirectResponse
     {
-        $order->load(['ticketType', 'tickets', 'latestPayment']);
+        $order->load('latestPayment');
         $from = $request->query('from');
 
         if (in_array($from, ['checkout', 'cancelled'], true) && $order->latestPayment && ! $order->checkoutEvents()
@@ -80,6 +82,16 @@ class OrderController extends Controller
                 'from' => $from,
             ]);
         }
+
+        if ($from === 'checkout') {
+            $this->refreshIfDue($order, $refreshPayment);
+        }
+
+        if ($order->status === OrderStatus::Paid) {
+            return redirect()->to($order->receiptUrl());
+        }
+
+        $order->load('ticketType');
 
         return view('orders.show', [
             'order' => $order,
@@ -93,23 +105,33 @@ class OrderController extends Controller
     }
 
     /**
+     * A paid order's receipt, at an address of its own the buyer can come back to: their tickets, what they paid
+     * and how. An order that isn't paid sends them to its order page instead.
+     */
+    public function receipt(Order $order): View|RedirectResponse
+    {
+        if ($order->status !== OrderStatus::Paid) {
+            return redirect()->to($order->statusUrl());
+        }
+
+        $order->load(['ticketType', 'tickets', 'latestPayment']);
+
+        return view('orders.receipt', [
+            'order' => $order,
+            'payment' => $order->latestPayment,
+            'event' => $order->ticketType->eventDetails(),
+            'when' => $order->ticketType->eventWhen(),
+            'discoRun' => config('lri.disco_run'),
+        ]);
+    }
+
+    /**
      * Where the order stands, for the order page to check while it waits. An open payment is checked with the
      * provider every few seconds, so the buyer isn't kept waiting on a webhook.
      */
     public function status(Order $order, RefreshPayment $refreshPayment): JsonResponse
     {
-        $payment = $order->latestPayment;
-
-        if ($order->status === OrderStatus::Pending
-            && $payment?->status === PaymentStatus::Open
-            && ($payment->last_checked_at === null || $payment->last_checked_at->lt(now()->subSeconds(self::RecheckAfterSeconds)))) {
-            try {
-                $refreshPayment->handle($payment);
-                $order->refresh()->load('latestPayment');
-            } catch (PaymentProviderException $exception) {
-                report($exception);
-            }
-        }
+        $this->refreshIfDue($order, $refreshPayment);
 
         return response()->json(['state' => $this->state($order)]);
     }
@@ -173,6 +195,28 @@ class OrderController extends Controller
         }
 
         return redirect()->away($started->session->checkoutUrl);
+    }
+
+    /**
+     * Ask the provider about the order's open payment, unless it was asked in the last few seconds. A provider
+     * that doesn't answer is reported and the order is left as it was.
+     */
+    private function refreshIfDue(Order $order, RefreshPayment $refreshPayment): void
+    {
+        $payment = $order->latestPayment;
+
+        if ($order->status !== OrderStatus::Pending
+            || $payment?->status !== PaymentStatus::Open
+            || $payment->last_checked_at?->gte(now()->subSeconds(self::RecheckAfterSeconds))) {
+            return;
+        }
+
+        try {
+            $refreshPayment->handle($payment);
+            $order->refresh()->load('latestPayment');
+        } catch (PaymentProviderException $exception) {
+            report($exception);
+        }
     }
 
     /**

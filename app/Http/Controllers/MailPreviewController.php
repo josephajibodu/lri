@@ -81,6 +81,7 @@ class MailPreviewController extends Controller
 
         $order = new Order([
             'reference' => 'LRI-7K3Q9P',
+            'receipt_token' => 'sampleReceiptToken0000000000000',
             'quantity' => $quantity,
             'unit_price' => $ticketType->price,
             'amount' => $ticketType->price * $quantity,

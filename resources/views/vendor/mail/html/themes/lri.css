@@ -1,0 +1,355 @@
+/*
+ * Let's Run Ibadan's email theme, inlined into every email. It uses the site's colours (resources/css/app.css)
+ * with system fonts, because most mail apps won't load ours. Phone sizes are in layout.blade.php: they can't be inlined.
+ */
+
+/* Base */
+
+body,
+table,
+td,
+p,
+a,
+li,
+h1,
+h2,
+h3 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    -webkit-text-size-adjust: none;
+    background-color: #EEECE7;
+    color: #1C1917;
+    height: 100%;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+    width: 100% !important;
+}
+
+p,
+ul,
+ol,
+blockquote {
+    color: #1C1917;
+    font-size: 16px;
+    line-height: 1.55;
+    margin-top: 0;
+    text-align: left;
+}
+
+a {
+    color: #1C1917;
+}
+
+a img {
+    border: none;
+}
+
+img {
+    max-width: 100%;
+}
+
+/* Typography */
+
+h1 {
+    color: #1C1917;
+    font-family: 'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-top: 0;
+    margin-bottom: 14px;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+h2 {
+    color: #1C1917;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 0;
+    text-align: left;
+}
+
+h3 {
+    color: #1C1917;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 0;
+    text-align: left;
+}
+
+/* Inbox preview line, hidden in the email itself */
+
+.preheader {
+    display: none;
+    font-size: 1px;
+    line-height: 1px;
+    max-height: 0;
+    max-width: 0;
+    mso-hide: all;
+    opacity: 0;
+    overflow: hidden;
+}
+
+/* Layout */
+
+.wrapper {
+    background-color: #EEECE7;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.wrapper-cell {
+    padding: 32px 16px;
+}
+
+.content {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.inner-body {
+    background-color: #FFFFFF;
+    border: 1px solid #DCD8D0;
+    border-collapse: separate;
+    border-radius: 20px;
+    margin: 0 auto;
+    padding: 0;
+    width: 570px;
+}
+
+.content-cell {
+    padding: 32px;
+}
+
+/* Header */
+
+.header {
+    padding: 22px 32px 18px;
+    text-align: center;
+}
+
+.logo {
+    display: block;
+    height: 105px;
+    width: 88px;
+}
+
+/* Event banner, with its name showing on black when a mail app blocks images */
+
+.banner {
+    background-color: #000000;
+    padding: 0;
+}
+
+.banner img {
+    color: #FFFFFF;
+    display: block;
+    font-size: 22px;
+    font-weight: bold;
+    height: auto;
+    line-height: 1.3;
+    text-align: center;
+    width: 100%;
+}
+
+/* Ticket codes */
+
+.tickets {
+    margin: 22px 0 8px;
+}
+
+.tickets-row {
+    padding-bottom: 8px;
+}
+
+.ticket {
+    background-color: #0B0A10;
+    border-collapse: separate;
+    border-radius: 14px;
+}
+
+.ticket-label {
+    font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    padding: 18px 0 18px 18px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.ticket-code {
+    color: #FFFFFF;
+    font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    font-size: 19px;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    padding: 18px 12px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Details */
+
+.details {
+    border-top: 1px solid #DCD8D0;
+    margin: 12px 0 0;
+}
+
+.details-label {
+    border-bottom: 1px solid #DCD8D0;
+    color: #67615B;
+    font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    line-height: 20px;
+    padding: 11px 12px 11px 0;
+    text-transform: uppercase;
+}
+
+.details-value {
+    border-bottom: 1px solid #DCD8D0;
+    color: #1C1917;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 20px;
+    padding: 11px 0;
+}
+
+/* Subcopy */
+
+.subcopy {
+    border-top: 1px solid #DCD8D0;
+    margin-top: 24px;
+    padding-top: 24px;
+}
+
+.subcopy p {
+    color: #67615B;
+    font-size: 14px;
+}
+
+/* Footer */
+
+.footer {
+    margin: 0 auto;
+    padding: 0;
+    text-align: center;
+    width: 570px;
+}
+
+.footer .content-cell {
+    padding: 24px 16px 8px;
+}
+
+.footer p {
+    color: #67615B;
+    font-size: 13px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.footer strong {
+    color: #1C1917;
+}
+
+.footer a {
+    color: #67615B;
+    text-decoration: underline;
+}
+
+/* Tables */
+
+.table table {
+    margin: 24px auto;
+    width: 100%;
+}
+
+.table th {
+    border-bottom: 1px solid #DCD8D0;
+    margin: 0;
+    padding-bottom: 8px;
+    text-align: left;
+}
+
+.table td {
+    color: #1C1917;
+    font-size: 15px;
+    line-height: 18px;
+    margin: 0;
+    padding: 10px 0;
+}
+
+/* Buttons */
+
+.action {
+    margin: 26px auto;
+    padding: 0;
+    text-align: center;
+    width: 100%;
+}
+
+.button {
+    -webkit-text-size-adjust: none;
+    border-radius: 999px;
+    color: #1C1917;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 15px 30px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.button-blue,
+.button-primary {
+    background-color: #FEB203;
+    border: 2px solid #1C1917;
+}
+
+.button-green,
+.button-success {
+    background-color: #3DAE6E;
+    border: 2px solid #1C1917;
+}
+
+.button-red,
+.button-error {
+    background-color: #FF7A66;
+    border: 2px solid #1C1917;
+}
+
+/* Panels */
+
+.panel {
+    border-left: #FEB203 solid 4px;
+    margin: 20px 0;
+}
+
+.panel-content {
+    background-color: #F7F6F3;
+    color: #1C1917;
+    padding: 16px;
+}
+
+.panel-item {
+    padding: 0;
+}
+
+.panel-item p:last-of-type {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Utilities */
+
+.break-all {
+    word-break: break-all;
+}

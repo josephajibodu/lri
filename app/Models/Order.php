@@ -13,12 +13,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 /**
  * A buyer's ticket order. It can have several payment attempts, and its tickets are issued once one succeeds.
  */
 #[Fillable([
     'reference',
+    'receipt_token',
     'ticket_type_id',
     'quantity',
     'unit_price',
@@ -53,7 +55,8 @@ class Order extends Model
     ];
 
     /**
-     * Give each new order a short reference buyers can quote, such as LRI-7K3Q9P.
+     * Give each new order a short reference buyers can quote, such as LRI-7K3Q9P, and a long secret
+     * code for its receipt address, which no one can guess from the reference.
      */
     protected static function booted(): void
     {
@@ -62,6 +65,10 @@ class Order extends Model
                 do {
                     $order->reference = 'LRI-'.ReadableCode::generate(6);
                 } while (static::query()->where('reference', $order->reference)->exists());
+            }
+
+            if (blank($order->receipt_token)) {
+                $order->receipt_token = Str::random(32);
             }
         });
     }
@@ -156,6 +163,14 @@ class Order extends Model
     public function statusUrl(array $query = []): string
     {
         return $this->signedUrl('orders.show', $query);
+    }
+
+    /**
+     * The buyer's lasting link to their paid order's receipt and tickets.
+     */
+    public function receiptUrl(): string
+    {
+        return route('receipts.show', $this->receipt_token);
     }
 
     /**

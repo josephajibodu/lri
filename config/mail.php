@@ -115,4 +115,22 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Markdown Mail Settings
+    |--------------------------------------------------------------------------
+    |
+    | Emails use the Let's Run Ibadan theme and the components in
+    | resources/views/vendor/mail. Any component not there comes from Laravel.
+    |
+    */
+
+    'markdown' => [
+        'theme' => env('MAIL_MARKDOWN_THEME', 'lri'),
+
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+    ],
+
 ];

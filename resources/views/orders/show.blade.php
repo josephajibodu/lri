@@ -12,27 +12,6 @@
                     @endif
 
                     @switch($state)
-                        @case('paid')
-                            <h1 class="dr-order-title">You’re <em>in</em>.</h1>
-                            <p class="dr-sub">Your {{ $order->quantity === 1 ? 'ticket is' : $order->quantity.' tickets are' }} paid for. Show {{ $order->quantity === 1 ? 'this code' : 'these codes' }} when you pick up your headset.</p>
-                            <ul class="dr-order-tickets">
-                                @foreach ($order->tickets as $ticket)
-                                    <li>
-                                        <span class="dr-order-ticket-label">Ticket {{ $loop->iteration }}</span>
-                                        <span class="dr-order-ticket-code">{{ $ticket->code }}</span>
-                                    </li>
-                                @endforeach
-                            </ul>
-                            <p class="dr-stub-note">
-                                @if ($order->tickets_emailed_at)
-                                    We’ve emailed your tickets to {{ $order->buyer_email }}.
-                                @else
-                                    Your tickets are on their way to {{ $order->buyer_email }}.
-                                @endif
-                                Keep this page too: its link is your proof of purchase.
-                            </p>
-                            @break
-
                         @case('waiting')
                             @if ($from === 'checkout')
                                 <h1 class="dr-order-title">Confirming your <em>payment</em>…</h1>

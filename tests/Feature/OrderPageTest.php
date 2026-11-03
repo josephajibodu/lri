@@ -5,9 +5,12 @@ use App\Enums\PaymentFailureReason;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\PaymentChannel;
+use App\Models\Ticket;
 use App\Models\TicketType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
@@ -49,13 +52,64 @@ test('the order page still opens when the provider adds its checkout id to the l
     $this->get($order->statusUrl(['from' => 'checkout']).'&checkout_id=chk_123')->assertOk();
 });
 
-test('coming back from the checkout, the page waits for the payment and checks on it', function () {
+test('coming back from the checkout before the payment lands, the page asks the provider, then waits and keeps checking', function () {
     $order = orderAwaitingPayment();
+    $payment = $order->latestPayment;
+    Http::fake(['sandbox-api.bachs.io/v1/checkout-sessions/'.$payment->provider_checkout_id => Http::response(bachsCheckoutSession($payment, paid: false))]);
 
     $this->get($order->statusUrl(['from' => 'checkout']))
         ->assertOk()
         ->assertSeeText('Confirming your payment')
         ->assertSee('data-order-poll="'.e($order->signedUrl('orders.status')).'"', false);
+
+    Http::assertSent(fn (ClientRequest $request): bool => $request->method() === 'GET' && str_ends_with($request->url(), $payment->provider_checkout_id));
+});
+
+test('coming back from a checkout the provider says is paid goes straight to the receipt', function () {
+    $order = orderAwaitingPayment();
+    fakePaidBachsCheckout($order->latestPayment);
+
+    $this->get($order->statusUrl(['from' => 'checkout']).'&checkout_id='.$order->latestPayment->provider_checkout_id)
+        ->assertRedirect($order->receiptUrl());
+
+    expect($order->fresh()->status)->toBe(OrderStatus::Paid);
+});
+
+test('a paid order’s page sends the buyer on to its receipt', function () {
+    $order = Order::factory()->for($this->ticketType)->paid()->create();
+
+    $this->get($order->statusUrl())->assertRedirect($order->receiptUrl());
+});
+
+test('the receipt shows the tickets and what was paid, at an address with nothing about the payment in it', function () {
+    $order = Order::factory()->for($this->ticketType)->paid()->create(['quantity' => 2, 'amount' => 2_000_000, 'tickets_emailed_at' => now()]);
+    $tickets = Ticket::factory()->count(2)->for($order)->create(['ticket_type_id' => $order->ticket_type_id]);
+    $payment = Payment::factory()->for($order)->method(PaymentMethod::BankTransfer)->succeeded()->create(['amount' => 2_000_000]);
+
+    expect($order->receiptUrl())->not->toContain('?');
+
+    $this->get($order->receiptUrl())
+        ->assertOk()
+        ->assertSeeText('You’re in')
+        ->assertSeeText($tickets[0]->code)
+        ->assertSeeText($tickets[1]->code)
+        ->assertSeeText('₦20,000')
+        ->assertSeeText('Bank transfer')
+        ->assertSeeText($payment->reference)
+        ->assertSeeText('We’ve emailed your tickets and this receipt to '.$order->buyer_email);
+});
+
+test('a receipt link for an order that isn’t paid opens its order page', function () {
+    $order = Order::factory()->for($this->ticketType)->create();
+
+    $this->get($order->receiptUrl())->assertRedirect($order->statusUrl());
+});
+
+test('a receipt can’t be opened with the order number or a made-up code', function () {
+    $order = Order::factory()->for($this->ticketType)->paid()->create();
+
+    $this->get('/receipts/'.$order->reference)->assertNotFound();
+    $this->get('/receipts/not-a-real-receipt-code')->assertNotFound();
 });
 
 test('checking on a payment the provider says is paid issues the tickets', function () {
@@ -71,12 +125,6 @@ test('checking on a payment the provider says is paid issues the tickets', funct
     expect($order->status)->toBe(OrderStatus::Paid)
         ->and($order->tickets)->toHaveCount(2)
         ->and($order->latestPayment->status)->toBe(PaymentStatus::Succeeded);
-
-    $this->get($order->statusUrl())
-        ->assertSeeText('You’re in')
-        ->assertSeeText($order->tickets[0]->code)
-        ->assertSeeText($order->tickets[1]->code)
-        ->assertDontSee('data-order-poll', false);
 });
 
 test('the provider is not asked again within a few seconds of the last check', function () {

@@ -37,8 +37,9 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 ### ✅ Phase 3: Checkout and order page (`24f124b`)
 - [x] The ticket card is now the order form, with featured methods up front and the rest under "More ways to pay"
 - [x] Tickets are held while the buyer pays, and two buyers can't take the last tickets at the same time
-- [x] Bachs's checkout opens as a pop-up over our page, falling back to Bachs's own page; the form still works without JavaScript
-- [x] A signed order page: it confirms the payment, shows ticket codes, explains failures in plain words and lets the buyer pay again
+- [x] Bachs's checkout opens as a pop-up over our page, for live and sandbox checkouts alike. Bachs's own page is only a fallback, for when the pop-up can't load or JavaScript is off
+- [x] A signed order page: buyers come back to it from the checkout. It asks Bachs straight away, explains failures in plain words and lets the buyer pay again
+- [x] Once paid, the buyer moves on to a receipt at its own lasting address (`/receipts/{secret code}`, with nothing about the payment in it): their tickets, what they paid, when and how. The tickets email links to it
 - [x] Each order is fulfilled only once; late updates can't undo a payment; short or wrong-currency payments are held back
 
 ### ✅ Phase 4: Webhooks, background checks, emails (`eed81db`)

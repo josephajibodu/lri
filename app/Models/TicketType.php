@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 #[Fillable([
     'event',
@@ -120,5 +121,18 @@ class TicketType extends Model
     public function eventDetails(): array
     {
         return config('lri.'.str_replace('-', '_', $this->event), []);
+    }
+
+    /**
+     * When the event starts, written out for buyers (such as Friday 11 December, 6:00 PM), or its date window
+     * while no start is set.
+     */
+    public function eventWhen(): ?string
+    {
+        $event = $this->eventDetails();
+
+        return filled($event['starts_at'] ?? null)
+            ? Carbon::parse($event['starts_at'], $event['timezone'])->format('l j F, g:i A')
+            : ($event['date_window'] ?? null);
     }
 }

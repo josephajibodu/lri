@@ -683,6 +683,8 @@ import.meta.glob("../fonts/*.woff2");
      * back to the payment page when it doesn't or can't load. Paid or not, the buyer ends on their order page.
      */
     var overlayScripts = { bachs: "https://checkout.bachs.io/bachs.js" };
+    /* The addresses each provider's pop-up may open checkouts on. Bachs serves live and sandbox checkouts from different ones. */
+    var overlayOrigins = { bachs: ["https://checkout.bachs.io", "https://sandbox-checkout.bachs.io"] };
     var eventsUrl = document.querySelector("meta[name=checkout-events]");
 
     /* Note a step only the browser sees. sendBeacon survives the page navigating away straight after. */
@@ -715,8 +717,13 @@ import.meta.glob("../fonts/*.woff2");
     function openOverlay(form, checkout) {
         if (checkout.overlay !== "bachs" || !overlayScripts[checkout.overlay]) return Promise.reject();
 
+        var origin = new URL(checkout.checkout_url, location.href).origin;
+        if (overlayOrigins[checkout.overlay].indexOf(origin) === -1) return Promise.reject(new Error("Unexpected checkout address"));
+
         return loadOverlay(checkout.overlay).then(function () {
             if (!window.Bachs || !window.Bachs.Checkout) throw new Error("Bachs checkout did not load");
+            /* Bachs's script only opens checkouts on the address it is set up with, which is the live one unless told otherwise */
+            window.Bachs.Initialize({ baseUrl: origin });
             var finished = false;
             return window.Bachs.Checkout.open({
                 checkoutUrl: checkout.checkout_url,

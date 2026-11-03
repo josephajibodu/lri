@@ -58,6 +58,8 @@ Route::middleware(['signed:checkout_id', IdentifyVisitor::class])->group(functio
         ->name('orders.pay');
 });
 
+Route::get('/receipts/{order:receipt_token}', [OrderController::class, 'receipt'])->name('receipts.show');
+
 Route::post('/webhooks/payments/{provider}', PaymentWebhookController::class)
     ->whereIn('provider', ['bachs'])
     ->middleware('throttle:240,1')
