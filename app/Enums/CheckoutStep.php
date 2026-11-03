@@ -2,10 +2,13 @@
 
 namespace App\Enums;
 
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
 /**
  * The steps of a buyer's journey from the ticket page to a paid order, recorded so organisers can see where people stop.
  */
-enum CheckoutStep: string
+enum CheckoutStep: string implements HasColor, HasLabel
 {
     case TicketPageViewed = 'ticket_page_viewed';
     case FormStarted = 'form_started';
@@ -63,5 +66,20 @@ enum CheckoutStep: string
     public static function reportableByBrowser(): array
     {
         return [self::FormStarted, self::CheckoutClosed];
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
+    }
+
+    public function getColor(): string
+    {
+        return match ($this) {
+            self::PaymentSucceeded => 'success',
+            self::FormInvalid, self::CheckoutUnavailable, self::PaymentFailed => 'danger',
+            self::CheckoutClosed, self::CheckoutExpired, self::OrderAbandoned => 'warning',
+            default => 'gray',
+        };
     }
 }

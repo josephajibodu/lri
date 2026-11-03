@@ -2,10 +2,13 @@
 
 namespace App\Enums;
 
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
 /**
  * Where one payment attempt stands, in our own words. Each provider translates its statuses into these.
  */
-enum PaymentStatus: string
+enum PaymentStatus: string implements HasColor, HasLabel
 {
     case Open = 'open';
     case Succeeded = 'succeeded';
@@ -39,5 +42,21 @@ enum PaymentStatus: string
     public function isOpen(): bool
     {
         return $this === self::Open;
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
+    }
+
+    public function getColor(): string
+    {
+        return match ($this) {
+            self::Open => 'warning',
+            self::Succeeded => 'success',
+            self::Failed, self::Underpaid => 'danger',
+            self::Abandoned, self::Expired => 'gray',
+            self::Refunded, self::PartiallyRefunded => 'info',
+        };
     }
 }

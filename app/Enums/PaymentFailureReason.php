@@ -2,10 +2,12 @@
 
 namespace App\Enums;
 
+use Filament\Support\Contracts\HasLabel;
+
 /**
  * Why a payment attempt failed, in our own words, so failures can be compared across providers and methods.
  */
-enum PaymentFailureReason: string
+enum PaymentFailureReason: string implements HasLabel
 {
     case InsufficientFunds = 'insufficient_funds';
     case Declined = 'declined';
@@ -50,5 +52,10 @@ enum PaymentFailureReason: string
             self::ProviderError, self::Unknown => 'Something went wrong on the payment side. Try again, or choose another way to pay.',
             self::AmountMismatch => 'The amount that arrived didn’t match your order. We’re looking into it and will be in touch.',
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }
