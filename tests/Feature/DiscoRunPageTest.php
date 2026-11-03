@@ -102,10 +102,10 @@ test('the header keeps its join link while tickets can’t be bought', function 
         ->assertDontSee('href="#tickets">Get your ticket</a>', false);
 });
 
-test('the browser bar matches the dark page instead of the site’s yellow', function () {
+test('the browser bar matches the page’s header instead of the site’s yellow', function () {
     $this->get(route('disco-run'))
         ->assertOk()
-        ->assertSee('<meta name="theme-color" content="#0B0A10">', false);
+        ->assertSee('<meta name="theme-color" content="#EEECE7">', false);
 });
 
 test('the ticket offers no more tickets than are left', function () {

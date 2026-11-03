@@ -32,7 +32,7 @@
             <li>{{ $discoRun['venue'] ?? 'Ibadan' }}</li>
         </ul>
 
-        <div class="cta-row">
+        <div class="cta-row dr-buy dr-tone-{{ $tone }}">
             <a class="btn dr-btn" href="#tickets">Get your ticket ↓</a>
             <a class="btn dr-btn-ghost" href="#how">How it works</a>
         </div>

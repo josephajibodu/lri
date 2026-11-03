@@ -1,7 +1,7 @@
 <x-layouts.app title="Your order {{ $order->reference }} · Let’s Run Ibadan" robots="noindex, nofollow" theme-color="#EEECE7">
     <x-site.header />
 
-    <main class="dr dr-day dr-tone-{{ $discoRun['channels'][0]['tone'] }}">
+    <main class="dr dr-tone-{{ $discoRun['channels'][0]['tone'] }}">
         <section class="dr-sec dr-order-sec">
             <div class="wrap">
                 <div class="dr-order" @if ($state === 'waiting') data-order-poll="{{ $pollUrl }}" data-state="{{ $state }}" @endif>

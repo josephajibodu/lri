@@ -1320,35 +1320,17 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 
 /*
  * Silent Disco Run.
- * The one dark page: a night-time dance floor. Each DJ channel has a neon tone, and the
- * page takes on the tone of the channel picked (--ch), the way a silent disco headset glows.
+ * A dance floor in daylight. Each DJ channel has a bright tone, and the page takes on the
+ * tone of the channel picked (--ch), the way a silent disco headset changes colour.
  */
-.dr-tone-coral { --tone: #FF6B57; }
-.dr-tone-green { --tone: #39E58C; }
-.dr-tone-sky { --tone: #4FB6FF; }
-.dr-tone-pink { --tone: #FF7EC4; }
-.dr-tone-yellow { --tone: #FEB203; }
+.dr-tone-coral { --tone: #FF6B57; --tone-ink: #B84D3F; }
+.dr-tone-green { --tone: #39E58C; --tone-ink: #12804A; }
+.dr-tone-sky { --tone: #4FB6FF; --tone-ink: #1769AA; }
+.dr-tone-pink { --tone: #FF7EC4; --tone-ink: #C2337F; }
+.dr-tone-yellow { --tone: #FEB203; --tone-ink: #8A5A00; }
 .dr {
     --ch: var(--tone, var(--yellow));
     --night: #0B0A10;
-    --night-2: #15131D;
-    --glass: rgba(255, 255, 255, .06);
-    --glass-line: rgba(255, 255, 255, .12);
-    --label: #fff;
-    --dim: #A39DB0;
-    --mx: 50%;
-    --my: 30%;
-    color-scheme: dark;
-    position: relative;
-    overflow-x: hidden;
-    overflow-x: clip;
-    background: var(--night);
-    color: #F5F3F8;
-}
-/* The night is for the story. From the tickets on, buying happens in daylight: the whole surface changes together,
-   and the action colour holds still even when a channel recolours the night above it */
-.dr-day {
-    --ch: var(--tone, var(--yellow));
     --page: var(--paper);
     --surface: var(--card);
     --glass: rgba(28, 25, 23, .05);
@@ -1360,22 +1342,25 @@ textarea.input { resize: vertical; min-height: 3.2em; }
     --label-2: #44403B;
     --dim: var(--muted);
     --placeholder: #77716B;
-    --accent-text: color-mix(in srgb, var(--ch) 72%, #000);
+    --accent-text: var(--tone-ink, var(--gold-ink));
     --error: #B3261E;
-    color-scheme: light;
+    --mx: 50%;
+    --my: 30%;
+    position: relative;
+    overflow-x: hidden;
+    overflow-x: clip;
     background: var(--page);
     color: var(--label);
 }
+/* Tuning a channel recolours the page, but the part where people buy keeps one action colour */
+.dr-buy { --ch: var(--tone, var(--yellow)); --accent-text: var(--tone-ink, var(--gold-ink)); }
 .dr ::selection { background: var(--ch); color: var(--night); }
-.dr :focus-visible { outline-color: var(--ch); }
-.dr-day :focus-visible { outline-color: var(--label); }
+.dr :focus-visible { outline-color: var(--label); }
 .dr h2 { color: var(--label); }
-.dr h2 em { background: none; color: var(--ch); padding: 0; text-shadow: 0 0 28px color-mix(in srgb, var(--ch) 60%, transparent); transition: color .5s, text-shadow .5s; }
-.dr-day h2 em { color: var(--accent-text); text-shadow: none; }
+.dr h2 em { background: none; color: var(--accent-text); padding: 0; transition: color .5s; }
 .dr a { text-decoration-color: var(--ch); }
 .dr-label { display: inline-flex; align-items: center; gap: 10px; margin: 0; font: 400 .72rem/1.3 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
-.dr-label::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ch); box-shadow: 0 0 12px var(--ch); transition: background .5s, box-shadow .5s; }
-.dr-day .dr-label::before { box-shadow: none; }
+.dr-label::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ch); transition: background .5s; }
 .dr-sec { position: relative; padding-block: clamp(72px, 10vw, 132px); }
 .dr-head { display: grid; gap: 16px; max-width: 46rem; margin-bottom: clamp(32px, 5vw, 56px); }
 .dr-sub { margin: 0; color: var(--dim); font-size: clamp(1.02rem, 1.4vw, 1.15rem); max-width: 34em; }
@@ -1384,25 +1369,14 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-btn { border-color: var(--ch); background: var(--ch); color: var(--night); box-shadow: 0 0 0 0 transparent; transition: transform .15s ease, box-shadow .2s ease, background .5s, border-color .5s; }
 .dr-btn:hover { box-shadow: 0 0 32px color-mix(in srgb, var(--ch) 70%, transparent); }
 .dr-btn[aria-disabled="true"] { opacity: .55; pointer-events: none; }
-.dr-btn-ghost { border-color: var(--glass-line); background: var(--glass); color: var(--label); }
+.dr-btn-ghost { border-color: var(--field-line); background: var(--glass); color: var(--label); }
 .dr-btn-ghost:hover { box-shadow: 4px 4px 0 var(--ch); }
-.dr-day .dr-btn-ghost { border-color: var(--field-line); }
 
-/* Over the night, the site header turns to dark glass and the browser's edges match, so no light strip sits above the story */
-.site-head-night {
-    --night: #0B0A10;
-    --ch: var(--tone, var(--yellow));
-    --header-bg: rgba(11, 10, 16, .82);
-    --ink: #F5F3F8;
-    --muted: #A39DB0;
-    --line: rgba(255, 255, 255, .12);
-    --card: rgba(255, 255, 255, .1);
-    color-scheme: dark;
-}
-html:has(.site-head-night) { background: #0B0A10; }
-@media (max-width: 400px) { .site-head-night:has(.dr-btn) .brand-name { display: none; } }
+/* The site header offers a ticket in the event's colour while tickets are on sale */
+.site-head-event { --night: #0B0A10; --ch: var(--tone, var(--yellow)); }
+@media (max-width: 400px) { .site-head-event:has(.dr-btn) .brand-name { display: none; } }
 
-/* Hero: light beams, a spotlight that follows the pointer, and type that moves to the beat */
+/* Hero: a white wall lit like a dance floor, with stage beams, drifting mirror-ball flecks, a spotlight that follows the pointer, and type that moves to the beat */
 .dr-hero { position: relative; isolation: isolate; overflow: hidden; min-height: min(100svh, 920px); display: grid; align-items: center; padding-block: clamp(32px, 7vh, 96px); }
 .dr-beams { position: absolute; inset: -20% -10% auto; height: 140%; z-index: -2; pointer-events: none; }
 .dr-beams span {
@@ -1415,42 +1389,55 @@ html:has(.site-head-night) { background: #0B0A10; }
     background: linear-gradient(to bottom, color-mix(in srgb, var(--b) 55%, transparent), transparent 75%);
     clip-path: polygon(48% 0, 52% 0, 100% 100%, 0 100%);
     filter: blur(18px);
-    opacity: .55;
-    mix-blend-mode: screen;
+    opacity: .75;
+    mix-blend-mode: multiply;
 }
-.dr-beams span:nth-child(1) { --b: #FF6B57; transform: translateX(-50%) rotate(28deg); }
-.dr-beams span:nth-child(2) { --b: #39E58C; transform: translateX(-50%) rotate(0deg); }
-.dr-beams span:nth-child(3) { --b: #4FB6FF; transform: translateX(-50%) rotate(-28deg); }
+.dr-beams span:nth-child(1) { --b: #FF4FB8; transform: translateX(-50%) rotate(28deg); }
+.dr-beams span:nth-child(2) { --b: #FFD23D; transform: translateX(-50%) rotate(0deg); }
+.dr-beams span:nth-child(3) { --b: #4FC8FF; transform: translateX(-50%) rotate(-28deg); }
 .dr-spot {
     position: absolute;
     inset: 0;
     z-index: -1;
     pointer-events: none;
     background:
-        radial-gradient(40vmax 40vmax at var(--mx) var(--my), color-mix(in srgb, var(--ch) 22%, transparent), transparent 60%),
+        radial-gradient(40vmax 40vmax at var(--mx) var(--my), color-mix(in srgb, var(--ch) 28%, transparent), transparent 60%),
         radial-gradient(circle at 50% 120%, rgba(254, 178, 3, .14), transparent 55%);
     transition: background .5s;
 }
+/* Mirror-ball flecks, scattered on a big disc that slowly turns so they sweep across the wall in arcs */
 .dr-hero::after {
     content: "";
     position: absolute;
-    inset: 0;
+    top: 40%;
+    left: 50%;
     z-index: -1;
+    width: 130vmax;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    rotate: 17deg;
     pointer-events: none;
-    background-image: radial-gradient(rgba(255, 255, 255, .5) 1px, transparent 1.5px);
-    background-size: 26px 26px;
-    -webkit-mask-image: radial-gradient(ellipse at 50% 60%, #000 10%, transparent 70%);
-    mask-image: radial-gradient(ellipse at 50% 60%, #000 10%, transparent 70%);
-    opacity: .16;
+    background-image:
+        radial-gradient(circle, #FF2E8A 0 4px, transparent 5px),
+        radial-gradient(circle, #8B3DFF 0 3px, transparent 4px),
+        radial-gradient(circle, #FEB203 0 5px, transparent 6px),
+        radial-gradient(circle, #4FB6FF 0 3px, transparent 4px),
+        radial-gradient(circle, #39E58C 0 4px, transparent 5px),
+        radial-gradient(circle, #FF6B57 0 3px, transparent 4px);
+    background-size: 233px 197px, 173px 251px, 311px 149px, 139px 283px, 271px 223px, 199px 167px;
+    background-position: 0 0, 61px 97px, 127px 31px, 41px 173px, 191px 59px, 89px 131px;
+    -webkit-mask-image: radial-gradient(circle, transparent 22vmax, #000 38vmax);
+    mask-image: radial-gradient(circle, transparent 22vmax, #000 38vmax);
+    opacity: .7;
 }
 /* Sized by the screen's height as well as its width, so a short laptop screen still shows the dates, buttons and crowd */
 .dr-hero-inner { display: grid; justify-items: center; text-align: center; gap: clamp(14px, 2.6vh, 24px); }
-/* The crowd from the flyer rises out of the dark under the beams, LED headsets glowing */
+/* The crowd from the flyer is a window into the night, the one place the LED headsets really glow */
 .dr-hero:has(.dr-hero-crowd) { grid-template-rows: 1fr auto; padding-bottom: 0; }
-.dr-hero-crowd { position: relative; z-index: -1; margin: clamp(-36px, -2.5vw, -12px) 0 0; pointer-events: none; }
-.dr-hero-crowd img { display: block; width: 100%; height: clamp(150px, min(26vw, 32vh), 360px); object-fit: cover; object-position: 50% 20%; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 38%, #000 80%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 38%, #000 80%, transparent); filter: saturate(1.15) contrast(1.05); }
-/* Two LED earcups from the flyer float beside the title */
-.dr-headphone { position: absolute; z-index: -1; width: clamp(90px, min(13vw, 20vh), 200px); height: auto; mix-blend-mode: screen; filter: drop-shadow(0 0 24px rgba(160, 80, 255, .7)); pointer-events: none; }
+.dr-hero-crowd { position: relative; z-index: 0; margin: clamp(12px, 2.5vh, 24px) 0 0; pointer-events: none; }
+.dr-hero-crowd img { display: block; width: 100%; height: clamp(150px, min(26vw, 32vh), 360px); object-fit: cover; object-position: 50% 20%; filter: saturate(1.15) contrast(1.05); }
+/* Two LED earcups from the flyer float beside the title like stickers on the wall */
+.dr-headphone { position: absolute; z-index: 0; width: clamp(90px, min(13vw, 20vh), 200px); height: auto; border-radius: 50%; background: #120E1E; box-shadow: 0 16px 40px -12px rgba(139, 61, 255, .65); pointer-events: none; }
 .dr-headphone-l { top: 16%; left: max(2%, calc(50% - 640px)); rotate: -16deg; }
 .dr-headphone-r { top: 30%; right: max(2%, calc(50% - 640px)); rotate: 14deg; width: clamp(70px, min(10vw, 16vh), 160px); }
 @media (prefers-reduced-motion: no-preference) {
@@ -1463,23 +1450,23 @@ html:has(.site-head-night) { background: #0B0A10; }
     .dr-headphone-l { top: 3%; left: -26px; }
     .dr-headphone-r { top: 11%; right: -26px; width: 64px; }
 }
-.dr-kicker { display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: .55em 1em; border: 1px solid var(--glass-line); border-radius: 999px; background: var(--glass); font: 400 .7rem/1.2 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.dr-kicker { display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: .55em 1em; border: 1px solid var(--glass-line); border-radius: 999px; background: var(--surface); font: 400 .7rem/1.2 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
 .dr-live { width: 8px; height: 8px; border-radius: 50%; background: var(--ch); box-shadow: 0 0 0 0 var(--ch); }
-.dr-title { display: grid; justify-items: center; font-family: var(--display); font-weight: 900; font-stretch: 120%; font-size: clamp(2.8rem, min(12vw, 12.5vh), 10rem); line-height: .84; letter-spacing: -.03em; text-transform: uppercase; color: #fff; }
+.dr-title { display: grid; justify-items: center; font-family: var(--display); font-weight: 900; font-stretch: 120%; font-size: clamp(2.8rem, min(12vw, 12.5vh), 10rem); line-height: .84; letter-spacing: -.03em; text-transform: uppercase; color: var(--label); }
 .dr-title-line { display: block; }
-.dr-outline { color: transparent; -webkit-text-stroke: 2px rgba(255, 255, 255, .85); font-style: italic; font-weight: 800; }
-.dr-beat { display: flex; color: var(--ch); text-shadow: 0 0 18px color-mix(in srgb, var(--ch) 80%, transparent), 0 0 60px color-mix(in srgb, var(--ch) 45%, transparent); transition: color .5s, text-shadow .5s; }
+.dr-outline { color: transparent; -webkit-text-stroke: 2px var(--label); font-style: italic; font-weight: 800; }
+.dr-beat { display: flex; gap: .03em; color: var(--ch); text-shadow: .025em .025em 0 #FF2E8A, .05em .05em 0 #8B3DFF, .075em .075em 0 var(--label); transition: color .5s; }
 .dr-beat span { display: inline-block; }
-.dr-dot { color: var(--yellow); }
+.dr-dot { color: var(--yellow); -webkit-text-stroke: 2px var(--label); paint-order: stroke fill; }
 .dr-eq { display: flex; align-items: flex-end; gap: clamp(3px, .6vw, 6px); height: clamp(26px, 4.5vh, 46px); }
 /* On short, wide screens (most laptops) keep the ticket button in view: drop the meter and let the intro run wider */
 @media (max-height: 640px) and (min-width: 700px) {
     .dr-hero .dr-eq { display: none; }
     .dr-hero .dr-lede { max-width: 46em; font-size: 1.02rem; }
 }
-.dr-eq span { width: clamp(4px, .7vw, 7px); height: calc(var(--h) * 100%); border-radius: 3px; background: linear-gradient(to top, var(--ch), color-mix(in srgb, var(--ch) 30%, #fff)); transform-origin: bottom; box-shadow: 0 0 10px color-mix(in srgb, var(--ch) 60%, transparent); transition: background .5s; }
-.dr-lede { margin: 0; max-width: 34em; color: #D9D4E3; font-size: clamp(1.05rem, 1.6vw, 1.25rem); }
-.dr-facts { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin: 0; padding: .65em 1.15em; border: 1px solid var(--glass-line); border-radius: 999px; background: var(--glass); list-style: none; font: 400 .7rem/1.3 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.dr-eq span { width: clamp(4px, .7vw, 7px); height: calc(var(--h) * 100%); border-radius: 3px; background: var(--ch); transform-origin: bottom; transition: background .5s; }
+.dr-lede { margin: 0; max-width: 34em; color: var(--label-2); font-size: clamp(1.05rem, 1.6vw, 1.25rem); }
+.dr-facts { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin: 0; padding: .65em 1.15em; border: 1px solid var(--glass-line); border-radius: 999px; background: var(--surface); list-style: none; font: 400 .7rem/1.3 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
 .dr-facts li { display: inline-flex; align-items: center; gap: 8px; }
 .dr-facts li + li::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--ch); }
 @media (prefers-reduced-motion: no-preference) {
@@ -1493,11 +1480,16 @@ html:has(.site-head-night) { background: #0B0A10; }
     .dr-beat span { animation: dr-bounce .5s cubic-bezier(.3, 0, .3, 1) infinite alternate; animation-delay: calc(var(--i) * -.1s); }
     .dr-eq span { animation: dr-eq calc(.45s + var(--h) * .5s) ease-in-out infinite alternate; animation-delay: calc(var(--b) * -.07s); }
 }
+@keyframes dr-flecks { to { rotate: 377deg; } }
 @keyframes dr-sweep { from { rotate: -14deg; } to { rotate: 14deg; } }
 @keyframes dr-ping { to { box-shadow: 0 0 0 10px transparent; } }
 @keyframes dr-drop { from { opacity: 0; transform: translateY(.4em) scaleY(1.4); filter: blur(10px); font-stretch: 50%; } }
 @keyframes dr-bounce { from { font-stretch: 150%; font-weight: 900; transform: translateY(0); } to { font-stretch: 85%; font-weight: 700; transform: translateY(-.05em); } }
 @keyframes dr-eq { from { transform: scaleY(.2); } to { transform: scaleY(1); } }
+/* Turning the flecks takes real graphics memory, so phones keep them still */
+@media (prefers-reduced-motion: no-preference) and (min-width: 761px) {
+    .dr-hero::after { animation: dr-flecks 140s linear infinite; }
+}
 
 /* Ticker: two skewed rows sliding opposite ways */
 .dr-ticker { position: relative; z-index: 1; display: grid; gap: 0; padding-block: 24px; transform: rotate(-2deg); margin-block: -10px; }
@@ -1518,18 +1510,18 @@ html:has(.site-head-night) { background: #0B0A10; }
 
 /* How the night goes */
 .dr-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
-.dr-step { position: relative; display: grid; align-content: start; gap: 12px; padding: 26px 22px 28px; border: 1px solid var(--glass-line); border-radius: var(--r); background: linear-gradient(160deg, var(--glass), transparent 60%); overflow: hidden; transition: border-color .3s, transform .3s; }
-.dr-step::before { content: ""; position: absolute; inset: auto -30% -60% auto; width: 80%; aspect-ratio: 1; border-radius: 50%; background: var(--ch); filter: blur(60px); opacity: 0; transition: opacity .4s, background .5s; }
-.dr-step:hover { border-color: var(--ch); transform: translateY(-4px); }
+.dr-step { position: relative; display: grid; align-content: start; gap: 12px; padding: 26px 22px 28px; border: 1px solid var(--glass-line); border-radius: var(--r); background: var(--surface); overflow: hidden; transition: border-color .3s, transform .3s; }
+.dr-step::before { content: ""; position: absolute; inset: auto -30% -60% auto; width: 80%; aspect-ratio: 1; border-radius: 50%; background: var(--tone); filter: blur(60px); opacity: 0; transition: opacity .4s; }
+.dr-step:hover { border-color: var(--tone); transform: translateY(-4px); }
 .dr-step:hover::before { opacity: .35; }
-.dr-step-no { font: 900 3.4rem/1 var(--display); font-stretch: 140%; color: transparent; -webkit-text-stroke: 1.5px var(--ch); transition: -webkit-text-stroke-color .5s; }
-.dr-step h3 { font-size: 1.35rem; color: #fff; }
+.dr-step-no { font: 900 3.4rem/1 var(--display); font-stretch: 140%; color: var(--tone); text-shadow: .04em .04em 0 var(--label); }
+.dr-step h3 { font-size: 1.35rem; color: var(--label); }
 .dr-step p { position: relative; margin: 0; color: var(--dim); font-size: .98rem; }
 @media (max-width: 900px) { .dr-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .dr-steps { grid-template-columns: 1fr; } }
 
-/* Three channels and the crowd of glowing headsets */
-.dr-channels { background: linear-gradient(to bottom, var(--night), var(--night-2) 30%, var(--night)); }
+/* Three channels and the crowd of headsets. The room itself takes on the colour of the channel you tune to */
+.dr-channels { background-color: color-mix(in srgb, var(--ch) 14%, var(--page)); transition: background-color .5s; }
 .dr-channels-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 80px); align-items: center; }
 .dr-channels-copy { display: grid; gap: 18px; }
 .dr-tuner { display: grid; gap: 10px; margin-top: 8px; }
@@ -1542,8 +1534,8 @@ html:has(.site-head-night) { background: #0B0A10; }
     padding: 14px 18px;
     border: 1px solid var(--glass-line);
     border-radius: 16px;
-    background: var(--glass);
-    color: #fff;
+    background: var(--surface);
+    color: var(--label);
     font: inherit;
     text-align: left;
     cursor: pointer;
@@ -1551,13 +1543,14 @@ html:has(.site-head-night) { background: #0B0A10; }
 }
 .dr-tune:hover { transform: translateX(4px); border-color: color-mix(in srgb, var(--tone) 60%, transparent); }
 .dr-tune[aria-pressed="true"] { border-color: var(--tone); box-shadow: 0 0 0 1px var(--tone), 0 0 36px color-mix(in srgb, var(--tone) 35%, transparent); }
-.dr-tune-no { grid-area: no; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--tone); color: var(--tone); font: 600 .7rem/1 var(--mono); letter-spacing: .08em; }
-.dr-tune[aria-pressed="true"] .dr-tune-no { background: var(--tone); color: var(--night); box-shadow: 0 0 18px var(--tone); }
+.dr-tune-no { grid-area: no; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--tone); color: var(--tone-ink); font: 600 .7rem/1 var(--mono); letter-spacing: .08em; }
+.dr-tune[aria-pressed="true"] .dr-tune-no { background: var(--tone); color: var(--night); }
 .dr-tune-name { grid-area: name; font-weight: 600; font-size: 1.12rem; }
 .dr-tune-genre { grid-area: genre; color: var(--dim); font: 400 .7rem/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .dr-now { margin: 0; color: var(--dim); font: 400 .72rem/1.3 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
-.dr-now strong { color: var(--ch); font-weight: 600; transition: color .5s; }
-.dr-crowd { display: grid; grid-template-columns: repeat(8, 1fr); gap: clamp(10px, 2vw, 20px); padding: clamp(20px, 3vw, 36px); border: 1px solid var(--glass-line); border-radius: calc(var(--r) + 8px); background: radial-gradient(circle at 50% 100%, color-mix(in srgb, var(--ch) 18%, transparent), transparent 70%), var(--glass); transition: background .5s; }
+.dr-now strong { color: var(--label); font-weight: 700; transition: color .5s; }
+/* The crowd of headsets is a window into the night, because LEDs only glow against the dark */
+.dr-crowd { display: grid; grid-template-columns: repeat(8, 1fr); gap: clamp(10px, 2vw, 20px); padding: clamp(20px, 3vw, 36px); border-radius: calc(var(--r) + 8px); background: #120E1E; box-shadow: 0 24px 60px -36px rgba(28, 25, 23, .5); }
 .dr-headset { position: relative; aspect-ratio: 1; border: 3px solid var(--tone); border-bottom-color: transparent; border-radius: 50% 50% 0 0 / 60% 60% 0 0; opacity: .3; transform: scale(.8); transition: opacity .4s, transform .4s, box-shadow .4s; }
 .dr-headset::before, .dr-headset::after { content: ""; position: absolute; bottom: -12%; width: 34%; height: 46%; border-radius: 40%; background: var(--tone); }
 .dr-headset::before { left: -14%; }
