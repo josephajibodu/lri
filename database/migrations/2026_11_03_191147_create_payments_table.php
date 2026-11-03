@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('method')->nullable();
             $table->string('status')->default('open');
             $table->string('failure_reason')->nullable();
+            $table->string('failure_message')->nullable();
             $table->unsignedBigInteger('amount');
             $table->char('currency', 3);
             $table->unsignedBigInteger('fee')->nullable();

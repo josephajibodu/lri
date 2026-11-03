@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'method',
     'status',
     'failure_reason',
+    'failure_message',
     'amount',
     'currency',
     'fee',
