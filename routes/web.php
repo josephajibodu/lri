@@ -11,6 +11,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaceSettersController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SeoController;
+use App\Http\Middleware\EnsureBarracksRegistrationIsOpen;
 use App\Http\Middleware\IdentifyVisitor;
 use Illuminate\Support\Facades\Route;
 
@@ -28,17 +29,19 @@ Route::post('/birthdays', [BirthdayController::class, 'store'])
     ->name('birthdays.store');
 Route::get('/birthdays', fn () => redirect('/admin/birthdays'));
 
-Route::get('/akobo/barracks', [BarracksRegistrationController::class, 'create'])->name('barracks.create');
-Route::post('/akobo/barracks', [BarracksRegistrationController::class, 'store'])
-    ->middleware('throttle:10,1')
-    ->name('barracks.store');
-Route::post('/akobo/barracks/passport', [BarracksRegistrationController::class, 'uploadPassport'])
-    ->middleware('throttle:20,1')
-    ->name('barracks.passport');
-Route::get('/akobo/barracks/registrations', fn () => redirect('/admin/barracks-registrations'));
-Route::get('/akobo/barracks/registrations/print/{registration?}', [BarracksRegistrationController::class, 'print'])
-    ->middleware('auth')
-    ->name('barracks.print');
+Route::middleware(EnsureBarracksRegistrationIsOpen::class)->group(function () {
+    Route::get('/akobo/barracks', [BarracksRegistrationController::class, 'create'])->name('barracks.create');
+    Route::post('/akobo/barracks', [BarracksRegistrationController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('barracks.store');
+    Route::post('/akobo/barracks/passport', [BarracksRegistrationController::class, 'uploadPassport'])
+        ->middleware('throttle:20,1')
+        ->name('barracks.passport');
+    Route::get('/akobo/barracks/registrations', fn () => redirect('/admin/barracks-registrations'));
+    Route::get('/akobo/barracks/registrations/print/{registration?}', [BarracksRegistrationController::class, 'print'])
+        ->middleware('auth')
+        ->name('barracks.print');
+});
 
 Route::post('/disco-run/tickets', [OrderController::class, 'store'])
     ->middleware(['throttle:10,1', IdentifyVisitor::class])

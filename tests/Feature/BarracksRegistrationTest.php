@@ -12,6 +12,23 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Storage::fake('local');
+    config(['lri.barracks_registration.open' => true]);
+});
+
+test('while the registration is switched off its pages are not found and the admin hides it', function () {
+    config(['lri.barracks_registration.open' => false]);
+    $registration = BarracksRegistration::factory()->create();
+
+    $this->get(route('barracks.create'))->assertNotFound();
+    $this->post(route('barracks.store'), validBarracksRegistrationData())->assertNotFound();
+    $this->post(route('barracks.passport'), ['passport' => UploadedFile::fake()->image('passport.jpg')])->assertNotFound();
+
+    $this->actingAs(User::factory()->create());
+    $this->get(route('barracks.print', $registration))->assertNotFound();
+    $this->get('/admin/barracks-registrations')->assertForbidden();
+    $this->get('/admin')->assertOk()->assertDontSeeText('Barracks permits');
+
+    expect(BarracksRegistration::count())->toBe(1);
 });
 
 /**

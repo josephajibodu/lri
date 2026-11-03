@@ -76,9 +76,14 @@ return [
     | so they are printed from here rather than asked on the form. The fee
     | and deadline are shown on the form; set the deadline to null to hide it.
     |
+    | The registration is switched off for now: its pages answer "not found"
+    | and it is hidden from the admin. Saved registrations are kept. Set
+    | BARRACKS_REGISTRATION_OPEN=true to bring it back.
+    |
     */
 
     'barracks_registration' => [
+        'open' => (bool) env('BARRACKS_REGISTRATION_OPEN', false),
         'cantonment' => 'Adekunle Fajuyi Cantonment',
         'fee' => '₦2,000',
         'deadline' => 'Friday',

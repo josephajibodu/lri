@@ -38,6 +38,14 @@ class BarracksRegistrationResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'full_name';
 
+    /**
+     * Hidden from the admin while the registration is switched off in config/lri.php.
+     */
+    public static function canAccess(): bool
+    {
+        return (bool) config('lri.barracks_registration.open');
+    }
+
     public static function getNavigationBadge(): ?string
     {
         return (string) BarracksRegistration::query()->count();
