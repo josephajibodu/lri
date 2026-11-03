@@ -168,6 +168,15 @@ test('a way to pay can be featured from the list', function () {
     expect($card->fresh()->is_featured)->toBeTrue();
 });
 
+test('a webhook shows what the provider sent', function () {
+    $this->actingAs($this->admin);
+    $call = WebhookCall::factory()->create(['type' => 'customer.created', 'payload' => ['id' => 'cus_123', 'type' => 'customer.created']]);
+
+    Livewire::test(ManageWebhookCalls::class)
+        ->mountAction(TestAction::make('view')->table($call))
+        ->assertMountedActionModalSee('cus_123');
+});
+
 test('a failed webhook can be handled again from the admin', function () {
     $this->actingAs($this->admin);
     $call = WebhookCall::factory()->create(['type' => 'customer.created', 'payload' => ['id' => 'x', 'type' => 'customer.created'], 'failed_at' => now(), 'error' => 'Boom']);
