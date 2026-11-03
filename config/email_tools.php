@@ -19,8 +19,8 @@ return [
 
         /*
         | Mailchimp (mailchimp.com/developer). The audience id is under
-        | Audience > Settings > Audience name and defaults. After setting
-        | these, run php artisan email-tools:prepare once.
+        | Audience > More options > Audience settings. After setting these,
+        | run php artisan email-tools:prepare once.
         */
 
         'mailchimp' => [

@@ -24,12 +24,13 @@ The website for Let's Run Ibadan (LRI), a running community of runners, joggers 
 - Blade layouts, components and partials
 - Vite builds `resources/css/app.css` and `resources/js/app.js`. Tailwind CSS 4 is imported, but the page styles are plain CSS in `app.css`
 - Vanilla JavaScript for the countdown, stickers, pace slider, route map, kit check and footer animation
+- [Filament](https://filamentphp.com) for the admin, [Bachs](https://docs.bachs.io) for ticket payments and [Mailchimp](https://mailchimp.com) for follow-up emails
 - [Pest](https://pestphp.com) for tests and [Pint](https://laravel.com/docs/pint) for code style
 - Anybody, Instrument Sans and Martian Mono, self-hosted in `resources/fonts` (Latin and Latin Extended subsets from Google Fonts) with their variable width axis, which the stretch animations need. The layout preloads Instrument Sans, the font of the headline and body text
 
 ## Getting started
 
-You need PHP 8.4, Composer, Node.js and npm.
+You need PHP 8.4, Composer, Node.js, npm and MySQL. Create the database named by `DB_DATABASE` in `.env.example` first.
 
 ```bash
 git clone https://github.com/josephajibodu/lri.git
@@ -122,6 +123,115 @@ The colours are CSS custom properties at the top of the page styles in `resource
 
 The logo is an SVG redraw of the LRI logo in `resources/views/components/logo.blade.php` (full logo), `resources/views/components/logo-mark.blade.php` (the LRI mark) and `public/favicon.svg`. Replace them with the original artwork when it is available.
 
+## Ticket payments
+
+Silent Disco Run tickets are sold on the site, paid through [Bachs](https://docs.bachs.io). Organisers manage sales in the admin at `/admin`.
+
+### How a purchase works
+
+1. The buyer fills in the ticket form and picks a way to pay. Their tickets are held for 60 minutes (`PAYMENTS_CHECKOUT_EXPIRES_IN`).
+2. Bachs's checkout opens as a pop-up over the page. If the pop-up can't load, the buyer goes to Bachs's own payment page instead.
+3. Bachs confirms the payment with a webhook, a notification it sends to our server. As a backup, the order page asks Bachs directly while the buyer waits, and `payments:reconcile` asks every 5 minutes.
+4. Once it's paid, the buyer moves on to their receipt at `/receipts/{code}`, an address they can always come back to, and their tickets are emailed from the queue.
+5. An order that isn't paid is marked abandoned about 10 minutes after its hold runs out, and its tickets go back on sale. The buyer can still pay from their order page while tickets are left.
+
+### Try it locally
+
+There's no fake payment mode. Local purchases go through the Bachs sandbox, so no real money moves.
+
+1. Get sandbox keys from the Bachs developer portal and add them to `.env`. A key starting `sk_sandbox_` talks to the sandbox, and one starting `sk_live_` takes real money, so never use a live key locally.
+
+   ```bash
+   BACHS_SECRET_KEY=sk_sandbox_...
+   BACHS_WEBHOOK_SECRET=whsec_...
+   ```
+
+2. With Herd, set `APP_URL=https://lri.test`. Links made in the background are signed for the exact address, so `http` links stop working when Herd moves the browser to `https`.
+3. Add the ticket and the ways to pay, match them to what's switched on at Bachs, and create an admin login:
+
+   ```bash
+   php artisan db:seed --class=TicketTypeSeeder
+   php artisan db:seed --class=PaymentChannelSeeder
+   php artisan payments:sync-channels
+   php artisan make:filament-user
+   ```
+
+4. Run `composer run dev`, which includes the queue worker that sends ticket emails. It doesn't run the scheduler, so run `php artisan schedule:work` as well if you want the 5-minute checks. Emails go to `storage/logs/laravel.log` until a mail service is set up.
+5. Buy a ticket at `/disco-run`, then look at the order in `/admin`.
+
+Bachs can't reach `lri.test`, so webhooks don't arrive locally, but purchases are still confirmed by the order page asking Bachs. To try real webhooks, run `herd share` to get a temporary public address and add it as a webhook destination in the Bachs portal.
+
+### Bachs webhooks
+
+Add `https://<your-domain>/webhooks/payments/bachs` as a webhook destination in the Bachs developer portal, and put its signing secret in `BACHS_WEBHOOK_SECRET`. A webhook without a valid signature is refused. The site acts on these events and stores any others without acting on them:
+
+| Event | What it does |
+| --- | --- |
+| `collection.succeeded` | Pays the order, issues its tickets and emails them |
+| `checkout.completed` | Pays the order, if Bachs says it's paid. It can arrive before or after `collection.succeeded`, and an order is only fulfilled once |
+| `collection.failed` | Records the failed attempt and why it failed |
+| `collection.underpaid` | Holds the order back without issuing tickets |
+| `checkout.expired` | Records that the checkout closed |
+
+### The admin
+
+Sign in at `/admin` with a login made by `php artisan make:filament-user`.
+
+| Section | What it's for |
+| --- | --- |
+| Dashboard | Sales, tickets per day, the checkout funnel, how each way to pay performs and where buyers come from |
+| Orders | Search and download orders, see each buyer's payment attempts and journey, check a payment with Bachs and email tickets again |
+| Ticket types | Prices in naira and the ticket limit, which is the number of headsets |
+| Ways to pay | Switch methods on or off, feature them at checkout and reorder them |
+| System > Webhooks | What Bachs sent, with the option to handle a failed one again |
+| System > Email tool | What Mailchimp was told, with the option to send a failed one again |
+| `/log-viewer` | The application logs |
+
+### Commands
+
+| Command | What it does |
+| --- | --- |
+| `php artisan payments:sync-channels` | Matches the ways to pay to what's switched on at Bachs |
+| `php artisan payments:reconcile` | Asks Bachs about open payments, in case a webhook went missing. Scheduled every 5 minutes |
+| `php artisan orders:abandon-unpaid` | Marks orders abandoned once their hold has run out. Scheduled every 5 minutes |
+| `php artisan payments:replay-webhook {id}` | Handles a stored webhook again. The id is its row in `webhook_calls` |
+| `php artisan email-tools:prepare` | Adds the audience fields Mailchimp needs. Safe to run again |
+
+### Follow-up emails with Mailchimp
+
+The site tells Mailchimp when a buyer starts, abandons or pays for a checkout, and the emails themselves are built in Mailchimp. Nothing is sent until `EMAIL_TOOL` is set, and only buyers who ticked the consent box on the ticket form are ever sent.
+
+1. In Mailchimp, create an API key (profile icon > Extras > API keys) and copy your audience ID (Audience > More options > Audience settings).
+2. Add them to `.env`:
+
+   ```bash
+   EMAIL_TOOL=mailchimp
+   MAILCHIMP_API_KEY=...
+   MAILCHIMP_AUDIENCE_ID=...
+   ```
+
+3. Add the audience fields:
+
+   ```bash
+   php artisan email-tools:prepare
+   ```
+
+4. Build a Mailchimp automation flow that starts when the tag `checkout-abandoned` is added, and link its button to `*|RESUMEURL|*`.
+5. Make the flow stop for anyone who gets the tag `ticket-paid`, so paid buyers aren't chased. Check how your Mailchimp plan handles this.
+6. Try it with your own email address before turning it on for buyers, then check **System > Email tool** in the admin.
+
+Each update sets the contact's name, email and order number, and one of these tags, taking off the other two:
+
+| Tag | Added when | Resume link (`RESUMEURL`) |
+| --- | --- | --- |
+| `checkout-started` | The buyer submits the ticket form | Set |
+| `checkout-abandoned` | The order is abandoned | Set |
+| `ticket-paid` | The order is paid | Cleared |
+
+The resume link opens the buyer's order page, where their details are saved and they can pick a way to pay. Phone numbers aren't sent. Someone already in the audience keeps their subscription status, so a buyer who unsubscribed isn't signed back up.
+
+Sending runs on the queue, so Mailchimp being slow or down can't hold up checkout. Outages are retried for about 80 minutes. A refusal fails straight away and shows Mailchimp's reason in the admin, where you can send it again.
+
 ## Testing
 
 ```bash
@@ -129,7 +239,7 @@ php artisan test --compact
 vendor/bin/pint --dirty
 ```
 
-`tests/Feature/HomePageTest.php` checks that the page shows the next run and the links from `config/lri.php`. Tests run without built assets because `tests/TestCase.php` turns Vite off.
+`tests/Feature/HomePageTest.php` checks that the page shows the next run and the links from `config/lri.php`. Tests run without built assets because `tests/TestCase.php` turns Vite off. They never reach Bachs or Mailchimp: `phpunit.xml` blanks the keys, and the tests fake both APIs.
 
 ## Deployment
 
@@ -141,9 +251,41 @@ php artisan migrate --force
 npm ci
 npm run build
 php artisan optimize
+php artisan queue:restart
 ```
 
 In production, set `APP_ENV=production`, `APP_DEBUG=false` and `APP_URL` to the site's address in `.env`.
+
+### Going live with ticket sales
+
+These only need doing once. `TICKET_PAYMENTS_PLAN.md` has the full checklist.
+
+1. Set the live details in `.env`: the MySQL `DB_*` settings, `BACHS_SECRET_KEY` (`sk_live_...`) and `BACHS_WEBHOOK_SECRET`.
+2. Choose a mail service and set `MAIL_MAILER` and its settings. Until then, ticket emails only go to the log file and buyers get nothing.
+3. Keep a queue worker running. It sends the ticket emails and the Mailchimp updates:
+
+   ```bash
+   php artisan queue:work
+   ```
+
+4. Run the scheduler every minute, which runs the 5-minute payment checks:
+
+   ```bash
+   * * * * * cd /path/to/lri && php artisan schedule:run >> /dev/null 2>&1
+   ```
+
+5. Add the [webhook address](#bachs-webhooks) in the Bachs developer portal.
+6. Add the ticket and the ways to pay, then create the first organiser:
+
+   ```bash
+   php artisan db:seed --class=TicketTypeSeeder --force
+   php artisan db:seed --class=PaymentChannelSeeder --force
+   php artisan payments:sync-channels
+   php artisan make:filament-user
+   ```
+
+7. Set the ticket limit (the number of headsets) under **Ticket types** in the admin.
+8. If you're using follow-up emails, [connect Mailchimp](#follow-up-emails-with-mailchimp).
 
 ## Community
 
