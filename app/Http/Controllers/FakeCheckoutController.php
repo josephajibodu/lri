@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Checkout\HandleWebhookCall;
 use App\Enums\PaymentFailureReason;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -37,9 +38,10 @@ class FakeCheckoutController extends Controller
     }
 
     /**
-     * Settle the fake checkout the way the buyer chose, then send them back to the site as the provider would.
+     * Settle the fake checkout the way the buyer chose, deliver the webhook the provider would send, then send
+     * the buyer back to the site.
      */
-    public function settle(Request $request, string $checkoutId): RedirectResponse
+    public function settle(Request $request, string $checkoutId, HandleWebhookCall $handleWebhookCall): RedirectResponse
     {
         $checkout = $this->checkout($checkoutId);
         $validated = $request->validate([
@@ -51,12 +53,14 @@ class FakeCheckoutController extends Controller
             return redirect()->away($this->withCheckoutId($checkout['cancel_url'], $checkoutId));
         }
 
-        $this->provider()->simulate(
+        $webhook = $this->provider()->simulate(
             $checkoutId,
             $validated['outcome'] === 'paid' ? PaymentStatus::Succeeded : PaymentStatus::Failed,
             PaymentMethod::tryFrom($checkout['methods'][0] ?? '') ?? PaymentMethod::BankTransfer,
             PaymentFailureReason::tryFrom($validated['reason'] ?? ''),
         );
+
+        $handleWebhookCall->handle($handleWebhookCall->store('fake', $webhook));
 
         return redirect()->away($this->withCheckoutId($checkout['success_url'], $checkoutId));
     }

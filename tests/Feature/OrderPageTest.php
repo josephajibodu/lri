@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentChannel;
 use App\Models\TicketType;
+use App\Models\WebhookCall;
 use App\Payments\PaymentManager;
 use App\Payments\Providers\FakeProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -157,8 +158,9 @@ test('the fake checkout pays and returns the buyer to their order', function () 
 
     $response = $this->post('/payments/fake/'.$payment->provider_checkout_id, ['outcome' => 'paid']);
 
-    expect($response->headers->get('Location'))->toContain('/orders/'.$order->reference)->toContain('checkout_id=');
-    expect(fakeCheckouts()->fetchCheckout($payment->provider_checkout_id)->status)->toBe(PaymentStatus::Succeeded);
+    expect($response->headers->get('Location'))->toContain('/orders/'.$order->reference)->toContain('checkout_id=')
+        ->and($order->fresh()->status)->toBe(OrderStatus::Paid)
+        ->and(WebhookCall::query()->where('provider', 'fake')->sole()->processed_at)->not->toBeNull();
 });
 
 test('leaving the fake checkout returns the buyer to their order without paying', function () {

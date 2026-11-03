@@ -8,6 +8,7 @@ use App\Http\Controllers\FoundersController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaceSettersController;
+use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
 
@@ -51,6 +52,11 @@ Route::middleware('signed:checkout_id')->group(function () {
         ->middleware('throttle:10,1')
         ->name('orders.pay');
 });
+
+Route::post('/webhooks/payments/{provider}', PaymentWebhookController::class)
+    ->whereIn('provider', ['bachs', 'fake'])
+    ->middleware('throttle:240,1')
+    ->name('webhooks.payments');
 
 if (! app()->isProduction()) {
     Route::get('/payments/fake/{checkoutId}', [FakeCheckoutController::class, 'show'])->name('payments.fake.show');

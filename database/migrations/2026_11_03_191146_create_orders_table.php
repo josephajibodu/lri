@@ -28,6 +28,7 @@ return new class extends Migration
             $table->json('attribution')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamp('paid_at')->nullable();
+            $table->timestamp('tickets_emailed_at')->nullable();
             $table->timestamp('abandoned_at')->nullable();
             $table->timestamp('refunded_at')->nullable();
             $table->timestamps();

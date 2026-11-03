@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\URL;
     'attribution',
     'expires_at',
     'paid_at',
+    'tickets_emailed_at',
     'abandoned_at',
     'refunded_at',
 ])]
@@ -81,6 +82,7 @@ class Order extends Model
             'attribution' => 'array',
             'expires_at' => 'datetime',
             'paid_at' => 'datetime',
+            'tickets_emailed_at' => 'datetime',
             'abandoned_at' => 'datetime',
             'refunded_at' => 'datetime',
         ];

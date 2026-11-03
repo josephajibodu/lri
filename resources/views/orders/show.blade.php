@@ -23,7 +23,14 @@
                                     </li>
                                 @endforeach
                             </ul>
-                            <p class="dr-stub-note">Keep this page. Its link is your proof of purchase.</p>
+                            <p class="dr-stub-note">
+                                @if ($order->tickets_emailed_at)
+                                    We’ve emailed your tickets to {{ $order->buyer_email }}.
+                                @else
+                                    Your tickets are on their way to {{ $order->buyer_email }}.
+                                @endif
+                                Keep this page too: its link is your proof of purchase.
+                            </p>
                             @break
 
                         @case('waiting')

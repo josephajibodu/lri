@@ -20,3 +20,6 @@ Artisan::command('barracks:prune-passports', function () {
 })->purpose('Delete barracks passport photographs uploaded over a day ago whose form was never submitted');
 
 Schedule::command('barracks:prune-passports')->daily();
+
+Schedule::command('payments:reconcile')->everyFiveMinutes()->withoutOverlapping(10)->onOneServer();
+Schedule::command('orders:abandon-unpaid')->everyFiveMinutes()->withoutOverlapping(10)->onOneServer();

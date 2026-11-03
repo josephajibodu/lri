@@ -111,4 +111,14 @@ class TicketType extends Model
     {
         return min($this->max_per_order, $this->ticketsLeft() ?? PHP_INT_MAX);
     }
+
+    /**
+     * The event's details from config/lri.php (its title, date and venue), such as lri.disco_run for "disco-run".
+     *
+     * @return array<string, mixed>
+     */
+    public function eventDetails(): array
+    {
+        return config('lri.'.str_replace('-', '_', $this->event), []);
+    }
 }
