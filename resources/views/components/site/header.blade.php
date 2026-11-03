@@ -5,8 +5,6 @@
             <span class="brand-name">Let’s Run Ibadan</span>
         </a>
         <nav class="site-nav" aria-label="Sections">
-            <a href="{{ route('home') }}#pace">Every pace</a>
-            <a href="{{ route('home') }}#week">Schedule</a>
             <a href="{{ route('home') }}#tribes">Tribes</a>
             <a href="{{ route('home') }}#routes">Routes</a>
             <a href="{{ route('home') }}#events">Events</a>
