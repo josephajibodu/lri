@@ -62,10 +62,12 @@ Route::middleware(['signed:checkout_id', IdentifyVisitor::class])->group(functio
 });
 
 Route::get('/receipts/{order:receipt_token}', [OrderController::class, 'receipt'])->name('receipts.show');
-Route::put('/receipts/{order:receipt_token}/tickets/{ticket}', [TicketController::class, 'update'])
-    ->scopeBindings()
-    ->middleware('throttle:20,1')
-    ->name('receipts.tickets.update');
+Route::scopeBindings()->middleware('throttle:20,1')->prefix('/receipts/{order:receipt_token}/tickets/{ticket}')->group(function () {
+    Route::put('/', [TicketController::class, 'update'])->name('receipts.tickets.update');
+    Route::post('/link', [TicketController::class, 'shareLink'])->name('receipts.tickets.share-link');
+    Route::delete('/link', [TicketController::class, 'cancelLink'])->name('receipts.tickets.cancel-link');
+    Route::post('/reissue', [TicketController::class, 'reissue'])->name('receipts.tickets.reissue');
+});
 
 Route::get('/tickets/{ticket:claim_token}', [TicketController::class, 'show'])->name('tickets.show');
 Route::post('/tickets/{ticket:claim_token}', [TicketController::class, 'claim'])

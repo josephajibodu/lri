@@ -1,9 +1,17 @@
 <x-mail::message :preheader="($order->quantity === 1 ? 'Your ticket code' : 'Your ticket codes').' and receipt for the '.$eventName.'.'" :banner-url="$bannerUrl" :banner-alt="$eventName">
 # You’re in, {{ Str::before($order->buyer_name, ' ') }}.
 
-Your {{ $order->quantity === 1 ? 'ticket' : $order->quantity.' tickets' }} for the **{{ $eventName }}** {{ $order->quantity === 1 ? 'is' : 'are' }} paid for. Show {{ $order->quantity === 1 ? 'this code' : 'these codes' }} when you pick up your headset.
+Your {{ $order->quantity === 1 ? 'ticket' : $order->quantity.' tickets' }} for the **{{ $eventName }}** {{ $order->quantity === 1 ? 'is' : 'are' }} paid for. Show your QR code at the desk when you pick up your headset.
 
-<x-mail::ticket-codes :tickets="$order->tickets" :accent="$accent" :holders="$order->quantity > 1" />
+@if ($ownTicket)
+<x-mail::ticket-qr :ticket="$ownTicket" :message="$message ?? null" />
+
+@endif
+@if ($order->quantity > 1)
+All the tickets you paid for:
+
+<x-mail::ticket-codes :tickets="$order->tickets" :accent="$accent" :holders="true" />
+@endif
 
 @if ($unnamedTickets > 0)
 Each person collects their own headset, so each ticket needs a name and email. Add them on your receipt, or send each friend their ticket’s link from there so they can fill it in. You can also bring everyone to the desk on the day.

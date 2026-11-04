@@ -37,15 +37,34 @@ class Ticket extends Model
     {
         static::creating(function (Ticket $ticket): void {
             if (blank($ticket->code)) {
-                do {
-                    $ticket->code = ReadableCode::generate(8, groupSize: 4);
-                } while (static::query()->where('code', $ticket->code)->exists());
+                $ticket->code = static::newCode();
             }
 
             if (blank($ticket->claim_token)) {
-                $ticket->claim_token = Str::random(40);
+                $ticket->claim_token = static::newClaimToken();
             }
         });
+    }
+
+    /**
+     * A gate code no other ticket has, such as 7K3Q-9PXM.
+     */
+    public static function newCode(): string
+    {
+        do {
+            $code = ReadableCode::generate(8, groupSize: 4);
+        } while (static::query()->where('code', $code)->exists());
+
+        return $code;
+    }
+
+    /**
+     * A long random secret for the ticket's own link. It is never the gate code, so knowing a code doesn't open
+     * anyone's ticket.
+     */
+    public static function newClaimToken(): string
+    {
+        return Str::random(40);
     }
 
     /**
@@ -57,6 +76,7 @@ class Ticket extends Model
     {
         return [
             'checked_in_at' => 'datetime',
+            'link_shared_at' => 'datetime',
         ];
     }
 
@@ -116,6 +136,31 @@ class Ticket extends Model
     public function isBuyers(): bool
     {
         return Str::lower((string) $this->holder_email) === Str::lower($this->order->buyer_email);
+    }
+
+    /**
+     * Where the ticket stands, as the buyer sees it on their receipt.
+     *
+     * @return 'collected'|'yours'|'emailed'|'link_sent'|'no_name'
+     */
+    public function receiptStatus(): string
+    {
+        return match (true) {
+            $this->isCollected() => 'collected',
+            $this->isNamed() && $this->isBuyers() => 'yours',
+            $this->isNamed() => 'emailed',
+            $this->link_shared_at !== null => 'link_sent',
+            default => 'no_name',
+        };
+    }
+
+    /**
+     * The headset desk with this ticket already searched for. The ticket's QR code holds this link, so desk staff
+     * can scan it with their phone's camera.
+     */
+    public function deskUrl(): string
+    {
+        return url('/admin/headset-desk').'?'.http_build_query(['search' => $this->code]);
     }
 
     /**

@@ -7,12 +7,12 @@ use App\Mail\TicketMail;
 use App\Models\Ticket;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 /**
- * Put someone's name and email on a ticket, and email them their ticket. The buyer, the holder (through the
- * ticket's own link) and the headset desk all name tickets this way. A ticket's name is fixed once its headset
- * has been collected.
+ * Put someone's name and email on a ticket, or fix a typo in them, and email that person their ticket. The buyer,
+ * the holder (through the ticket's own link) and the headset desk all name tickets this way. The buyer's own
+ * ticket isn't emailed again, since they already have everything. A ticket's name is fixed once its headset has
+ * been collected.
  */
 class NameTicket
 {
@@ -23,7 +23,7 @@ class NameTicket
      */
     public function handle(Ticket $ticket, string $name, string $email, bool $onlyIfBlank = false): Ticket
     {
-        $emailChanged = DB::transaction(function () use ($ticket, $name, $email, $onlyIfBlank): bool {
+        DB::transaction(function () use ($ticket, $name, $email, $onlyIfBlank): void {
             $locked = Ticket::query()->with('order')->lockForUpdate()->findOrFail($ticket->id);
 
             if (! $locked->isValid()) {
@@ -38,16 +38,12 @@ class NameTicket
                 throw TicketNotUsable::alreadyNamed();
             }
 
-            $emailChanged = Str::lower((string) $locked->holder_email) !== Str::lower($email);
-
-            $locked->update(['holder_name' => $name, 'holder_email' => $email]);
-
-            return $emailChanged;
+            $locked->forceFill(['holder_name' => $name, 'holder_email' => $email, 'link_shared_at' => null])->save();
         });
 
         $ticket->refresh()->load(['order', 'ticketType']);
 
-        if ($emailChanged && ! $ticket->isBuyers()) {
+        if (! $ticket->isBuyers()) {
             Mail::to($ticket->holder_email, $ticket->holder_name)->queue(new TicketMail($ticket));
         }
 

@@ -14,19 +14,23 @@
                         @if (session('status'))
                             <p class="dr-order-notice" role="status">{{ session('status') }}</p>
                         @endif
-                        <p class="dr-sub">Show this code at the desk when you pick up your headset.</p>
+                        <p class="dr-sub">Show this QR code at the desk when you pick up your headset. If it won’t scan, they can type the code under it.</p>
                         <p class="dr-field-error">{{ $ticketErrors->first('ticket') }}</p>
                     @else
                         <h1 class="dr-order-title">Your <em>ticket</em>.</h1>
-                        <p class="dr-sub">{{ $ticket->order->buyer_name }} got you a ticket. Add your name and email so it’s yours, and we’ll email it to you.</p>
+                        <p class="dr-sub">Someone got you a ticket. Add your name and email so it’s yours, and we’ll email it to you.</p>
                     @endif
 
-                    <ul class="dr-order-tickets">
-                        <li>
-                            <span class="dr-order-ticket-label">Ticket</span>
-                            <span class="dr-order-ticket-code">{{ $ticket->code }}</span>
-                        </li>
-                    </ul>
+                    @if ($ticket->isNamed())
+                        <x-ticket-qr :ticket="$ticket" />
+                    @else
+                        <ul class="dr-order-tickets">
+                            <li>
+                                <span class="dr-order-ticket-label">Ticket</span>
+                                <span class="dr-order-ticket-code">{{ $ticket->code }}</span>
+                            </li>
+                        </ul>
+                    @endif
 
                     @unless ($ticket->isNamed())
                         <form class="dr-order-claim" method="POST" action="{{ route('tickets.claim', $ticket->claim_token) }}">

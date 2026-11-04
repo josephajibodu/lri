@@ -870,22 +870,44 @@ import.meta.glob("../fonts/*.woff2");
         })();
     }
 
-    /* Copy a ticket's own link, for the buyer to send to the friend it's for. Phones get the share sheet instead */
+    /* Share or copy a ticket's own link: the phone's share sheet where there is one, otherwise the clipboard */
+    function shareLink(url) {
+        if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
+            return navigator.share({ title: "Your ticket", url: url }).then(function () { return true; }, function () { return false; });
+        }
+        if (navigator.clipboard) {
+            return navigator.clipboard.writeText(url).then(function () { return true; }, function () { window.prompt("Copy this link:", url); return true; });
+        }
+        window.prompt("Copy this link:", url);
+        return Promise.resolve(true);
+    }
+
     document.querySelectorAll("[data-copy]").forEach(function (button) {
         button.addEventListener("click", function () {
-            var url = button.dataset.copy;
             var label = button.textContent;
-            function done() {
+            shareLink(button.dataset.copy).then(function (shared) {
+                if (!shared) { return; }
                 button.textContent = button.dataset.copied;
                 setTimeout(function () { button.textContent = label; }, 2500);
-            }
-            if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
-                navigator.share({ title: "Your ticket", url: url }).catch(function () {});
-            } else if (navigator.clipboard) {
-                navigator.clipboard.writeText(url).then(done, function () { window.prompt("Copy this link:", url); });
-            } else {
-                window.prompt("Copy this link:", url);
-            }
+            });
+        });
+    });
+
+    /* "Send link": share the link first, then tell the site it went out. Without JavaScript the form just submits,
+       and the receipt offers the link to copy */
+    document.querySelectorAll("form[data-share]").forEach(function (form) {
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            shareLink(form.dataset.share).then(function (shared) {
+                if (shared) { form.submit(); }
+            });
+        });
+    });
+
+    /* Ask before an undo that can't be taken back */
+    document.querySelectorAll("form[data-confirm]").forEach(function (form) {
+        form.addEventListener("submit", function (event) {
+            if (!window.confirm(form.dataset.confirm)) { event.preventDefault(); }
         });
     });
 

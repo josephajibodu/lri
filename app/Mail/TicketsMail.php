@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Order;
+use App\Models\Ticket;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -51,6 +52,7 @@ class TicketsMail extends Mailable
                 ]),
                 'receiptUrl' => $this->order->receiptUrl(),
                 'unnamedTickets' => $this->order->tickets->reject->isNamed()->count(),
+                'ownTicket' => $this->order->tickets->first(fn (Ticket $ticket): bool => $ticket->isNamed() && $ticket->isBuyers()),
             ],
         );
     }

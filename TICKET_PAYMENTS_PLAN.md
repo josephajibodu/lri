@@ -112,10 +112,49 @@ Each person picks up their own headset, so each ticket carries its own name and 
 - [x] `/admin` sends each person to the first section they can see, so desk staff land straight on the desk; the dashboard moved to `/admin/dashboard`
 - [x] Only a super admin can make someone a super admin or change one; nobody can change their own roles or remove themselves; a role someone still has can't be removed
 
+### ✅ Phase 10: QR codes on tickets, and undo for the buyer
+
+Already in place from phases 8 and 9: a holder name and email on each ticket, a long random link per ticket (`claim_token`, separate from the short gate code), `checked_in_at` as the "headset collected" marker, and the desk's search by code, name, email or order. This phase adds the rest.
+
+**QR code on every ticket**
+- [x] Each ticket gets its own QR code, with the printed code (like `7K3Q-9PXM`) underneath for staff to type if the scan fails. One per ticket, never one per order
+- [x] Shown on the ticket page (`/tickets/{link}`) once it has a name, on the receipt for the buyer's own ticket, in the friend's ticket email, and in the buyer's email for their own ticket. The buyer's email lists the other tickets' codes and names without QR codes
+- [x] Made with `chillerlan/php-qrcode`, which is already installed because Filament uses it; it would be listed in `composer.json` directly rather than relied on through Filament. In emails the QR is attached as an inline image, because Gmail and others block images written into the email itself
+- [x] The QR holds a link to the headset desk with that ticket's code already searched (`/admin/headset-desk?search=7K3Q-9PXM`). Desk staff scan it with their phone's normal camera, which opens the desk on that ticket; no scanner app or extra library. Anyone else who scans it just reaches the admin sign-in
+
+**Receipt: every ticket with its status and buttons**
+- [x] The buyer's own ticket: **Yours**
+- [x] A named ticket: **Emailed**, with **Edit** and **Reissue**
+- [x] A blank ticket: **No name yet**, with **Type details** and **Send link**
+- [x] A blank ticket whose link was sent: **Link sent**, with **Copy link** and **Cancel link**. "Sent" is recorded when the buyer presses Send link (we can't see what happens in WhatsApp), in a new `link_shared_at` column
+
+**The friend's link**
+- [x] Opens only that one ticket: no other tickets, no price and no buyer details (it says "Someone got you a ticket"; the friend's email still names the buyer)
+- [x] After claiming, the friend sees their ticket with its QR and gets it by email
+
+**Undo, buyer only (from the receipt)**
+- [x] **Cancel link**: the unclaimed link stops working (a new secret replaces it) and the ticket goes back to "No name yet"
+- [x] **Reissue**: a new gate code and a new link, so the old QR, the old link and any screenshots stop working. The name and email are cleared, and the buyer names the ticket again or sends a new link
+- [x] **Edit**: fixes a typo in the name or email and emails the ticket again with the same code (today it only emails again when the address changes)
+- [x] None of these work once the headset has been collected. Whoever received a ticket can't pass it on or reissue it: their page has no such buttons, and the friend's link can't name a ticket that already has a name
+
+**Headset desk after a scan or search**
+- [x] Green **Paid, ready** with a **Give headset** button
+- [x] Red **Headset already given**, with the time it was collected (and by whom)
+- [x] Amber **Needs a name** with "Order has N unnamed tickets", and one **Save and give headset** button that asks for the name and email, replacing the two steps (Fill in name, then Hand over)
+- [x] **Change name** on a named ticket fixes a typo at the desk and emails the ticket again
+
+**Tests**
+- [x] Every ticket has a QR that holds its own code; a reissued ticket's old code and old link no longer find it
+- [x] Each receipt status shows the right buttons; Cancel link, Reissue and Edit work, and are refused after collection
+- [x] The friend's page shows no price, other tickets or buyer details
+- [x] Desk: each of the three results, and Save and give headset in one step
+
 ## Before going live
 
 - [ ] Production `.env`: `APP_URL` (the real address), `DB_*` for MySQL, `BACHS_SECRET_KEY` (`sk_live_…`), `BACHS_WEBHOOK_SECRET`
 - [ ] In the Bachs developer portal, add `https://<domain>/webhooks/payments/bachs` as a webhook destination
+- [ ] Make sure PHP's GD extension is on (`php -m | grep gd`); ticket emails need it to draw the QR code
 - [ ] Run a queue worker (`php artisan queue:work`) for ticket emails
 - [ ] Run the scheduler (`php artisan schedule:run` every minute) for the 5-minute checks
 - [ ] Choose and set up a mail service; mail currently only goes to the log file

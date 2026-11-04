@@ -1659,6 +1659,17 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-order-ticket-name form { display: grid; gap: 12px; margin-top: 12px; }
 .dr-order-ticket-name form .btn { justify-self: start; }
 .dr-order-ticket-name .dr-field-hint { margin-top: 10px; }
+.dr-order-ticket-status { padding: 4px 10px; border-radius: 999px; font: 600 .72rem/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; background: var(--glass); color: var(--label); border: 1px solid var(--field-line); }
+.dr-order-ticket-status-yours, .dr-order-ticket-status-emailed { background: color-mix(in srgb, var(--ch) 30%, transparent); border-color: transparent; }
+.dr-order-ticket-status-collected { color: var(--dim); }
+.dr-order-ticket-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.dr-order-ticket-actions form { display: contents; }
+.dr-order-link { padding: 0; border: 0; background: none; color: var(--label); font: inherit; font-size: .9rem; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.dr-qr { display: grid; justify-items: center; gap: 8px; margin: 4px 0 0; }
+.dr-qr-code { width: min(220px, 70vw); padding: 12px; border-radius: 14px; background: #fff; line-height: 0; }
+.dr-qr-code svg { width: 100%; height: auto; }
+.dr-qr-code svg .qr-dark, .dr-qr-code svg path { fill: #0B0A10; }
+.dr-qr-caption { font: 700 1.3rem/1 var(--mono); letter-spacing: .08em; color: var(--label); }
 .dr-order-copy { padding: 0; border: 0; background: none; color: var(--label); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
 .dr-order-claim { display: grid; gap: 14px; }
 .dr-order-claim .btn { justify-self: start; }

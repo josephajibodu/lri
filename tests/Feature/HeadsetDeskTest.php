@@ -79,38 +79,77 @@ test('searching for the buyer brings up every ticket on their order, named or no
         ->assertCanSeeTableRecords([$this->named, $this->blank]);
 });
 
-test('staff fill in a blank ticket’s name at the desk and the person is emailed their ticket', function () {
+test('a scan opens the desk on that ticket', function () {
+    $this->actingAs($this->staff)
+        ->get($this->named->deskUrl())
+        ->assertOk()
+        ->assertSee($this->named->code);
+
+    $this->actingAs($this->staff);
+    Livewire::withQueryParams(['search' => $this->named->code])
+        ->test(HeadsetDesk::class)
+        ->assertCanSeeTableRecords([$this->named])
+        ->assertCanNotSeeTableRecords([$this->blank]);
+});
+
+test('the desk shows each ticket as ready, already given, or needing a name with how many on its order are unnamed', function () {
+    $this->named->update(['checked_in_at' => now(), 'checked_in_by' => $this->staff->id]);
+    $ready = Ticket::factory()->named()->create();
+
     desk()
-        ->assertActionHidden(TestAction::make('handOver')->table($this->blank))
-        ->callAction(TestAction::make('fillInName')->table($this->blank), ['name' => 'Tunde Okafor', 'email' => 'tunde@example.com'])
+        ->assertSeeText('Paid, ready')
+        ->assertSeeText('Headset already given')
+        ->assertSeeText('by Bisi Desk')
+        ->assertSeeText('Needs a name')
+        ->assertSeeText('Order has 1 unnamed ticket')
+        ->assertActionVisible(TestAction::make('giveHeadset')->table($ready))
+        ->assertActionHidden(TestAction::make('giveHeadset')->table($this->named))
+        ->assertActionHidden(TestAction::make('giveHeadset')->table($this->blank))
+        ->assertActionVisible(TestAction::make('saveAndGiveHeadset')->table($this->blank));
+});
+
+test('staff name a blank ticket and give its headset in one step, and the person is emailed their ticket', function () {
+    desk()
+        ->callAction(TestAction::make('saveAndGiveHeadset')->table($this->blank), ['name' => 'Tunde Okafor', 'email' => 'tunde@example.com'])
         ->assertHasNoFormErrors();
 
     expect($this->blank->fresh())
         ->holder_name->toBe('Tunde Okafor')
-        ->holder_email->toBe('tunde@example.com');
+        ->holder_email->toBe('tunde@example.com')
+        ->checked_in_by->toBe($this->staff->id);
     Mail::assertQueued(TicketMail::class, fn (TicketMail $mail): bool => $mail->hasTo('tunde@example.com'));
 });
 
-test('filling in a name at the desk needs a name and a real email', function () {
+test('staff can fix a name at the desk before giving the headset', function () {
     desk()
-        ->callAction(TestAction::make('fillInName')->table($this->blank), ['name' => '', 'email' => 'nope'])
+        ->callAction(TestAction::make('changeName')->table($this->named), ['name' => 'Ada B. Bello', 'email' => 'ada@example.com'])
+        ->assertHasNoFormErrors();
+
+    expect($this->named->fresh())
+        ->holder_name->toBe('Ada B. Bello')
+        ->checked_in_at->toBeNull();
+});
+
+test('naming at the desk needs a name and a real email, and gives no headset until it has them', function () {
+    desk()
+        ->callAction(TestAction::make('saveAndGiveHeadset')->table($this->blank), ['name' => '', 'email' => 'nope'])
         ->assertHasFormErrors(['name' => 'required', 'email' => 'email']);
 
-    expect($this->blank->fresh()->holder_name)->toBeNull();
+    expect($this->blank->fresh())->holder_name->toBeNull()->checked_in_at->toBeNull();
 });
 
 test('handing over a headset records when and by whom, and only once', function () {
     $this->freezeSecond();
 
-    desk()->callAction(TestAction::make('handOver')->table($this->named));
+    desk()->callAction(TestAction::make('giveHeadset')->table($this->named));
 
     expect($this->named->fresh())
         ->checked_in_at->toEqual(now())
         ->checked_in_by->toBe($this->staff->id);
 
     desk()
-        ->assertActionHidden(TestAction::make('handOver')->table($this->named))
-        ->assertActionHidden(TestAction::make('fillInName')->table($this->named));
+        ->assertActionHidden(TestAction::make('giveHeadset')->table($this->named))
+        ->assertActionHidden(TestAction::make('changeName')->table($this->named));
 });
 
 test('a headset is refused for a ticket already collected, a refunded one, or one with no name', function (callable $arrange, string $message) {
@@ -129,8 +168,8 @@ test('the desk offers nothing for a refunded order’s tickets', function () {
     $this->order->update(['status' => 'refunded']);
 
     desk()
-        ->assertActionHidden(TestAction::make('handOver')->table($this->named))
-        ->assertActionHidden(TestAction::make('fillInName')->table($this->blank))
+        ->assertActionHidden(TestAction::make('giveHeadset')->table($this->named))
+        ->assertActionHidden(TestAction::make('saveAndGiveHeadset')->table($this->blank))
         ->searchTable($this->named->code)
         ->assertSeeText('Not paid');
 });

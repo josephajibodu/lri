@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Tickets\ChangeTicketLink;
 use App\Actions\Tickets\NameTicket;
 use App\Enums\OrderStatus;
 use App\Exceptions\TicketNotUsable;
@@ -12,7 +13,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 /**
- * Putting a name on each ticket: by the buyer from their receipt, or by the holder from the ticket's own link.
+ * Putting a name on each ticket: by the buyer from their receipt, or by the holder from the ticket's own link. The
+ * buyer also controls each ticket's link and code from the receipt: sending, cancelling and reissuing.
  */
 class TicketController extends Controller
 {
@@ -66,5 +68,47 @@ class TicketController extends Controller
         return redirect()->to($back)->with('status', $ticket->isBuyers()
             ? 'Saved.'
             : 'Saved. We’ve emailed '.$ticket->holder_name.' their ticket.');
+    }
+
+    /**
+     * The buyer sent a blank ticket's link to someone; the receipt now says "Link sent".
+     */
+    public function shareLink(Order $order, Ticket $ticket, ChangeTicketLink $changeTicketLink): RedirectResponse
+    {
+        return $this->changeFromReceipt($order, $ticket, fn () => $changeTicketLink->share($ticket), 'Link ready. Send it to the person this ticket is for.');
+    }
+
+    /**
+     * The buyer stops a sent link working before anyone fills it in.
+     */
+    public function cancelLink(Order $order, Ticket $ticket, ChangeTicketLink $changeTicketLink): RedirectResponse
+    {
+        return $this->changeFromReceipt($order, $ticket, fn () => $changeTicketLink->cancel($ticket), 'That link no longer works. Type their details or send a new link.');
+    }
+
+    /**
+     * The buyer gives a ticket a new code and link, so the old ones stop working.
+     */
+    public function reissue(Order $order, Ticket $ticket, ChangeTicketLink $changeTicketLink): RedirectResponse
+    {
+        return $this->changeFromReceipt($order, $ticket, fn () => $changeTicketLink->reissue($ticket), 'Reissued with a new code. The old code, QR and link no longer work. Name the ticket again or send its new link.');
+    }
+
+    /**
+     * Run one of the buyer's ticket changes and go back to that ticket on the receipt.
+     *
+     * @param  callable(): Ticket  $change
+     */
+    private function changeFromReceipt(Order $order, Ticket $ticket, callable $change, string $done): RedirectResponse
+    {
+        $back = $order->receiptUrl().'#ticket-'.$ticket->id;
+
+        try {
+            $change();
+        } catch (TicketNotUsable $exception) {
+            return redirect()->to($back)->withErrors(['ticket' => $exception->getMessage()], 'ticket'.$ticket->id);
+        }
+
+        return redirect()->to($back)->with('status', $done);
     }
 }

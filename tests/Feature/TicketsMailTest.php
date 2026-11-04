@@ -52,12 +52,12 @@ test('the tickets email shows the club logo and the event banner and accent from
 
 test('the tickets email falls back to the ticket name and club colours when the event has no details', function () {
     $order = Order::factory()->paid()->for(TicketType::factory()->state(['event' => 'no-such-event', 'name' => 'Community Run ticket']))
-        ->create(['quantity' => 1]);
-    Ticket::factory()->for($order)->create(['ticket_type_id' => $order->ticket_type_id]);
+        ->create(['quantity' => 2]);
+    Ticket::factory()->count(2)->for($order)->create(['ticket_type_id' => $order->ticket_type_id]);
 
     $mail = new TicketsMail($order->load('tickets'));
 
-    $mail->assertSeeInHtml('Your ticket code and receipt for the Community Run ticket.')
+    $mail->assertSeeInHtml('Your ticket codes and receipt for the Community Run ticket.')
         ->assertSeeInHtml('border-right: 1px dashed #FEB203', false)
         ->assertDontSeeInHtml('class="banner"', false)
         ->assertDontSeeInText('When:')

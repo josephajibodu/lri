@@ -22,6 +22,8 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Livewire\Attributes\Url;
 use UnitEnum;
 
 /**
@@ -32,6 +34,13 @@ use UnitEnum;
 class HeadsetDesk extends Page implements HasTable
 {
     use InteractsWithTable;
+
+    /**
+     * The search, kept in the address. A ticket's QR code links here with its code as the search, so scanning it
+     * with a phone camera opens the desk on that ticket.
+     */
+    #[Url(as: 'search')]
+    public $tableSearch = '';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;
 
@@ -64,7 +73,11 @@ class HeadsetDesk extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(Ticket::query()->with(['order', 'checkedInBy']))
+            ->query(Ticket::query()->with([
+                'checkedInBy',
+                'order' => fn (Relation $query) => $query->withCount(['tickets as unnamed_tickets_count' => fn (Builder $query): Builder => $query
+                    ->where(fn (Builder $query): Builder => $query->whereNull('holder_name')->orWhereNull('holder_email'))]),
+            ]))
             ->defaultSort('id')
             ->defaultGroup(
                 Group::make('order.reference')
@@ -74,7 +87,6 @@ class HeadsetDesk extends Page implements HasTable
             )
             ->groupingSettingsHidden()
             ->searchPlaceholder('Code, name, email or order number')
-            ->persistSearchInSession()
             ->columns([
                 TextColumn::make('code')
                     ->label('Ticket')
@@ -99,37 +111,68 @@ class HeadsetDesk extends Page implements HasTable
                     ->badge()
                     ->state(fn (Ticket $record): string => match (true) {
                         ! $record->isValid() => 'Not paid',
-                        $record->isCollected() => 'Collected',
+                        $record->isCollected() => 'Headset already given',
                         ! $record->isNamed() => 'Needs a name',
-                        default => 'Ready',
+                        default => 'Paid, ready',
                     })
                     ->color(fn (string $state): string => match ($state) {
-                        'Not paid' => 'danger',
-                        'Collected' => 'gray',
+                        'Not paid', 'Headset already given' => 'danger',
                         'Needs a name' => 'warning',
                         default => 'success',
                     })
-                    ->description(fn (Ticket $record): ?string => $record->isCollected()
-                        ? $record->checked_in_at->timezone('Africa/Lagos')->format('j M, g:i A').($record->checkedInBy ? ' · '.$record->checkedInBy->name : '')
-                        : null),
+                    ->description(fn (Ticket $record): ?string => match (true) {
+                        $record->isCollected() => 'Given '.$record->checked_in_at->timezone('Africa/Lagos')->format('j M, g:i A').($record->checkedInBy ? ' by '.$record->checkedInBy->name : ''),
+                        $record->isValid() && ! $record->isNamed() => 'Order has '.$record->order->unnamed_tickets_count.' unnamed '.str('ticket')->plural($record->order->unnamed_tickets_count),
+                        default => null,
+                    }),
             ])
             ->recordActions([
-                Action::make('fillInName')
-                    ->label(fn (Ticket $record): string => $record->isNamed() ? 'Change name' : 'Fill in name')
-                    ->icon(Heroicon::OutlinedPencilSquare)
-                    ->color('gray')
-                    ->visible(fn (Ticket $record): bool => $record->isValid() && ! $record->isCollected())
+                Action::make('giveHeadset')
+                    ->label('Give headset')
+                    ->icon(Heroicon::OutlinedCheckCircle)
+                    ->color('success')
+                    ->button()
+                    ->visible(fn (Ticket $record): bool => $record->isValid() && $record->isNamed() && ! $record->isCollected())
+                    ->authorize(fn (): bool => static::canAccess())
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (Ticket $record): string => 'Give a headset to '.$record->holder_name.'?')
+                    ->modalDescription(fn (Ticket $record): string => 'Ticket '.$record->code.'. This ticket can’t be used for another headset after this.')
+                    ->modalSubmitActionLabel('Headset given')
+                    ->action(fn (Ticket $record, HandOverHeadset $handOverHeadset) => $this->giveHeadset($record, $handOverHeadset)),
+                Action::make('saveAndGiveHeadset')
+                    ->label('Save and give headset')
+                    ->icon(Heroicon::OutlinedCheckCircle)
+                    ->color('warning')
+                    ->button()
+                    ->visible(fn (Ticket $record): bool => $record->isValid() && ! $record->isNamed() && ! $record->isCollected())
                     ->authorize(fn (): bool => static::canAccess())
                     ->modalHeading(fn (Ticket $record): string => 'Ticket '.$record->code)
-                    ->modalDescription('We’ll email this person their ticket.')
+                    ->modalDescription('Type in the name and email of the person collecting this headset. We’ll email them their ticket.')
+                    ->schema(static::holderFields())
+                    ->modalSubmitActionLabel('Save and give headset')
+                    ->action(function (Ticket $record, array $data, Action $action, NameTicket $nameTicket, HandOverHeadset $handOverHeadset): void {
+                        try {
+                            $record = $nameTicket->handle($record, $data['name'], $data['email']);
+                        } catch (TicketNotUsable $exception) {
+                            Notification::make()->title($exception->getMessage())->danger()->send();
+                            $action->halt();
+                        }
+
+                        $this->giveHeadset($record, $handOverHeadset);
+                    }),
+                Action::make('changeName')
+                    ->label('Change name')
+                    ->icon(Heroicon::OutlinedPencilSquare)
+                    ->color('gray')
+                    ->visible(fn (Ticket $record): bool => $record->isValid() && $record->isNamed() && ! $record->isCollected())
+                    ->authorize(fn (): bool => static::canAccess())
+                    ->modalHeading(fn (Ticket $record): string => 'Ticket '.$record->code)
+                    ->modalDescription('Fix the name or email. We’ll email them their ticket again.')
                     ->fillForm(fn (Ticket $record): array => [
                         'name' => $record->holder_name,
                         'email' => $record->holder_email,
                     ])
-                    ->schema([
-                        TextInput::make('name')->label('Their name')->required()->maxLength(120),
-                        TextInput::make('email')->label('Their email')->email()->required()->maxLength(190),
-                    ])
+                    ->schema(static::holderFields())
                     ->modalSubmitActionLabel('Save')
                     ->action(function (Ticket $record, array $data, Action $action, NameTicket $nameTicket): void {
                         try {
@@ -139,32 +182,39 @@ class HeadsetDesk extends Page implements HasTable
                             $action->halt();
                         }
 
-                        Notification::make()->title('Saved. Now hand over the headset.')->success()->send();
-                    }),
-                Action::make('handOver')
-                    ->label('Hand over headset')
-                    ->icon(Heroicon::OutlinedCheckCircle)
-                    ->color('success')
-                    ->button()
-                    ->visible(fn (Ticket $record): bool => $record->isValid() && $record->isNamed() && ! $record->isCollected())
-                    ->authorize(fn (): bool => static::canAccess())
-                    ->requiresConfirmation()
-                    ->modalHeading(fn (Ticket $record): string => 'Hand a headset to '.$record->holder_name.'?')
-                    ->modalDescription(fn (Ticket $record): string => 'Ticket '.$record->code.'. This ticket can’t be used for another headset after this.')
-                    ->modalSubmitActionLabel('Handed over')
-                    ->action(function (Ticket $record, HandOverHeadset $handOverHeadset): void {
-                        try {
-                            $handOverHeadset->handle($record, auth()->user());
-                        } catch (TicketNotUsable $exception) {
-                            Notification::make()->title($exception->getMessage())->danger()->send();
-
-                            return;
-                        }
-
-                        Notification::make()->title('Headset handed to '.$record->holder_name.'.')->success()->send();
+                        Notification::make()->title('Saved.')->success()->send();
                     }),
             ])
             ->emptyStateHeading('No tickets found')
             ->emptyStateDescription('Try the code on their ticket, their name or email, or the name of whoever bought it.');
+    }
+
+    /**
+     * The name and email of the person a ticket is for.
+     *
+     * @return array<TextInput>
+     */
+    protected static function holderFields(): array
+    {
+        return [
+            TextInput::make('name')->label('Their name')->required()->maxLength(120),
+            TextInput::make('email')->label('Their email')->email()->required()->maxLength(190),
+        ];
+    }
+
+    /**
+     * Record the headset as given, and say how it went.
+     */
+    protected function giveHeadset(Ticket $ticket, HandOverHeadset $handOverHeadset): void
+    {
+        try {
+            $handOverHeadset->handle($ticket, auth()->user());
+        } catch (TicketNotUsable $exception) {
+            Notification::make()->title($exception->getMessage())->danger()->send();
+
+            return;
+        }
+
+        Notification::make()->title('Headset given to '.$ticket->holder_name.'.')->success()->send();
     }
 }

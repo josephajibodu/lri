@@ -5,7 +5,9 @@ use App\Mail\TicketsMail;
 use App\Models\Order;
 use App\Models\Ticket;
 use App\Models\TicketType;
+use App\Support\TicketQrCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 
@@ -33,13 +35,106 @@ function nameFromReceipt(Order $order, Ticket $ticket, array $details): TestResp
         ->put(route('receipts.tickets.update', [$order->receipt_token, $ticket]), $details);
 }
 
-test('the receipt asks who each blank ticket is for and offers its link to send', function () {
+test('the receipt shows the buyer’s own ticket with its QR code, and offers to name or send each blank one', function () {
     $this->get($this->order->receiptUrl())
         ->assertOk()
-        ->assertSeeText('Who is this ticket for?')
+        ->assertSeeText('Yours')
         ->assertSeeText('Ada Bello · ada@example.com')
+        ->assertSee('QR code for ticket '.$this->buyersTicket->code, false)
+        ->assertSeeText('No name yet')
+        ->assertSeeText('Type details')
+        ->assertSeeText('Send link')
         ->assertSee($this->friendsTicket->claimUrl(), false)
-        ->assertDontSee($this->buyersTicket->claimUrl(), false);
+        ->assertDontSee($this->buyersTicket->claimUrl(), false)
+        ->assertDontSee('QR code for ticket '.$this->friendsTicket->code, false);
+});
+
+test('a named friend’s ticket shows as emailed, with Edit and Reissue', function () {
+    $this->friendsTicket->update(['holder_name' => 'Tunde Okafor', 'holder_email' => 'tunde@example.com']);
+
+    $this->get($this->order->receiptUrl())
+        ->assertSeeText('Emailed')
+        ->assertSeeText('Tunde Okafor · tunde@example.com')
+        ->assertSeeText('Edit')
+        ->assertSeeText('Reissue')
+        ->assertDontSee($this->friendsTicket->claimUrl(), false);
+});
+
+test('sending a blank ticket’s link marks it as sent, with Copy link and Cancel link', function () {
+    $this->post(route('receipts.tickets.share-link', [$this->order->receipt_token, $this->friendsTicket]))
+        ->assertRedirect($this->order->receiptUrl().'#ticket-'.$this->friendsTicket->id);
+
+    expect($this->friendsTicket->fresh()->link_shared_at)->not->toBeNull();
+
+    $this->get($this->order->receiptUrl())
+        ->assertSeeText('Link sent')
+        ->assertSeeText('Copy link')
+        ->assertSeeText('Cancel link')
+        ->assertSee($this->friendsTicket->claimUrl(), false);
+});
+
+test('cancelling a sent link stops it working and leaves a fresh link to send', function () {
+    $this->friendsTicket->update(['link_shared_at' => now()]);
+    $oldLink = $this->friendsTicket->claimUrl();
+
+    $this->delete(route('receipts.tickets.cancel-link', [$this->order->receipt_token, $this->friendsTicket]))->assertRedirect();
+
+    $ticket = $this->friendsTicket->fresh();
+    expect($ticket)->link_shared_at->toBeNull()->code->toBe($this->friendsTicket->code)
+        ->and($ticket->claimUrl())->not->toBe($oldLink);
+
+    $this->get($oldLink)->assertNotFound();
+    $this->get($ticket->claimUrl())->assertOk();
+});
+
+test('reissuing gives a new code and link, so the old code, QR and link stop working', function () {
+    $this->friendsTicket->update(['holder_name' => 'Tunde Okafor', 'holder_email' => 'tunde@example.com']);
+    $old = $this->friendsTicket->fresh();
+
+    $this->post(route('receipts.tickets.reissue', [$this->order->receipt_token, $this->friendsTicket]))->assertRedirect();
+
+    $new = $this->friendsTicket->fresh();
+    expect($new)
+        ->code->not->toBe($old->code)
+        ->claim_token->not->toBe($old->claim_token)
+        ->holder_name->toBeNull()
+        ->holder_email->toBeNull()
+        ->and(TicketQrCode::svg($new))->not->toBe(TicketQrCode::svg($old))
+        ->and(Ticket::query()->where('code', $old->code)->exists())->toBeFalse();
+
+    $this->get($old->claimUrl())->assertNotFound();
+    $this->get($new->claimUrl())->assertOk()->assertSeeText('This ticket is mine');
+});
+
+test('a ticket’s link and code can’t be changed once its headset has been collected', function (string $route, string $method) {
+    $this->friendsTicket->update(['holder_name' => 'Tunde Okafor', 'holder_email' => 'tunde@example.com', 'checked_in_at' => now()]);
+    $before = $this->friendsTicket->fresh();
+
+    $this->call($method, route($route, [$this->order->receipt_token, $this->friendsTicket]))
+        ->assertSessionHasErrors('ticket', errorBag: 'ticket'.$this->friendsTicket->id);
+
+    expect($this->friendsTicket->fresh())->code->toBe($before->code)->claim_token->toBe($before->claim_token);
+})->with([
+    'reissue' => ['receipts.tickets.reissue', 'POST'],
+    'cancel link' => ['receipts.tickets.cancel-link', 'DELETE'],
+]);
+
+test('only blank tickets have a link to send or cancel', function (string $route, string $method) {
+    $this->call($method, route($route, [$this->order->receipt_token, $this->buyersTicket]))
+        ->assertSessionHasErrors('ticket', errorBag: 'ticket'.$this->buyersTicket->id);
+
+    expect($this->buyersTicket->fresh()->claim_token)->toBe($this->buyersTicket->claim_token);
+})->with([
+    'send link' => ['receipts.tickets.share-link', 'POST'],
+    'cancel link' => ['receipts.tickets.cancel-link', 'DELETE'],
+]);
+
+test('a receipt can’t reissue or cancel another order’s ticket', function () {
+    $otherTicket = Ticket::factory()->named()->create();
+
+    $this->post(route('receipts.tickets.reissue', [$this->order->receipt_token, $otherTicket]))->assertNotFound();
+
+    expect($otherTicket->fresh()->code)->toBe($otherTicket->code);
 });
 
 test('the buyer names a ticket from the receipt and its holder is emailed their ticket', function () {
@@ -54,14 +149,19 @@ test('the buyer names a ticket from the receipt and its holder is emailed their 
     Mail::assertQueued(TicketMail::class, fn (TicketMail $mail): bool => $mail->hasTo('tunde@example.com') && $mail->ticket->is($this->friendsTicket));
 });
 
-test('the buyer is not emailed again for their own ticket, nor a holder for a name-only change', function () {
+test('the buyer is not emailed again for their own ticket', function () {
     nameFromReceipt($this->order, $this->buyersTicket, ['name' => 'Ada B.', 'email' => 'ADA@example.com'])->assertSessionHas('status', 'Saved.');
 
-    $this->friendsTicket->update(['holder_name' => 'Tunde', 'holder_email' => 'tunde@example.com']);
+    Mail::assertNothingQueued();
+});
+
+test('editing a friend’s ticket fixes the typo and emails it again with the same code', function () {
+    $this->friendsTicket->update(['holder_name' => 'Tunde Okafr', 'holder_email' => 'tunde@example.com']);
+
     nameFromReceipt($this->order, $this->friendsTicket, ['name' => 'Tunde Okafor', 'email' => 'tunde@example.com']);
 
-    expect($this->friendsTicket->fresh()->holder_name)->toBe('Tunde Okafor');
-    Mail::assertNothingQueued();
+    expect($this->friendsTicket->fresh())->holder_name->toBe('Tunde Okafor')->code->toBe($this->friendsTicket->code);
+    Mail::assertQueued(TicketMail::class, fn (TicketMail $mail): bool => $mail->hasTo('tunde@example.com'));
 });
 
 test('naming a ticket needs a name and a real email, and the errors stay with that ticket', function () {
@@ -104,8 +204,13 @@ test('a refunded order’s tickets can’t be named', function () {
 test('a friend fills in their blank ticket through its link and is emailed it', function () {
     $this->get($this->friendsTicket->claimUrl())
         ->assertOk()
-        ->assertSeeText('Ada Bello got you a ticket')
-        ->assertSeeText($this->friendsTicket->code);
+        ->assertSeeText('Someone got you a ticket')
+        ->assertSeeText($this->friendsTicket->code)
+        ->assertDontSeeText('Ada Bello')
+        ->assertDontSeeText('ada@example.com')
+        ->assertDontSeeText('₦')
+        ->assertDontSeeText($this->buyersTicket->code)
+        ->assertDontSee('QR code for ticket', false);
 
     $this->post(route('tickets.claim', $this->friendsTicket->claim_token), ['name' => 'Tunde Okafor', 'email' => 'tunde@example.com'])
         ->assertRedirect($this->friendsTicket->claimUrl());
@@ -117,7 +222,10 @@ test('a friend fills in their blank ticket through its link and is emailed it', 
 
     $this->get($this->friendsTicket->claimUrl())
         ->assertSeeText('You’re in, Tunde.')
-        ->assertDontSee('This ticket is mine');
+        ->assertSee('QR code for ticket '.$this->friendsTicket->code, false)
+        ->assertDontSee('This ticket is mine')
+        ->assertDontSeeText('Reissue')
+        ->assertDontSeeText('Cancel link');
 });
 
 test('a ticket’s link can’t take over a ticket that already has a name', function () {
@@ -155,6 +263,7 @@ test('the one-person ticket email gives the code, who bought it and a link to th
         ->assertSeeInHtml('You’re in, Tunde.')
         ->assertSeeInHtml('Ada Bello got you a ticket')
         ->assertSeeInHtml($this->friendsTicket->code)
+        ->assertSeeInHtml('alt="QR code for ticket '.$this->friendsTicket->code.'"', false)
         ->assertSeeInHtml(e($this->friendsTicket->claimUrl()), false);
 });
 
@@ -168,4 +277,28 @@ test('the tickets email shows who each ticket is for and asks the buyer to name 
 
     (new TicketsMail($this->order->fresh()->load(['ticketType', 'tickets'])))
         ->assertDontSeeInText('each ticket needs a name and email');
+});
+
+test('a ticket’s QR code opens the headset desk on that ticket', function () {
+    expect($this->friendsTicket->deskUrl())->toBe(url('/admin/headset-desk').'?search='.urlencode($this->friendsTicket->code));
+});
+
+test('the buyer’s tickets email carries the QR code of their own ticket', function () {
+    (new TicketsMail($this->order->load(['ticketType', 'tickets'])))
+        ->assertSeeInHtml('alt="QR code for ticket '.$this->buyersTicket->code.'"', false)
+        ->assertDontSeeInHtml('alt="QR code for ticket '.$this->friendsTicket->code.'"', false);
+});
+
+test('a sent ticket email attaches the QR code as an image inside the email', function () {
+    $this->friendsTicket->update(['holder_name' => 'Tunde Okafor', 'holder_email' => 'tunde@example.com']);
+
+    $mailer = (new MailManager(app()))->mailer('array');
+    $mailer->to('tunde@example.com')->send(new TicketMail($this->friendsTicket->fresh()));
+
+    $email = $mailer->getSymfonyTransport()->messages()->last()->getOriginalMessage();
+    $qr = collect($email->getAttachments())->first(fn ($part): bool => $part->getFilename() === 'ticket-'.$this->friendsTicket->code.'.png');
+
+    expect($qr)->not->toBeNull()
+        ->and($email->getHtmlBody())->toContain('cid:')
+        ->not->toContain('data:image/png');
 });

@@ -1,9 +1,9 @@
-<x-mail::message :preheader="'Your ticket code for the '.$eventName.'.'" :banner-url="$bannerUrl" :banner-alt="$eventName">
+<x-mail::message :preheader="'Your ticket QR code for the '.$eventName.'.'" :banner-url="$bannerUrl" :banner-alt="$eventName">
 # You’re in, {{ Str::before($ticket->holder_name, ' ') }}.
 
-{{ $buyerName }} got you a ticket for the **{{ $eventName }}**. Show this code at the desk when you pick up your headset.
+{{ $buyerName }} got you a ticket for the **{{ $eventName }}**. Show this QR code at the desk when you pick up your headset. If it won’t scan, they can type the code under it.
 
-<x-mail::ticket-codes :tickets="[$ticket]" :accent="$accent" :numbered="false" />
+<x-mail::ticket-qr :ticket="$ticket" :message="$message ?? null" />
 
 <x-mail::details :rows="$details" />
 

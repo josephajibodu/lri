@@ -139,20 +139,41 @@ Silent Disco Run tickets are sold on the site, paid through [Bachs](https://docs
 
 There is one ticket type at one price. Each ticket is for one person, and each person picks up their own headset, so every ticket needs that person's name and email. The buyer only enters their own details at checkout; the other tickets are named after paying:
 
-- **From the receipt.** For an order of more than one ticket, the receipt has a name and email form under each ticket. The buyer can change a ticket's details until its headset has been collected.
-- **Through the ticket's own link.** Each blank ticket has a "Copy their link" button (a share sheet on phones). The friend opens `/tickets/{secret}`, fills in their name and email, and from then on the same link shows their ticket and code. A ticket that already has a name can't be taken over through its link.
+- **Type details.** The buyer types the friend's name and email on the receipt.
+- **Send link.** The buyer sends the ticket's own link (the share sheet on phones, otherwise it's copied). The friend opens `/tickets/{secret}`, fills in their name and email, and from then on the same link shows their ticket and QR code. The page shows only that one ticket: no other tickets, no price and nothing about the buyer. A ticket that already has a name can't be taken over through its link.
 - **At the desk on the day.** Anything still blank can be filled in at the [headset desk](#on-the-day-the-headset-desk).
 
-Whenever a ticket gets a new email address, that person is emailed their own ticket with its code and link. The buyer isn't emailed again for their own ticket. Friends are never sent to Mailchimp, because they didn't tick the consent box; their email is only used for their ticket.
+Every time a ticket is named or its details are fixed, that person is emailed their own ticket with its QR code and link. The buyer isn't emailed again for their own ticket. Friends are never sent to Mailchimp, because they didn't tick the consent box; their email is only used for their ticket.
+
+The receipt lists every ticket with where it stands and what the buyer can do:
+
+| Status | Means | Buttons |
+| --- | --- | --- |
+| Yours | The buyer's own ticket, with its QR code | |
+| Emailed | Named, and that person has their ticket | **Edit** fixes a typo and emails it again with the same code. **Reissue** gives it a new code and link, so the old QR code, link and any screenshots stop working; it then needs naming again |
+| No name yet | Blank | **Type details**, **Send link** |
+| Link sent | The link went out, but nobody has filled it in | **Copy link**, **Cancel link** (the old link stops working) |
+| Headset collected | Used | None: a collected ticket can't be changed |
+
+Only the buyer has these buttons. Whoever receives a ticket can't pass it on or reissue it.
+
+### QR codes
+
+Every ticket has its own QR code, never one per order, with the printed code (like `7K3Q-9PXM`) underneath to type if a scan fails. It's on the ticket page, on the receipt for the buyer's own ticket, and in the ticket emails, where it's attached as an image inside the email because Gmail and others block other kinds of image. The QR code holds a link to the headset desk with that code searched (`/admin/headset-desk?search=7K3Q-9PXM`), so desk staff scan it with their phone's normal camera. Anyone else who scans it only reaches the admin sign-in. The codes are made with `chillerlan/php-qrcode`; emails need PHP's GD extension to draw them.
 
 ### On the day: the headset desk
 
 The headset desk is a page in the admin (**Tickets > Headset desk**, at `/admin/headset-desk`) that works on a phone. Give each person working the desk a login with the **Headset desk** role, and they'll see nothing else in the admin.
 
-1. Ask for the code on their ticket, their name or email, or the name of whoever bought it, and type it into the search box. Codes work with or without the dash. Tickets are grouped by order, so searching for the buyer shows everyone they paid for.
-2. Each ticket shows where it stands: **Ready**, **Needs a name**, **Collected** (with when and by whom), or **Not paid** (the order was refunded).
-3. For a ticket that needs a name, press **Fill in name** and type in the person's name and email. They're emailed their ticket.
-4. Press **Hand over headset** and give them the headset. Each paid, named ticket gets one headset, once. If two people at the desk press it for the same ticket at the same moment, only one hand-over is recorded.
+1. Scan their QR code with your phone's camera, which opens the desk on that ticket. If it won't scan, type the code under it, their name or email, or the name of whoever bought it. Codes work with or without the dash. Tickets are grouped by order, so searching for the buyer shows everyone they paid for.
+2. Each ticket shows one of:
+   - green **Paid, ready**: press **Give headset**;
+   - red **Headset already given**, with when and by whom: don't give another;
+   - amber **Needs a name**, with how many tickets on that order are unnamed: press **Save and give headset**, type in the person's name and email, and they're emailed their ticket;
+   - **Not paid**: the order was refunded.
+3. **Change name** fixes a typo on a named ticket before the headset goes out.
+
+Each paid ticket gets one headset, once. If two people at the desk press the button for the same ticket at the same moment, only one is recorded.
 
 The count at the top of the page shows how many headsets have been handed out against the number of paid tickets.
 
@@ -300,7 +321,7 @@ php artisan optimize
 php artisan queue:restart
 ```
 
-In production, set `APP_ENV=production`, `APP_DEBUG=false` and `APP_URL` to the site's address in `.env`. `APP_URL` must be the exact live address, `https` included: ticket links, receipt links and the links in emails are built from it.
+The server needs PHP's GD extension (`php -m | grep gd`), which draws the QR codes in ticket emails. In production, set `APP_ENV=production`, `APP_DEBUG=false` and `APP_URL` to the site's address in `.env`. `APP_URL` must be the exact live address, `https` included: ticket links, receipt links and the links in emails are built from it.
 
 `php artisan migrate --force` also creates the admin's permissions and its three starting roles, so they exist from the first deploy.
 
