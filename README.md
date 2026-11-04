@@ -310,41 +310,60 @@ vendor/bin/pint --dirty
 
 ## Deployment
 
-The site runs on any host with PHP 8.4, including [Laravel Cloud](https://cloud.laravel.com). A typical deploy:
+The site runs on any host with PHP 8.4, including [Laravel Cloud](https://cloud.laravel.com). It needs:
 
-```bash
-composer install --no-dev --optimize-autoloader
-php artisan migrate --force
-npm ci
-npm run build
-php artisan optimize
-php artisan queue:restart
-```
+- PHP 8.4 with the GD extension (`php -m | grep gd`), which draws the QR codes in ticket emails
+- MySQL
+- Composer, Node.js and npm, to install and build
+- A way to keep a queue worker running and to run the scheduler every minute
 
-The server needs PHP's GD extension (`php -m | grep gd`), which draws the QR codes in ticket emails. In production, set `APP_ENV=production`, `APP_DEBUG=false` and `APP_URL` to the site's address in `.env`. `APP_URL` must be the exact live address, `https` included: ticket links, receipt links and the links in emails are built from it.
+### The first deploy
 
-`php artisan migrate --force` also creates the admin's permissions and its three starting roles, so they exist from the first deploy.
+Do these once, in order, when the site goes live.
 
-### Going live with ticket sales
-
-These only need doing once. `TICKET_PAYMENTS_PLAN.md` has the full checklist.
-
-1. Set the live details in `.env`: the MySQL `DB_*` settings, `BACHS_SECRET_KEY` (`sk_live_...`) and `BACHS_WEBHOOK_SECRET`.
-2. Choose a mail service and set `MAIL_MAILER` and its settings. Until then, ticket emails only go to the log file and buyers and friends get nothing.
-3. Keep a queue worker running. It sends the ticket emails and the Mailchimp updates:
+1. **Get the code and install it.**
 
    ```bash
-   php artisan queue:work
+   composer install --no-dev --optimize-autoloader
+   npm ci
+   npm run build
    ```
 
-4. Run the scheduler every minute, which runs the 5-minute payment checks:
+2. **Create `.env`** from `.env.example` and fill it in:
+
+   | Setting | Value |
+   | --- | --- |
+   | `APP_ENV` | `production` |
+   | `APP_DEBUG` | `false`, so visitors never see error details |
+   | `APP_URL` | The exact live address, `https` included. Ticket links, receipt links and the links in emails are built from it |
+   | `DB_*` | The live MySQL database. Create the empty database first |
+   | `BACHS_SECRET_KEY` | The live key, starting `sk_live_` |
+   | `BACHS_WEBHOOK_SECRET` | The signing secret of the webhook you add in step 9 |
+   | `MAIL_MAILER` and its settings | A real mail service. Until this is set, ticket emails only go to the log file and nobody gets their tickets |
+   | `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Who ticket emails come from. Change it from `hello@example.com` |
+   | `LOG_LEVEL` | `error` or `warning`, so the log doesn't fill up with detail |
+   | `EMAIL_TOOL`, `MAILCHIMP_*` | Leave blank unless you're using [follow-up emails](#follow-up-emails-with-mailchimp) |
+   | `BARRACKS_REGISTRATION_OPEN` | `false` unless the barracks permit sign-up is running |
+
+3. **Make the app key.** It encrypts sessions and signs links. Run this once only: changing it later logs everyone out and breaks links already sent.
 
    ```bash
-   * * * * * cd /path/to/lri && php artisan schedule:run >> /dev/null 2>&1
+   php artisan key:generate --force
    ```
 
-5. Add the [webhook address](#bachs-webhooks) in the Bachs developer portal.
-6. Add the ticket and the ways to pay:
+4. **Create the tables.** This builds every table, plus the admin's permissions and its three starting roles.
+
+   ```bash
+   php artisan migrate --force
+   ```
+
+   If migrations were ever run on this database before the migrations were tidied up, start it again from empty instead. **This deletes everything in the database**, so only do it while nothing real is in there:
+
+   ```bash
+   php artisan migrate:fresh --force
+   ```
+
+5. **Add the ticket and the ways to pay**, and match them to what's switched on at Bachs:
 
    ```bash
    php artisan db:seed --class=TicketTypeSeeder --force
@@ -352,17 +371,57 @@ These only need doing once. `TICKET_PAYMENTS_PLAN.md` has the full checklist.
    php artisan payments:sync-channels
    ```
 
-7. Create the first login and make it a super admin. The database starts empty, and a login with no role can't get into the admin. Use its id if it isn't 1; `php artisan permission:show` and the People screen show who has which role.
+   Don't run plain `php artisan db:seed` in production: it also creates a test user.
+
+6. **Create the first login and make it a super admin.** The database starts with no logins, and a login with no role can't get into the admin. Use its id if it isn't 1; `php artisan permission:show` lists who has which role.
 
    ```bash
    php artisan make:filament-user
    php artisan permission:assign-role "Super admin" 1
    ```
 
-   Add everyone else from **Settings > People** in the admin.
-8. Set the ticket limit (the number of headsets) under **Ticket types** in the admin.
-9. Before the event, add a login for each person working the headset desk under **Settings > People**, with the **Headset desk** role. They sign in at `/admin` like everyone else and only see the desk. Try a search and a hand-over with a test order beforehand.
-10. If you're using follow-up emails, [connect Mailchimp](#follow-up-emails-with-mailchimp).
+7. **Cache the config, routes and views** so the site runs faster:
+
+   ```bash
+   php artisan optimize
+   ```
+
+8. **Start the background work.**
+   - Keep a queue worker running, with Supervisor or your host's worker setting. It sends the ticket emails and the Mailchimp updates, so without it nobody gets their tickets:
+
+     ```bash
+     php artisan queue:work
+     ```
+
+   - Run the scheduler every minute. It checks payments with Bachs and frees up unpaid tickets every 5 minutes, and clears out old barracks passport uploads daily:
+
+     ```bash
+     * * * * * cd /path/to/lri && php artisan schedule:run >> /dev/null 2>&1
+     ```
+
+9. **Add the webhook** at `https://<your-domain>/webhooks/payments/bachs` in the Bachs developer portal, and put its signing secret in `BACHS_WEBHOOK_SECRET` (run `php artisan optimize` again after changing `.env`). See [Bachs webhooks](#bachs-webhooks).
+10. **Finish in the admin** at `/admin`, signed in as the super admin:
+    - Set the price and the ticket limit (the number of headsets) under **Ticket types**.
+    - Check **Ways to pay** shows the methods you expect.
+    - Add everyone else under **Settings > People**. Before the event, give each person working the headset desk the **Headset desk** role.
+11. **Try it for real.** Buy one ticket with a real payment, check it arrives by email with its QR code, and find it on the headset desk. `TICKET_PAYMENTS_PLAN.md` has the full go-live checklist.
+12. If you're using follow-up emails, [connect Mailchimp](#follow-up-emails-with-mailchimp).
+
+### Every deploy after that
+
+```bash
+php artisan down
+git pull
+composer install --no-dev --optimize-autoloader
+npm ci
+npm run build
+php artisan migrate --force
+php artisan optimize
+php artisan queue:restart
+php artisan up
+```
+
+`php artisan queue:restart` makes the queue worker pick up the new code once it finishes the job it's on. Never run `migrate:fresh` once real orders exist: it deletes them all. Changes to the database from now on go in new migrations.
 
 ## Community
 

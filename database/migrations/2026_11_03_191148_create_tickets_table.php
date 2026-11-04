@@ -16,8 +16,12 @@ return new class extends Migration
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->foreignId('ticket_type_id')->constrained()->restrictOnDelete();
             $table->string('code', 20)->unique();
+            $table->string('claim_token', 64)->nullable()->unique();
+            $table->timestamp('link_shared_at')->nullable();
             $table->string('holder_name')->nullable();
+            $table->string('holder_email')->nullable()->index();
             $table->timestamp('checked_in_at')->nullable();
+            $table->foreignId('checked_in_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

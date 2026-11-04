@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->string('reference', 20)->unique();
+            $table->string('receipt_token', 40)->nullable()->unique();
             $table->foreignId('ticket_type_id')->constrained()->restrictOnDelete();
             $table->unsignedSmallInteger('quantity');
             $table->unsignedBigInteger('unit_price');
