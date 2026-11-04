@@ -64,7 +64,7 @@ test('where the visitor came from is credited on their order', function () {
     expect(CheckoutEvent::query()->sole()->properties['source'])->toBe('instagram');
 
     $this->withCookie(IdentifyVisitor::VisitorCookie, $this->visitorId)
-        ->withCookie(IdentifyVisitor::AttributionCookie, json_encode(['source' => 'instagram', 'medium' => 'story', 'campaign' => 'disco-launch', 'landing' => '/disco-run']))
+        ->withCookie(IdentifyVisitor::AttributionCookie, json_encode(['source' => 'instagram', 'medium' => 'story', 'campaign' => 'disco-launch', 'landing' => '/silent-disco-run']))
         ->post(route('orders.store'), [
             'ticket_type' => $this->ticketType->slug,
             'quantity' => 1,

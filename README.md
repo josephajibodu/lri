@@ -202,7 +202,7 @@ There's no fake payment mode. Local purchases go through the Bachs sandbox, so n
    The last line makes that login a super admin. Use its id if it isn't 1. A login with no role can't get into the admin.
 
 4. Run `composer run dev`, which includes the queue worker that sends ticket emails. It doesn't run the scheduler, so run `php artisan schedule:work` as well if you want the 5-minute checks. Emails go to `storage/logs/laravel.log` until a mail service is set up.
-5. Buy a ticket at `/disco-run`, then look at the order in `/admin`.
+5. Buy a ticket at `/silent-disco-run`, then look at the order in `/admin`.
 
 Bachs can't reach `lri.test`, so webhooks don't arrive locally, but purchases are still confirmed by the order page asking Bachs. To try real webhooks, run `herd share` to get a temporary public address and add it as a webhook destination in the Bachs portal.
 
