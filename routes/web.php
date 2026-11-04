@@ -20,7 +20,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', HomeController::class)->name('home');
 Route::get('/founders', FoundersController::class)->name('founders');
 Route::get('/pace-setters', PaceSettersController::class)->name('pace-setters');
-Route::get('/disco-run', DiscoRunController::class)->middleware(IdentifyVisitor::class)->name('disco-run');
+Route::get('/silent-disco-run', DiscoRunController::class)->middleware(IdentifyVisitor::class)->name('disco-run');
+Route::permanentRedirect('/disco-run', '/silent-disco-run');
 
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
@@ -45,7 +46,7 @@ Route::middleware(EnsureBarracksRegistrationIsOpen::class)->group(function () {
         ->name('barracks.print');
 });
 
-Route::post('/disco-run/tickets', [OrderController::class, 'store'])
+Route::post('/silent-disco-run/tickets', [OrderController::class, 'store'])
     ->middleware(['throttle:10,1', IdentifyVisitor::class])
     ->name('orders.store');
 Route::post('/checkout-events', CheckoutEventController::class)

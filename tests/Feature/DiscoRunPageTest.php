@@ -8,6 +8,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
+test('the disco run page lives at /silent-disco-run and the old /disco-run link redirects there', function () {
+    expect(route('disco-run', absolute: false))->toBe('/silent-disco-run');
+
+    $this->get('/disco-run')->assertRedirect('/silent-disco-run')->assertStatus(301);
+});
+
 test('the disco run page shows the run, its channels and the date window until a date is set', function () {
     config()->set('lri.disco_run.starts_at', null);
     config()->set('lri.disco_run.date_window', 'First two weeks of December');
