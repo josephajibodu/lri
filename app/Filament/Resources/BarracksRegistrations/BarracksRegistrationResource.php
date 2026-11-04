@@ -43,7 +43,7 @@ class BarracksRegistrationResource extends Resource
      */
     public static function canAccess(): bool
     {
-        return (bool) config('lri.barracks_registration.open');
+        return config('lri.barracks_registration.open') && parent::canAccess();
     }
 
     public static function getNavigationBadge(): ?string

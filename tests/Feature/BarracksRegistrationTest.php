@@ -23,10 +23,10 @@ test('while the registration is switched off its pages are not found and the adm
     $this->post(route('barracks.store'), validBarracksRegistrationData())->assertNotFound();
     $this->post(route('barracks.passport'), ['passport' => UploadedFile::fake()->image('passport.jpg')])->assertNotFound();
 
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(User::factory()->superAdmin()->create());
     $this->get(route('barracks.print', $registration))->assertNotFound();
     $this->get('/admin/barracks-registrations')->assertForbidden();
-    $this->get('/admin')->assertOk()->assertDontSeeText('Barracks permits');
+    $this->get('/admin/dashboard')->assertOk()->assertDontSeeText('Barracks permits');
 
     expect(BarracksRegistration::count())->toBe(1);
 });
@@ -176,7 +176,7 @@ test('organisers see everyone who registered, oldest first', function () {
     $first = BarracksRegistration::factory()->create(['created_at' => now()->subDay()]);
     $second = BarracksRegistration::factory()->create();
 
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(User::factory()->superAdmin()->create());
 
     Livewire::test(ManageBarracksRegistrations::class)
         ->assertCanSeeTableRecords([$first, $second], inOrder: true)
@@ -187,7 +187,7 @@ test('organisers can print every permit form or just one', function () {
     $ada = BarracksRegistration::factory()->create(['full_name' => 'Ada Okafor']);
     BarracksRegistration::factory()->create(['full_name' => 'Tunde Bello']);
 
-    $organiser = User::factory()->create();
+    $organiser = User::factory()->superAdmin()->create();
 
     $this->actingAs($organiser)
         ->get(route('barracks.print'))

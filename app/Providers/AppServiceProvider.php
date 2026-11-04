@@ -3,11 +3,14 @@
 namespace App\Providers;
 
 use App\EmailTools\EmailToolManager;
+use App\Enums\AdminPermission;
 use App\Models\User;
 use App\Payments\PaymentManager;
+use App\Policies\RolePolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +32,13 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        Gate::define('viewLogViewer', fn (?User $user): bool => $user?->isOrganiser() ?? false);
+        Gate::policy(Role::class, RolePolicy::class);
+
+        /*
+         * Super admins hold every admin permission, including ones added later. This only answers the permission
+         * checks themselves, so rules on top of them (such as nobody removing themselves) still apply.
+         */
+        Gate::before(fn (User $user, string $ability): ?bool => $user->isSuperAdmin() && AdminPermission::tryFrom($ability) ? true : null);
+        Gate::define('viewLogViewer', fn (?User $user): bool => $user?->can(AdminPermission::ViewLogs->value) ?? false);
     }
 }

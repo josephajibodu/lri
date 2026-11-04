@@ -1,15 +1,14 @@
 <?php
 
 use App\Actions\Tickets\HandOverHeadset;
+use App\Enums\AdminPermission;
 use App\Exceptions\TicketNotUsable;
-use App\Filament\Desk\Pages\HeadsetDesk;
-use App\Filament\Resources\Users\Pages\ManageUsers;
+use App\Filament\Pages\HeadsetDesk;
 use App\Mail\TicketMail;
 use App\Models\Order;
 use App\Models\Ticket;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
-use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Features\SupportTesting\Testable;
@@ -33,38 +32,31 @@ beforeEach(function () {
 function desk(?User $user = null): Testable
 {
     test()->actingAs($user ?? test()->staff);
-    Filament::setCurrentPanel('desk');
 
     return Livewire::test(HeadsetDesk::class);
 }
 
-test('the desk asks guests to sign in', function () {
-    $this->get('/desk')->assertRedirect('/desk/login');
+test('the desk is part of the admin and asks guests to sign in', function () {
+    $this->get('/admin/headset-desk')->assertRedirect('/admin/login');
 });
 
-test('desk staff can use the desk but not the admin or the logs', function () {
-    $this->actingAs($this->staff)->get('/desk')->assertOk()->assertSeeText('Headset desk');
+test('desk staff land on the desk and see nothing else in the admin', function () {
+    $this->actingAs($this->staff)->get('/admin')->assertRedirect('/admin/headset-desk');
 
-    $this->actingAs($this->staff)->get('/admin')->assertForbidden();
+    $this->actingAs($this->staff)->get('/admin/headset-desk')
+        ->assertOk()
+        ->assertSeeText('Headset desk')
+        ->assertDontSeeText('Orders')
+        ->assertDontSeeText('Logs');
+
+    $this->actingAs($this->staff)->get('/admin/dashboard')->assertForbidden();
     $this->actingAs($this->staff)->get('/admin/orders')->assertForbidden();
-    $this->actingAs($this->staff)->get('/log-viewer')->assertForbidden();
 });
 
-test('organisers can use the desk as well as the admin', function () {
-    $organiser = User::factory()->create();
-
-    $this->actingAs($organiser)->get('/desk')->assertOk();
-    $this->actingAs($organiser)->get('/admin')->assertOk();
-});
-
-test('organisers can make an account that only works the desk', function () {
-    $this->actingAs(User::factory()->create());
-
-    Livewire::test(ManageUsers::class)
-        ->callAction('create', ['name' => 'Kemi Desk', 'email' => 'kemi@example.com', 'role' => 'desk_staff', 'password' => 'a-long-password-1'])
-        ->assertHasNoFormErrors();
-
-    expect(User::query()->where('email', 'kemi@example.com')->firstOrFail()->isOrganiser())->toBeFalse();
+test('someone whose roles don’t include the desk can’t open it', function () {
+    $this->actingAs(User::factory()->withPermissions(AdminPermission::ManageOrders)->create())
+        ->get('/admin/headset-desk')
+        ->assertForbidden();
 });
 
 test('the desk finds tickets by code with or without its dash, holder, or the buyer’s details', function (callable $search) {

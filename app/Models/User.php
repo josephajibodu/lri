@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\UserRole;
+use App\Enums\StaffRole;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -11,16 +11,17 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'role', 'password'])]
+#[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 /**
- * Someone who helps run the site: an organiser, who uses the admin, or desk staff, who only use the headset desk.
+ * Someone who helps run the site through the admin. Their roles decide which parts of the admin they see.
  */
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasRoles, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -32,26 +33,22 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'role' => UserRole::class,
         ];
     }
 
     /**
-     * Whether this person runs the site, rather than only working the headset desk.
+     * Whether this person can see and do everything in the admin.
      */
-    public function isOrganiser(): bool
+    public function isSuperAdmin(): bool
     {
-        return $this->role === UserRole::Organiser;
+        return $this->hasRole(StaffRole::SuperAdmin->value);
     }
 
     /**
-     * Organisers may use both panels. Desk staff may only use the headset desk.
+     * Anyone with a role may sign in; what they see once inside depends on their roles.
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return match ($panel->getId()) {
-            'desk' => true,
-            default => $this->isOrganiser(),
-        };
+        return $this->roles()->exists();
     }
 }

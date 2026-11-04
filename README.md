@@ -154,7 +154,10 @@ There's no fake payment mode. Local purchases go through the Bachs sandbox, so n
    php artisan db:seed --class=PaymentChannelSeeder
    php artisan payments:sync-channels
    php artisan make:filament-user
+   php artisan permission:assign-role "Super admin" 1
    ```
+
+   The last line makes that login a super admin. Use its id if it isn't 1. A login with no role can't get into the admin.
 
 4. Run `composer run dev`, which includes the queue worker that sends ticket emails. It doesn't run the scheduler, so run `php artisan schedule:work` as well if you want the 5-minute checks. Emails go to `storage/logs/laravel.log` until a mail service is set up.
 5. Buy a ticket at `/disco-run`, then look at the order in `/admin`.
@@ -175,16 +178,22 @@ Add `https://<your-domain>/webhooks/payments/bachs` as a webhook destination in 
 
 ### The admin
 
-Sign in at `/admin` with a login made by `php artisan make:filament-user`.
+Sign in at `/admin`. Each person sees only the sections their roles allow, and lands on the first one they can see. Roles are set up under **Settings > Roles** by ticking the sections a role can see, and given out under **Settings > People**. The site starts with three roles:
+
+- **Super admin** sees everything, including sections added later. It can't be edited, and only a super admin can make someone else one.
+- **Admin** starts with every section, but can be changed.
+- **Headset desk** sees only the headset desk.
 
 | Section | What it's for |
 | --- | --- |
 | Dashboard | Sales, tickets per day, the checkout funnel, how each way to pay performs and where buyers come from |
+| Headset desk | On the day: find a ticket, fill in a missing name and email, and hand over one headset per paid ticket |
 | Orders | Search and download orders, see each buyer's payment attempts and journey, check a payment with Bachs and email tickets again |
 | Ticket types | Prices in naira and the ticket limit, which is the number of headsets |
 | Ways to pay | Switch methods on or off, feature them at checkout and reorder them |
 | System > Webhooks | What Bachs sent, with the option to handle a failed one again |
 | System > Email tool | What Mailchimp was told, with the option to send a failed one again |
+| Settings > People and Roles | Who can sign in, and which sections each role sees |
 | `/log-viewer` | The application logs |
 
 ### Commands
@@ -284,13 +293,14 @@ These only need doing once. `TICKET_PAYMENTS_PLAN.md` has the full checklist.
    ```
 
 6. Add the [webhook address](#bachs-webhooks) in the Bachs developer portal.
-7. Add the ticket and the ways to pay, then create the first organiser:
+7. Add the ticket and the ways to pay, then create the first organiser and make them a super admin (use their id if it isn't 1):
 
    ```bash
    php artisan db:seed --class=TicketTypeSeeder --force
    php artisan db:seed --class=PaymentChannelSeeder --force
    php artisan payments:sync-channels
    php artisan make:filament-user
+   php artisan permission:assign-role "Super admin" 1
    ```
 
 8. Set the ticket limit (the number of headsets) under **Ticket types** in the admin.

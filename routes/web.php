@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AdminPermission;
 use App\Http\Controllers\BarracksRegistrationController;
 use App\Http\Controllers\BirthdayController;
 use App\Http\Controllers\CheckoutEventController;
@@ -40,7 +41,7 @@ Route::middleware(EnsureBarracksRegistrationIsOpen::class)->group(function () {
         ->name('barracks.passport');
     Route::get('/akobo/barracks/registrations', fn () => redirect('/admin/barracks-registrations'));
     Route::get('/akobo/barracks/registrations/print/{registration?}', [BarracksRegistrationController::class, 'print'])
-        ->middleware('auth')
+        ->middleware(['auth', 'can:'.AdminPermission::ManageBarracksRegistrations->value])
         ->name('barracks.print');
 });
 

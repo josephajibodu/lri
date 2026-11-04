@@ -2,16 +2,23 @@
 
 namespace App\Filament\Widgets\Concerns;
 
+use App\Enums\AdminPermission;
 use App\Reports\ReportPeriod;
 use Carbon\CarbonImmutable;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 /**
- * Read the dashboard's period filter, defaulting to the last 30 days.
+ * Read the dashboard's period filter, defaulting to the last 30 days. Only people allowed the sales dashboard see
+ * these widgets.
  */
 trait ReadsReportPeriod
 {
     use InteractsWithPageFilters;
+
+    public static function canView(): bool
+    {
+        return auth()->user()?->can(AdminPermission::ViewDashboard->value) ?? false;
+    }
 
     protected function reportPeriod(): ReportPeriod
     {

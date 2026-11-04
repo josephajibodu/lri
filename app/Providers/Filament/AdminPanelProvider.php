@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Enums\AdminPermission;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -40,13 +41,9 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('System'),
             ])
             ->navigationItems([
-                NavigationItem::make('Headset desk')
-                    ->url('/desk')
-                    ->icon(Heroicon::OutlinedTicket)
-                    ->group('Tickets')
-                    ->sort(0),
                 NavigationItem::make('Logs')
                     ->url(fn (): string => route('log-viewer.index'))
+                    ->visible(fn (): bool => auth()->user()?->can(AdminPermission::ViewLogs->value) ?? false)
                     ->openUrlInNewTab()
                     ->icon(Heroicon::OutlinedDocumentMagnifyingGlass)
                     ->group('System')

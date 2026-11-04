@@ -113,7 +113,7 @@ test('the birthday list shows next month by default, in date order', function ()
     $early = Birthday::factory()->on(11, 3)->create(['full_name' => 'Early Person', 'notes' => 'Big 4-0, please mention it!']);
     $december = Birthday::factory()->on(12, 1)->create(['full_name' => 'December Person']);
 
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(User::factory()->superAdmin()->create());
 
     Livewire::test(ManageBirthdays::class)
         ->assertCanSeeTableRecords([$early, $later], inOrder: true)
@@ -126,7 +126,7 @@ test('the birthday list can show another month, with the age turned at the next 
 
     $january = Birthday::factory()->on(1, 5)->create(['birth_year' => 1990]);
 
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(User::factory()->superAdmin()->create());
 
     Livewire::test(ManageBirthdays::class)
         ->filterTable('birth_month', 1)

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\AdminPermission;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard as BaseDashboard;
@@ -16,6 +17,17 @@ use Filament\Schemas\Schema;
 class Dashboard extends BaseDashboard
 {
     use HasFiltersForm;
+
+    /**
+     * The dashboard has its own address, so /admin can send each person to the first part of the admin they're
+     * allowed to see.
+     */
+    protected static string $routePath = '/dashboard';
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->can(AdminPermission::ViewDashboard->value) ?? false;
+    }
 
     public function filtersForm(Schema $schema): Schema
     {

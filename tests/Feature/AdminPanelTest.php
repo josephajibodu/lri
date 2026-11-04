@@ -35,7 +35,7 @@ use Livewire\Livewire;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->admin = User::factory()->create();
+    $this->admin = User::factory()->superAdmin()->create();
 });
 
 test('the admin and the logs ask guests to sign in', function () {
@@ -44,8 +44,9 @@ test('the admin and the logs ask guests to sign in', function () {
     $this->get('/log-viewer')->assertRedirect('/admin/login');
 });
 
-test('an organiser sees the dashboard and the logs', function () {
-    $this->actingAs($this->admin)->get('/admin')->assertOk()->assertSeeText('LRI Admin');
+test('a super admin lands on the dashboard and sees the logs', function () {
+    $this->actingAs($this->admin)->get('/admin')->assertRedirect('/admin/dashboard');
+    $this->actingAs($this->admin)->get('/admin/dashboard')->assertOk()->assertSeeText('LRI Admin');
     $this->actingAs($this->admin)->get('/log-viewer')->assertOk();
 });
 

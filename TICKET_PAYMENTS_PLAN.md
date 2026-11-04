@@ -9,7 +9,7 @@ Branch: `ticket-payments`. Last updated: 4 November 2026.
 - **Care about payment methods, not just payments.** Each method, in each currency, is set up separately, and any of them can be featured at checkout. For example, "Pay with bank transfer" shows as a big button that goes straight to a bank-transfer-only checkout.
 - **Track every step of the buyer's journey**, so we can see why someone didn't pay and which payment methods and sources work best.
 - **Win back abandoned payments through an outside email tool** (Mailchimp, Mailtrap and the like). The site only sends those tools the data; the follow-up emails themselves are set up in the tool.
-- **Give admins an admin area.** The `users` table is for organisers only.
+- **Give admins an admin area.** The `users` table is for organisers and helpers; their roles decide what each sees.
 
 ## How it's built
 
@@ -81,7 +81,6 @@ Each person picks up their own headset, so each ticket carries its own name and 
 
 **Database**
 - [x] `tickets` gained `holder_email`, `claim_token` (a long random secret for the ticket's own link) and `checked_in_by` (who handed over the headset). `checked_in_at` already recorded when
-- [x] `users` gained a `role`: organiser (everyone who already had an account) or headset desk only
 - [x] When an order is paid, the first ticket gets the buyer's name and email; the rest stay blank
 
 **Buyer names the tickets (on the receipt page)**
@@ -95,14 +94,23 @@ Each person picks up their own headset, so each ticket carries its own name and 
 - [x] When a ticket gets a new email (from the buyer, the friend or the desk), that person is emailed their own ticket ([TicketMail.php](app/Mail/TicketMail.php)), unless it's the buyer's own ticket
 - [x] Friends are never sent to Mailchimp: they didn't tick the consent box
 
-**Headset desk** ([HeadsetDesk.php](app/Filament/Desk/Pages/HeadsetDesk.php))
-- [x] A panel of its own at `/desk`, so desk staff accounts can't open `/admin` or the logs. Organisers can use both, and the admin links to the desk under Tickets
+**Headset desk** ([HeadsetDesk.php](app/Filament/Pages/HeadsetDesk.php))
+- [x] A page in the admin at `/admin/headset-desk`, under Tickets
 - [x] One search box: ticket code (with or without the dash), holder's name or email, buyer's name or email, or order number. Tickets are grouped by order, so searching for the buyer shows everyone on their order
 - [x] Each ticket shows Ready, Needs a name, Collected (when and by whom) or Not paid
 - [x] "Fill in name": staff type in the name and email on the spot; that person is emailed their ticket
 - [x] "Hand over headset": only for a paid, named ticket that hasn't had one. The ticket is locked while it's recorded, so two staff can't hand out a headset for the same ticket
 - [x] A count at the top: headsets handed out out of paid tickets
-- [x] Organisers add desk staff under Settings > People, choosing "Headset desk only"
+- [x] Organisers add desk staff under Settings > People, giving them the "Headset desk" role
+
+### ✅ Phase 9: Roles and permissions in the admin
+
+- [x] Spatie's roles and permissions package, with one permission per section of the admin ([AdminPermission.php](app/Enums/AdminPermission.php)): dashboard, orders, headset desk, ticket types, ways to pay, birthdays, barracks permits, people and roles, webhooks, email tool, logs
+- [x] Each section checks its permission through a policy ([app/Policies](app/Policies)), so a section someone can't use is missing from their menu and its address is refused
+- [x] Starting roles: **Super admin** (everything, including sections added later; can't be edited), **Admin** (every section, editable) and **Headset desk** (only the desk). Everyone who already had a login became a super admin
+- [x] Settings > Roles: create a role and tick the sections it sees. Settings > People: give each person one or more roles
+- [x] `/admin` sends each person to the first section they can see, so desk staff land straight on the desk; the dashboard moved to `/admin/dashboard`
+- [x] Only a super admin can make someone a super admin or change one; nobody can change their own roles or remove themselves; a role someone still has can't be removed
 
 ## Before going live
 
@@ -113,12 +121,12 @@ Each person picks up their own headset, so each ticket carries its own name and 
 - [ ] Run the scheduler (`php artisan schedule:run` every minute) for the 5-minute checks
 - [ ] Choose and set up a mail service; mail currently only goes to the log file
 - [ ] Run `php artisan db:seed --class=TicketTypeSeeder` and `--class=PaymentChannelSeeder`, then `php artisan payments:sync-channels`
-- [ ] Create the first organiser with `php artisan make:filament-user`
+- [ ] Create the first organiser with `php artisan make:filament-user`, then make them a super admin with `php artisan permission:assign-role "Super admin" <their id>`
 - [ ] Only once the email tool is chosen, and if it's Mailchimp: set `EMAIL_TOOL=mailchimp`, `MAILCHIMP_API_KEY` and `MAILCHIMP_AUDIENCE_ID`, then run `php artisan email-tools:prepare` once to add the audience fields
 - [ ] In Mailchimp, build the follow-up flow: start it on the tag `checkout-abandoned`, link to `*|RESUMEURL|*`, and stop it for anyone who gets the tag `ticket-paid`
 - [ ] Set the Disco Run ticket limit (number of headsets) in the admin
-- [ ] Run `php artisan migrate` for the ticket holder and role columns
-- [ ] Add an account for each person working the headset desk (Settings > People, "Headset desk only"); they sign in at `/desk`
+- [ ] Run `php artisan migrate` for the ticket holder columns and the roles. Existing logins become super admins
+- [ ] Add an account for each person working the headset desk (Settings > People, role "Headset desk"); they sign in at `/admin` and only see the desk
 - [ ] Do a real test purchase on the Bachs sandbox (the sandbox keys in the local `.env` work)
 
 ## Open questions
@@ -130,7 +138,7 @@ Each person picks up their own headset, so each ticket carries its own name and 
 
 - **One ticket type, one price.** No early bird or group pricing.
 - **A name and email on every ticket.** The buyer names extra tickets after paying, or sends each friend a link. On the day, the buyer can bring everyone to the desk and staff fill in any blank names. No headset without a paid ticket, and one headset per ticket.
-- **Desk staff get desk-only accounts.** They sign in at `/desk` and can't see sales, buyers or settings.
+- **Roles and permissions decide what each person sees in the admin.** Desk staff use the same `/admin` sign-in and only see the headset desk.
 - **No OPay.** Card and bank transfer through Bachs are enough. We won't chase OPay with Bachs or add a second provider for it. The provider layer still allows one later if this changes.
 - **No cookie notice.** The visitor and source cookies go ahead without one.
 

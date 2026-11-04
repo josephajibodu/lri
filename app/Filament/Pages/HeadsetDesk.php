@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Filament\Desk\Pages;
+namespace App\Filament\Pages;
 
 use App\Actions\Tickets\HandOverHeadset;
 use App\Actions\Tickets\NameTicket;
+use App\Enums\AdminPermission;
 use App\Enums\OrderStatus;
 use App\Exceptions\TicketNotUsable;
 use App\Models\Ticket;
@@ -12,7 +13,6 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Panel;
 use Filament\Schemas\Components\EmbeddedTable;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -22,6 +22,7 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 /**
  * Where staff hand out headsets on the day. They find a ticket by its code, the holder's name or email, or the
@@ -36,9 +37,13 @@ class HeadsetDesk extends Page implements HasTable
 
     protected static ?string $title = 'Headset desk';
 
-    public static function getRoutePath(Panel $panel): string
+    protected static string|UnitEnum|null $navigationGroup = 'Tickets';
+
+    protected static ?int $navigationSort = 0;
+
+    public static function canAccess(): bool
     {
-        return '/';
+        return auth()->user()?->can(AdminPermission::UseHeadsetDesk->value) ?? false;
     }
 
     public function getSubheading(): string
@@ -114,6 +119,7 @@ class HeadsetDesk extends Page implements HasTable
                     ->icon(Heroicon::OutlinedPencilSquare)
                     ->color('gray')
                     ->visible(fn (Ticket $record): bool => $record->isValid() && ! $record->isCollected())
+                    ->authorize(fn (): bool => static::canAccess())
                     ->modalHeading(fn (Ticket $record): string => 'Ticket '.$record->code)
                     ->modalDescription('We’ll email this person their ticket.')
                     ->fillForm(fn (Ticket $record): array => [
@@ -141,6 +147,7 @@ class HeadsetDesk extends Page implements HasTable
                     ->color('success')
                     ->button()
                     ->visible(fn (Ticket $record): bool => $record->isValid() && $record->isNamed() && ! $record->isCollected())
+                    ->authorize(fn (): bool => static::canAccess())
                     ->requiresConfirmation()
                     ->modalHeading(fn (Ticket $record): string => 'Hand a headset to '.$record->holder_name.'?')
                     ->modalDescription(fn (Ticket $record): string => 'Ticket '.$record->code.'. This ticket can’t be used for another headset after this.')

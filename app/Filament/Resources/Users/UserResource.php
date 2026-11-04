@@ -2,10 +2,11 @@
 
 namespace App\Filament\Resources\Users;
 
-use App\Enums\UserRole;
+use App\Enums\StaffRole;
 use App\Filament\Resources\Users\Pages\ManageUsers;
 use App\Models\User;
 use BackedEnum;
+use Closure;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
@@ -15,10 +16,12 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Spatie\Permission\Models\Role;
 use UnitEnum;
 
 /**
- * The people who can sign in: organisers, who use the admin, and desk staff, who only use the headset desk.
+ * The people who can sign in to the admin, and the roles that decide what each of them sees.
  */
 class UserResource extends Resource
 {
@@ -44,13 +47,26 @@ class UserResource extends Resource
             ->components([
                 TextInput::make('name')->required()->maxLength(255),
                 TextInput::make('email')->email()->required()->maxLength(255)->unique(ignoreRecord: true),
-                Select::make('role')
-                    ->options(UserRole::class)
-                    ->default(UserRole::Organiser)
+                Select::make('roles')
+                    ->relationship(
+                        'roles',
+                        'name',
+                        modifyQueryUsing: fn (Builder $query): Builder => static::assignableRoles($query),
+                    )
+                    ->multiple()
+                    ->preload()
                     ->required()
-                    ->selectablePlaceholder(false)
+                    ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                        $offered = static::assignableRoles(Role::query())->pluck('id')->all();
+
+                        if (array_diff(array_map('intval', (array) $value), $offered) !== []) {
+                            $fail('You can’t give out that role.');
+                        }
+                    })
                     ->disabled(fn (?User $record): bool => $record?->is(auth()->user()) ?? false)
-                    ->helperText('Headset desk only: can sign in at /desk to hand out headsets, and nothing else.'),
+                    ->helperText(fn (?User $record): string => $record?->is(auth()->user())
+                        ? 'You can’t change your own roles. Ask another admin.'
+                        : 'Decides which parts of the admin they see. Set up roles under Settings > Roles.'),
                 TextInput::make('password')
                     ->password()
                     ->revealable()
@@ -67,13 +83,27 @@ class UserResource extends Resource
             ->columns([
                 TextColumn::make('name')->searchable(),
                 TextColumn::make('email')->searchable(),
-                TextColumn::make('role')->badge(),
+                TextColumn::make('roles.name')->label('Roles')->badge(),
                 TextColumn::make('created_at')->label('Added')->date('j M Y'),
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make()->hidden(fn (User $record): bool => $record->is(auth()->user())),
+                DeleteAction::make(),
             ]);
+    }
+
+    /**
+     * The roles the signed-in person may give out. Only a super admin can make someone else a super admin.
+     *
+     * @param  Builder<Role>  $query
+     * @return Builder<Role>
+     */
+    public static function assignableRoles(Builder $query): Builder
+    {
+        return $query->when(
+            ! auth()->user()?->isSuperAdmin(),
+            fn (Builder $query): Builder => $query->where('name', '!=', StaffRole::SuperAdmin->value),
+        );
     }
 
     public static function getPages(): array
