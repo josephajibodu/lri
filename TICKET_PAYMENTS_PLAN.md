@@ -107,14 +107,13 @@ Each person picks up their own headset, so each ticket carries its own name and 
 
 - [x] Spatie's roles and permissions package, with one permission per section of the admin ([AdminPermission.php](app/Enums/AdminPermission.php)): dashboard, orders, headset desk, ticket types, ways to pay, birthdays, barracks permits, people and roles, webhooks, email tool, logs
 - [x] Each section checks its permission through a policy ([app/Policies](app/Policies)), so a section someone can't use is missing from their menu and its address is refused
-- [x] Starting roles: **Super admin** (everything, including sections added later; can't be edited), **Admin** (every section, editable) and **Headset desk** (only the desk). Everyone who already had a login became a super admin
+- [x] Starting roles: **Super admin** (everything, including sections added later; can't be edited), **Admin** (every section, editable) and **Headset desk** (only the desk). Any login that already exists when the migration runs becomes a super admin; on a fresh database, the first login is made one with `permission:assign-role`
 - [x] Settings > Roles: create a role and tick the sections it sees. Settings > People: give each person one or more roles
 - [x] `/admin` sends each person to the first section they can see, so desk staff land straight on the desk; the dashboard moved to `/admin/dashboard`
 - [x] Only a super admin can make someone a super admin or change one; nobody can change their own roles or remove themselves; a role someone still has can't be removed
 
 ## Before going live
 
-- [ ] Move production's existing birthdays and barracks registrations from SQLite to MySQL: back up `database/database.sqlite`, then `php artisan signups:import-sqlite --dry-run` and `php artisan signups:import-sqlite` once `.env` points at MySQL
 - [ ] Production `.env`: `APP_URL` (the real address), `DB_*` for MySQL, `BACHS_SECRET_KEY` (`sk_live_…`), `BACHS_WEBHOOK_SECRET`
 - [ ] In the Bachs developer portal, add `https://<domain>/webhooks/payments/bachs` as a webhook destination
 - [ ] Run a queue worker (`php artisan queue:work`) for ticket emails
@@ -125,7 +124,7 @@ Each person picks up their own headset, so each ticket carries its own name and 
 - [ ] Only once the email tool is chosen, and if it's Mailchimp: set `EMAIL_TOOL=mailchimp`, `MAILCHIMP_API_KEY` and `MAILCHIMP_AUDIENCE_ID`, then run `php artisan email-tools:prepare` once to add the audience fields
 - [ ] In Mailchimp, build the follow-up flow: start it on the tag `checkout-abandoned`, link to `*|RESUMEURL|*`, and stop it for anyone who gets the tag `ticket-paid`
 - [ ] Set the Disco Run ticket limit (number of headsets) in the admin
-- [ ] Run `php artisan migrate` for the ticket holder columns and the roles. Existing logins become super admins
+- [ ] Run `php artisan migrate` on the fresh production database; it creates the tables, the admin's permissions and the starting roles
 - [ ] Add an account for each person working the headset desk (Settings > People, role "Headset desk"); they sign in at `/admin` and only see the desk
 - [ ] Do a real test purchase on the Bachs sandbox (the sandbox keys in the local `.env` work)
 

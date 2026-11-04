@@ -24,7 +24,7 @@ The website for Let's Run Ibadan (LRI), a running community of runners, joggers 
 - Blade layouts, components and partials
 - Vite builds `resources/css/app.css` and `resources/js/app.js`. Tailwind CSS 4 is imported, but the page styles are plain CSS in `app.css`
 - Vanilla JavaScript for the countdown, stickers, pace slider, route map, kit check and footer animation
-- [Filament](https://filamentphp.com) for the admin, [Bachs](https://docs.bachs.io) for ticket payments and [Mailchimp](https://mailchimp.com) for follow-up emails
+- [Filament](https://filamentphp.com) for the admin, with [Spatie's laravel-permission](https://spatie.be/docs/laravel-permission) for its roles, [Bachs](https://docs.bachs.io) for ticket payments and [Mailchimp](https://mailchimp.com) for follow-up emails
 - [Pest](https://pestphp.com) for tests and [Pint](https://laravel.com/docs/pint) for code style
 - Anybody, Instrument Sans and Martian Mono, self-hosted in `resources/fonts` (Latin and Latin Extended subsets from Google Fonts) with their variable width axis, which the stretch animations need. The layout preloads Instrument Sans, the font of the headline and body text
 
@@ -132,8 +132,29 @@ Silent Disco Run tickets are sold on the site, paid through [Bachs](https://docs
 1. The buyer fills in the ticket form and picks a way to pay. Their tickets are held for 60 minutes (`PAYMENTS_CHECKOUT_EXPIRES_IN`).
 2. Bachs's checkout opens as a pop-up over the page. If the pop-up can't load, the buyer goes to Bachs's own payment page instead.
 3. Bachs confirms the payment with a webhook, a notification it sends to our server. As a backup, the order page asks Bachs directly while the buyer waits, and `payments:reconcile` asks every 5 minutes.
-4. Once it's paid, the buyer moves on to their receipt at `/receipts/{code}`, an address they can always come back to, and their tickets are emailed from the queue.
+4. Once it's paid, the buyer moves on to their receipt at `/receipts/{code}`, an address they can always come back to, and their tickets are emailed from the queue. The first ticket already carries the buyer's name and email.
 5. An order that isn't paid is marked abandoned about 10 minutes after its hold runs out, and its tickets go back on sale. The buyer can still pay from their order page while tickets are left.
+
+### A name on every ticket
+
+There is one ticket type at one price. Each ticket is for one person, and each person picks up their own headset, so every ticket needs that person's name and email. The buyer only enters their own details at checkout; the other tickets are named after paying:
+
+- **From the receipt.** For an order of more than one ticket, the receipt has a name and email form under each ticket. The buyer can change a ticket's details until its headset has been collected.
+- **Through the ticket's own link.** Each blank ticket has a "Copy their link" button (a share sheet on phones). The friend opens `/tickets/{secret}`, fills in their name and email, and from then on the same link shows their ticket and code. A ticket that already has a name can't be taken over through its link.
+- **At the desk on the day.** Anything still blank can be filled in at the [headset desk](#on-the-day-the-headset-desk).
+
+Whenever a ticket gets a new email address, that person is emailed their own ticket with its code and link. The buyer isn't emailed again for their own ticket. Friends are never sent to Mailchimp, because they didn't tick the consent box; their email is only used for their ticket.
+
+### On the day: the headset desk
+
+The headset desk is a page in the admin (**Tickets > Headset desk**, at `/admin/headset-desk`) that works on a phone. Give each person working the desk a login with the **Headset desk** role, and they'll see nothing else in the admin.
+
+1. Ask for the code on their ticket, their name or email, or the name of whoever bought it, and type it into the search box. Codes work with or without the dash. Tickets are grouped by order, so searching for the buyer shows everyone they paid for.
+2. Each ticket shows where it stands: **Ready**, **Needs a name**, **Collected** (with when and by whom), or **Not paid** (the order was refunded).
+3. For a ticket that needs a name, press **Fill in name** and type in the person's name and email. They're emailed their ticket.
+4. Press **Hand over headset** and give them the headset. Each paid, named ticket gets one headset, once. If two people at the desk press it for the same ticket at the same moment, only one hand-over is recorded.
+
+The count at the top of the page shows how many headsets have been handed out against the number of paid tickets.
 
 ### Try it locally
 
@@ -178,11 +199,15 @@ Add `https://<your-domain>/webhooks/payments/bachs` as a webhook destination in 
 
 ### The admin
 
-Sign in at `/admin`. Each person sees only the sections their roles allow, and lands on the first one they can see. Roles are set up under **Settings > Roles** by ticking the sections a role can see, and given out under **Settings > People**. The site starts with three roles:
+Everyone signs in at `/admin`. Each person sees only the sections their roles allow: the rest are missing from their menu, and their addresses are refused. `/admin` takes each person to the first section they can see, so desk staff land straight on the desk and everyone else on the dashboard (`/admin/dashboard`).
 
-- **Super admin** sees everything, including sections added later. It can't be edited, and only a super admin can make someone else one.
-- **Admin** starts with every section, but can be changed.
+Roles are set up under **Settings > Roles** by ticking the sections a role can see, and given out under **Settings > People**. Someone can have more than one role, and someone with no role can't sign in. The site starts with three roles:
+
+- **Super admin** sees everything, including sections added later. It can't be edited, and only a super admin can make someone else one, or change or remove one.
+- **Admin** starts with every section, but can be changed. A section added later isn't ticked for it automatically.
 - **Headset desk** sees only the headset desk.
+
+Nobody can change their own roles or remove their own login, so nobody locks themselves out. A role still given to someone can't be removed. **People and roles** lets someone give anyone any role except Super admin, so only tick it for people you trust with everything.
 
 | Section | What it's for |
 | --- | --- |
@@ -193,6 +218,7 @@ Sign in at `/admin`. Each person sees only the sections their roles allow, and l
 | Ways to pay | Switch methods on or off, feature them at checkout and reorder them |
 | System > Webhooks | What Bachs sent, with the option to handle a failed one again |
 | System > Email tool | What Mailchimp was told, with the option to send a failed one again |
+| Club > Birthdays, Barracks permits | Birthdays members shared and barracks permit sign-ups (permits only while that registration is switched on) |
 | Settings > People and Roles | Who can sign in, and which sections each role sees |
 | `/log-viewer` | The application logs |
 
@@ -205,6 +231,17 @@ Sign in at `/admin`. Each person sees only the sections their roles allow, and l
 | `php artisan orders:abandon-unpaid` | Marks orders abandoned once their hold has run out. Scheduled every 5 minutes |
 | `php artisan payments:replay-webhook {id}` | Handles a stored webhook again. The id is its row in `webhook_calls` |
 | `php artisan email-tools:prepare` | Adds the audience fields Mailchimp needs. Safe to run again |
+| `php artisan permission:assign-role "Super admin" {id}` | Gives a login a role. Use it for the first login, or if every super admin is locked out |
+| `php artisan permission:show` | Lists the roles and what each one can see |
+| `php artisan permission:cache-reset` | Clears the saved copy of the roles and permissions, if a change in the admin doesn't seem to take effect |
+
+### Adding a section to the admin
+
+Every section is guarded by a permission, so a new resource or page needs one too, or only super admins will see it:
+
+1. Add a case to `app/Enums/AdminPermission.php`, with its label and description for the Roles screen.
+2. Create it in the database with a migration, the way `database/migrations/2026_11_04_000457_create_admin_roles_and_permissions.php` does, then tick it for the roles that should see it.
+3. Guard the section: for a resource, add a policy extending `app/Policies/AdminSectionPolicy.php` (Laravel finds `App\Policies\{Model}Policy` on its own); for a page, return `auth()->user()?->can(AdminPermission::YourCase->value)` from its `canAccess()`.
 
 ### Follow-up emails with Mailchimp
 
@@ -263,48 +300,48 @@ php artisan optimize
 php artisan queue:restart
 ```
 
-In production, set `APP_ENV=production`, `APP_DEBUG=false` and `APP_URL` to the site's address in `.env`.
+In production, set `APP_ENV=production`, `APP_DEBUG=false` and `APP_URL` to the site's address in `.env`. `APP_URL` must be the exact live address, `https` included: ticket links, receipt links and the links in emails are built from it.
+
+`php artisan migrate --force` also creates the admin's permissions and its three starting roles, so they exist from the first deploy.
 
 ### Going live with ticket sales
 
 These only need doing once. `TICKET_PAYMENTS_PLAN.md` has the full checklist.
 
 1. Set the live details in `.env`: the MySQL `DB_*` settings, `BACHS_SECRET_KEY` (`sk_live_...`) and `BACHS_WEBHOOK_SECRET`.
-2. Bring across the birthdays, barracks registrations and organiser logins saved before the switch, which are still in the old SQLite file. Keep a copy of the file first. Then, with `.env` already pointing at MySQL and the migrations run, see what would be copied and copy it:
-
-   ```bash
-   cp database/database.sqlite ~/lri-before-mysql.sqlite
-   php artisan signups:import-sqlite --dry-run
-   php artisan signups:import-sqlite
-   ```
-
-   The photos and passports stay where they are on disk; only their records move. Anyone already in MySQL (matched by email, or phone for barracks) is skipped, so running it twice is safe. Organisers then find both lists under **Club** in the admin.
-3. Choose a mail service and set `MAIL_MAILER` and its settings. Until then, ticket emails only go to the log file and buyers get nothing.
-4. Keep a queue worker running. It sends the ticket emails and the Mailchimp updates:
+2. Choose a mail service and set `MAIL_MAILER` and its settings. Until then, ticket emails only go to the log file and buyers and friends get nothing.
+3. Keep a queue worker running. It sends the ticket emails and the Mailchimp updates:
 
    ```bash
    php artisan queue:work
    ```
 
-5. Run the scheduler every minute, which runs the 5-minute payment checks:
+4. Run the scheduler every minute, which runs the 5-minute payment checks:
 
    ```bash
    * * * * * cd /path/to/lri && php artisan schedule:run >> /dev/null 2>&1
    ```
 
-6. Add the [webhook address](#bachs-webhooks) in the Bachs developer portal.
-7. Add the ticket and the ways to pay, then create the first organiser and make them a super admin (use their id if it isn't 1):
+5. Add the [webhook address](#bachs-webhooks) in the Bachs developer portal.
+6. Add the ticket and the ways to pay:
 
    ```bash
    php artisan db:seed --class=TicketTypeSeeder --force
    php artisan db:seed --class=PaymentChannelSeeder --force
    php artisan payments:sync-channels
+   ```
+
+7. Create the first login and make it a super admin. The database starts empty, and a login with no role can't get into the admin. Use its id if it isn't 1; `php artisan permission:show` and the People screen show who has which role.
+
+   ```bash
    php artisan make:filament-user
    php artisan permission:assign-role "Super admin" 1
    ```
 
+   Add everyone else from **Settings > People** in the admin.
 8. Set the ticket limit (the number of headsets) under **Ticket types** in the admin.
-9. If you're using follow-up emails, [connect Mailchimp](#follow-up-emails-with-mailchimp).
+9. Before the event, add a login for each person working the headset desk under **Settings > People**, with the **Headset desk** role. They sign in at `/admin` like everyone else and only see the desk. Try a search and a hand-over with a test order beforehand.
+10. If you're using follow-up emails, [connect Mailchimp](#follow-up-emails-with-mailchimp).
 
 ## Community
 
