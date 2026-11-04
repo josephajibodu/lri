@@ -24,7 +24,19 @@ class TicketFactory extends Factory
             'ticket_type_id' => fn (array $attributes): int => Order::find($attributes['order_id'])->ticket_type_id,
             'code' => ReadableCode::generate(8, groupSize: 4),
             'holder_name' => null,
+            'holder_email' => null,
             'checked_in_at' => null,
         ];
+    }
+
+    /**
+     * A ticket with someone's name and email on it.
+     */
+    public function named(): static
+    {
+        return $this->state(fn (): array => [
+            'holder_name' => fake()->name(),
+            'holder_email' => fake()->unique()->safeEmail(),
+        ]);
     }
 }

@@ -2,22 +2,28 @@
 
 namespace App\Models;
 
+use App\Enums\OrderStatus;
 use App\Support\ReadableCode;
 use Database\Factories\TicketFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 /**
- * One admission, issued once its order is paid.
+ * One admission, issued once its order is paid. Each ticket belongs to one person (its holder), who collects one
+ * headset with it. The buyer's own ticket is named at payment; the rest are named afterwards by the buyer, by the
+ * holder through the ticket's private link, or by staff at the headset desk.
  */
 #[Fillable([
     'order_id',
     'ticket_type_id',
     'code',
     'holder_name',
+    'holder_email',
     'checked_in_at',
+    'checked_in_by',
 ])]
 class Ticket extends Model
 {
@@ -34,6 +40,10 @@ class Ticket extends Model
                 do {
                     $ticket->code = ReadableCode::generate(8, groupSize: 4);
                 } while (static::query()->where('code', $ticket->code)->exists());
+            }
+
+            if (blank($ticket->claim_token)) {
+                $ticket->claim_token = Str::random(40);
             }
         });
     }
@@ -64,5 +74,55 @@ class Ticket extends Model
     public function ticketType(): BelongsTo
     {
         return $this->belongsTo(TicketType::class);
+    }
+
+    /**
+     * The staff member who handed over this ticket's headset.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function checkedInBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'checked_in_by');
+    }
+
+    /**
+     * Whether someone's name and email are on this ticket yet.
+     */
+    public function isNamed(): bool
+    {
+        return filled($this->holder_name) && filled($this->holder_email);
+    }
+
+    /**
+     * Whether this ticket's headset has been handed over.
+     */
+    public function isCollected(): bool
+    {
+        return $this->checked_in_at !== null;
+    }
+
+    /**
+     * Whether this ticket still counts: its order is paid and hasn't been refunded.
+     */
+    public function isValid(): bool
+    {
+        return $this->order->status === OrderStatus::Paid;
+    }
+
+    /**
+     * Whether this ticket belongs to the person who bought the order.
+     */
+    public function isBuyers(): bool
+    {
+        return Str::lower((string) $this->holder_email) === Str::lower($this->order->buyer_email);
+    }
+
+    /**
+     * The ticket's own private link, for its holder to fill in their details and see their ticket.
+     */
+    public function claimUrl(): string
+    {
+        return route('tickets.show', $this->claim_token);
     }
 }

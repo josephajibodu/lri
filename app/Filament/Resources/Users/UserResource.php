@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\Users;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\Users\Pages\ManageUsers;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -16,7 +18,7 @@ use Filament\Tables\Table;
 use UnitEnum;
 
 /**
- * The organisers who can sign in to the admin.
+ * The people who can sign in: organisers, who use the admin, and desk staff, who only use the headset desk.
  */
 class UserResource extends Resource
 {
@@ -26,9 +28,11 @@ class UserResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Settings';
 
-    protected static ?string $navigationLabel = 'Organisers';
+    protected static ?string $navigationLabel = 'People';
 
-    protected static ?string $modelLabel = 'organiser';
+    protected static ?string $modelLabel = 'person';
+
+    protected static ?string $pluralModelLabel = 'people';
 
     protected static ?int $navigationSort = 2;
 
@@ -40,6 +44,13 @@ class UserResource extends Resource
             ->components([
                 TextInput::make('name')->required()->maxLength(255),
                 TextInput::make('email')->email()->required()->maxLength(255)->unique(ignoreRecord: true),
+                Select::make('role')
+                    ->options(UserRole::class)
+                    ->default(UserRole::Organiser)
+                    ->required()
+                    ->selectablePlaceholder(false)
+                    ->disabled(fn (?User $record): bool => $record?->is(auth()->user()) ?? false)
+                    ->helperText('Headset desk only: can sign in at /desk to hand out headsets, and nothing else.'),
                 TextInput::make('password')
                     ->password()
                     ->revealable()
@@ -56,6 +67,7 @@ class UserResource extends Resource
             ->columns([
                 TextColumn::make('name')->searchable(),
                 TextColumn::make('email')->searchable(),
+                TextColumn::make('role')->badge(),
                 TextColumn::make('created_at')->label('Added')->date('j M Y'),
             ])
             ->recordActions([

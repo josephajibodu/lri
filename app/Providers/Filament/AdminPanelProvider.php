@@ -40,6 +40,11 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('System'),
             ])
             ->navigationItems([
+                NavigationItem::make('Headset desk')
+                    ->url('/desk')
+                    ->icon(Heroicon::OutlinedTicket)
+                    ->group('Tickets')
+                    ->sort(0),
                 NavigationItem::make('Logs')
                     ->url(fn (): string => route('log-viewer.index'))
                     ->openUrlInNewTab()

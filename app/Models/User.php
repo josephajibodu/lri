@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -12,10 +12,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'role', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 /**
- * An organiser who runs the site from the admin panel. Only organisers have accounts, so every user can sign in.
+ * Someone who helps run the site: an organiser, who uses the admin, or desk staff, who only use the headset desk.
  */
 class User extends Authenticatable implements FilamentUser
 {
@@ -32,14 +32,26 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
     }
 
     /**
-     * Every user is an organiser, so each one may use the admin panel.
+     * Whether this person runs the site, rather than only working the headset desk.
+     */
+    public function isOrganiser(): bool
+    {
+        return $this->role === UserRole::Organiser;
+    }
+
+    /**
+     * Organisers may use both panels. Desk staff may only use the headset desk.
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return match ($panel->getId()) {
+            'desk' => true,
+            default => $this->isOrganiser(),
+        };
     }
 }

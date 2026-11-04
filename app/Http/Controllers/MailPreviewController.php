@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
+use App\Mail\TicketMail;
 use App\Mail\TicketsMail;
 use App\Models\Order;
 use App\Models\Ticket;
@@ -64,6 +65,11 @@ class MailPreviewController extends Controller
                 'description' => 'The same email when the buyer paid for more than one ticket.',
                 'mail' => fn (): Mailable => new TicketsMail($this->sampleOrder(quantity: 3)),
             ],
+            'ticket' => [
+                'name' => 'One person’s ticket',
+                'description' => 'Sent to a friend the buyer got a ticket for, once their name goes on it.',
+                'mail' => fn (): Mailable => new TicketMail($this->sampleOrder(quantity: 3)->tickets[1]),
+            ],
         ]);
     }
 
@@ -92,10 +98,23 @@ class MailPreviewController extends Controller
             'paid_at' => now(),
         ]);
 
-        $tickets = collect(['7K3Q-9PXM', 'H4TW-2NRC', 'P8LD-6VKE'])
-            ->take($quantity)
-            ->map(fn (string $code): Ticket => new Ticket(['code' => $code]));
+        $order->setRelation('ticketType', $ticketType);
 
-        return $order->setRelation('ticketType', $ticketType)->setRelation('tickets', $tickets);
+        $tickets = collect([
+            ['7K3Q-9PXM', 'Ada Bello', 'ada@example.com'],
+            ['H4TW-2NRC', 'Tunde Okafor', 'tunde@example.com'],
+            ['P8LD-6VKE', null, null],
+        ])
+            ->take($quantity)
+            ->map(function (array $ticket) use ($order, $ticketType): Ticket {
+                [$code, $name, $email] = $ticket;
+
+                return (new Ticket(['code' => $code, 'holder_name' => $name, 'holder_email' => $email]))
+                    ->forceFill(['claim_token' => 'sampleTicketToken'.$code])
+                    ->setRelation('order', $order)
+                    ->setRelation('ticketType', $ticketType);
+            });
+
+        return $order->setRelation('tickets', $tickets);
     }
 }

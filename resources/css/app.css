@@ -1652,6 +1652,17 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-order-tickets li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border: 1px dashed var(--ch); border-radius: 14px; background: color-mix(in srgb, var(--ch) 10%, transparent); }
 .dr-order-ticket-label { color: var(--dim); font: 400 .7rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
 .dr-order-ticket-code { font: 700 1.3rem/1 var(--mono); letter-spacing: .08em; color: var(--label); }
+.dr-order-tickets li.dr-order-ticket { display: grid; justify-content: stretch; gap: 12px; }
+.dr-order-ticket-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.dr-order-ticket-holder { margin: 0; color: var(--dim); font-size: .9rem; overflow-wrap: anywhere; }
+.dr-order-ticket-name summary { cursor: pointer; font-weight: 600; font-size: .9rem; color: var(--label); }
+.dr-order-ticket-name form { display: grid; gap: 12px; margin-top: 12px; }
+.dr-order-ticket-name form .btn { justify-self: start; }
+.dr-order-ticket-name .dr-field-hint { margin-top: 10px; }
+.dr-order-copy { padding: 0; border: 0; background: none; color: var(--label); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.dr-order-claim { display: grid; gap: 14px; }
+.dr-order-claim .btn { justify-self: start; }
+.dr-order-notice { margin: 0; padding: 12px 16px; border-radius: 12px; background: color-mix(in srgb, var(--ch) 18%, transparent); color: var(--label); font-weight: 600; }
 .dr-order-retry { padding-top: 4px; }
 .dr-order-back { color: var(--dim); font-size: .9rem; }
 .dr-order-pulse { display: flex; gap: 8px; }

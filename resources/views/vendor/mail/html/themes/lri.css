@@ -195,6 +195,14 @@ h3 {
     white-space: nowrap;
 }
 
+.ticket-holder {
+    color: #B9B6C3;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    font-weight: normal;
+    letter-spacing: 0;
+}
+
 /* Details */
 
 .details {

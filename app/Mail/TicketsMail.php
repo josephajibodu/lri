@@ -50,6 +50,7 @@ class TicketsMail extends Mailable
                     'Order' => $this->order->reference,
                 ]),
                 'receiptUrl' => $this->order->receiptUrl(),
+                'unnamedTickets' => $this->order->tickets->reject->isNamed()->count(),
             ],
         );
     }

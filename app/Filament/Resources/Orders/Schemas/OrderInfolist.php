@@ -56,10 +56,11 @@ class OrderInfolist
                             ->hiddenLabel()
                             ->schema([
                                 TextEntry::make('code')->copyable()->fontFamily('mono')->weight('bold'),
-                                TextEntry::make('holder_name')->label('Holder')->placeholder('–'),
-                                TextEntry::make('checked_in_at')->label('Picked up')->dateTime('j M, g:i A', 'Africa/Lagos')->placeholder('Not yet'),
+                                TextEntry::make('holder_name')->label('Holder')->placeholder('No name yet'),
+                                TextEntry::make('holder_email')->label('Holder’s email')->placeholder('–'),
+                                TextEntry::make('checked_in_at')->label('Headset collected')->dateTime('j M, g:i A', 'Africa/Lagos')->placeholder('Not yet'),
                             ])
-                            ->columns(3)
+                            ->columns(4)
                             ->placeholder('Issued once the order is paid'),
                     ])
                     ->columnSpanFull(),

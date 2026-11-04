@@ -3,7 +3,11 @@
 
 Your {{ $order->quantity === 1 ? 'ticket' : $order->quantity.' tickets' }} for the **{{ $eventName }}** {{ $order->quantity === 1 ? 'is' : 'are' }} paid for. Show {{ $order->quantity === 1 ? 'this code' : 'these codes' }} when you pick up your headset.
 
-<x-mail::ticket-codes :tickets="$order->tickets" :accent="$accent" />
+<x-mail::ticket-codes :tickets="$order->tickets" :accent="$accent" :holders="$order->quantity > 1" />
+
+@if ($unnamedTickets > 0)
+Each person collects their own headset, so each ticket needs a name and email. Add them on your receipt, or send each friend their ticket’s link from there so they can fill it in. You can also bring everyone to the desk on the day.
+@endif
 
 <x-mail::details :rows="$details" />
 

@@ -141,7 +141,8 @@ class RecordPaymentUpdate
     }
 
     /**
-     * Mark the order paid and issue one ticket per seat. Returns whether this call did it.
+     * Mark the order paid and issue one ticket per seat, the first one in the buyer's name. Returns whether this
+     * call did it.
      */
     private function fulfil(Order $order, Payment $payment): bool
     {
@@ -168,6 +169,7 @@ class RecordPaymentUpdate
             $order->tickets()->create([
                 'ticket_type_id' => $order->ticket_type_id,
                 'holder_name' => $seat === 1 ? $order->buyer_name : null,
+                'holder_email' => $seat === 1 ? $order->buyer_email : null,
             ]);
         }
 

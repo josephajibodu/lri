@@ -1,7 +1,7 @@
 # Ticket payments plan
 
 Selling Silent Disco Run tickets on the site, with Bachs as the first payment provider.
-Branch: `ticket-payments`. Last updated: 3 November 2026.
+Branch: `ticket-payments`. Last updated: 4 November 2026.
 
 ## Goals
 
@@ -60,7 +60,10 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 - [x] Ticket types (prices in naira), ways to pay (on/off, featured, drag to reorder), webhooks (replay)
 - [x] The opcodes log viewer at `/log-viewer`, behind the admin sign-in
 
-### ✅ Phase 7: Email tool connections, with Mailchimp first
+### ⏸️ Phase 7: Email tool connections, with Mailchimp first (built, switched off)
+
+On hold until the email tool is chosen. The code stays, and nothing is sent while `EMAIL_TOOL` isn't set. If another tool is picked, it gets its own driver alongside Mailchimp's.
+
 - [x] One shared contract for email tools ([EmailTool.php](app/EmailTools/Contracts/EmailTool.php)), with a driver per tool. Mailchimp is the first ([MailchimpProvider.php](app/EmailTools/Providers/MailchimpProvider.php))
 - [x] The tool gets three things. Each sets the contact's name, order number and one tag, and takes off the other two tags:
   - **Checkout started** (tag `checkout-started`): adds or updates the contact, with a resume link
@@ -72,6 +75,35 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 - [x] Sent in the background: outages are retried, refusals fail straight away, and news that's no longer true (such as "abandoned" for someone who has since paid) is skipped
 - [x] The admin shows what was sent and anything that failed, under System > Email tool, with "Send again"
 
+### ✅ Phase 8: A name on every ticket, and the headset desk
+
+Each person picks up their own headset, so each ticket carries its own name and email. The buyer pays for everyone, and the tickets are named after payment.
+
+**Database**
+- [x] `tickets` gained `holder_email`, `claim_token` (a long random secret for the ticket's own link) and `checked_in_by` (who handed over the headset). `checked_in_at` already recorded when
+- [x] `users` gained a `role`: organiser (everyone who already had an account) or headset desk only
+- [x] When an order is paid, the first ticket gets the buyer's name and email; the rest stay blank
+
+**Buyer names the tickets (on the receipt page)**
+- [x] For orders of more than one ticket, the receipt has a name-and-email form under each ticket and a "Copy their link" button for blank ones (the share sheet on phones)
+- [x] The buyer can change a ticket's name or email until its headset has been collected
+- [x] The tickets email shows who each ticket belongs to, and if some are blank, tells the buyer to name them or bring everyone to the desk
+
+**Friend fills in their own ticket**
+- [x] `/tickets/{claim_token}`: shows the event and, if the ticket is blank, asks for a name and email. Once it's named, the same link shows that person's ticket and code
+- [x] A ticket that already has a name can't be taken over through the link
+- [x] When a ticket gets a new email (from the buyer, the friend or the desk), that person is emailed their own ticket ([TicketMail.php](app/Mail/TicketMail.php)), unless it's the buyer's own ticket
+- [x] Friends are never sent to Mailchimp: they didn't tick the consent box
+
+**Headset desk** ([HeadsetDesk.php](app/Filament/Desk/Pages/HeadsetDesk.php))
+- [x] A panel of its own at `/desk`, so desk staff accounts can't open `/admin` or the logs. Organisers can use both, and the admin links to the desk under Tickets
+- [x] One search box: ticket code (with or without the dash), holder's name or email, buyer's name or email, or order number. Tickets are grouped by order, so searching for the buyer shows everyone on their order
+- [x] Each ticket shows Ready, Needs a name, Collected (when and by whom) or Not paid
+- [x] "Fill in name": staff type in the name and email on the spot; that person is emailed their ticket
+- [x] "Hand over headset": only for a paid, named ticket that hasn't had one. The ticket is locked while it's recorded, so two staff can't hand out a headset for the same ticket
+- [x] A count at the top: headsets handed out out of paid tickets
+- [x] Organisers add desk staff under Settings > People, choosing "Headset desk only"
+
 ## Before going live
 
 - [ ] Move production's existing birthdays and barracks registrations from SQLite to MySQL: back up `database/database.sqlite`, then `php artisan signups:import-sqlite --dry-run` and `php artisan signups:import-sqlite` once `.env` points at MySQL
@@ -82,18 +114,25 @@ Branch: `ticket-payments`. Last updated: 3 November 2026.
 - [ ] Choose and set up a mail service; mail currently only goes to the log file
 - [ ] Run `php artisan db:seed --class=TicketTypeSeeder` and `--class=PaymentChannelSeeder`, then `php artisan payments:sync-channels`
 - [ ] Create the first organiser with `php artisan make:filament-user`
-- [ ] Connect Mailchimp: set `EMAIL_TOOL=mailchimp`, `MAILCHIMP_API_KEY` and `MAILCHIMP_AUDIENCE_ID`, then run `php artisan email-tools:prepare` once to add the audience fields
+- [ ] Only once the email tool is chosen, and if it's Mailchimp: set `EMAIL_TOOL=mailchimp`, `MAILCHIMP_API_KEY` and `MAILCHIMP_AUDIENCE_ID`, then run `php artisan email-tools:prepare` once to add the audience fields
 - [ ] In Mailchimp, build the follow-up flow: start it on the tag `checkout-abandoned`, link to `*|RESUMEURL|*`, and stop it for anyone who gets the tag `ticket-paid`
 - [ ] Set the Disco Run ticket limit (number of headsets) in the admin
+- [ ] Run `php artisan migrate` for the ticket holder and role columns
+- [ ] Add an account for each person working the headset desk (Settings > People, "Headset desk only"); they sign in at `/desk`
 - [ ] Do a real test purchase on the Bachs sandbox (the sandbox keys in the local `.env` work)
 
 ## Open questions
 
 - **Ticket emails:** should Mailchimp also send them, or the mail service chosen above?
 - **QR codes:** do you want a QR code on tickets for check-in?
-- **Ticket types:** more than one, such as early bird or group? Do you need each attendee's name?
-- **OPay:** Bachs offers only card and bank transfer for naira. Ask Bachs whether OPay is coming, or add a second provider?
-- **Cookie notice:** do we need one for the visitor and source cookies?
+
+## Decided
+
+- **One ticket type, one price.** No early bird or group pricing.
+- **A name and email on every ticket.** The buyer names extra tickets after paying, or sends each friend a link. On the day, the buyer can bring everyone to the desk and staff fill in any blank names. No headset without a paid ticket, and one headset per ticket.
+- **Desk staff get desk-only accounts.** They sign in at `/desk` and can't see sales, buyers or settings.
+- **No OPay.** Card and bank transfer through Bachs are enough. We won't chase OPay with Bachs or add a second provider for it. The provider layer still allows one later if this changes.
+- **No cookie notice.** The visitor and source cookies go ahead without one.
 
 ## Known gaps
 

@@ -44,6 +44,21 @@ test('a succeeded payment marks the order paid and issues one ticket per seat, o
     Event::assertDispatchedTimes(OrderPaid::class, 1);
 });
 
+test('paying puts the buyer’s name and email on the first ticket and leaves the rest for them to name', function () {
+    record($this->payment, PaymentStatus::Succeeded, ['amount' => Money::of(2_000_000, 'NGN')]);
+
+    [$first, $second] = $this->order->tickets()->orderBy('id')->get();
+
+    expect($first)
+        ->holder_name->toBe($this->order->buyer_name)
+        ->holder_email->toBe($this->order->buyer_email)
+        ->claim_token->not->toBeEmpty()
+        ->and($second)
+        ->holder_name->toBeNull()
+        ->holder_email->toBeNull()
+        ->claim_token->not->toBe($first->claim_token);
+});
+
 test('a payment that brought in less than the total is recorded as underpaid and not fulfilled', function () {
     $payment = record($this->payment, PaymentStatus::Succeeded, ['amount' => Money::of(1_000_000, 'NGN')]);
 

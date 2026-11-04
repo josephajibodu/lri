@@ -29,6 +29,6 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        Gate::define('viewLogViewer', fn (?User $user): bool => $user !== null);
+        Gate::define('viewLogViewer', fn (?User $user): bool => $user?->isOrganiser() ?? false);
     }
 }

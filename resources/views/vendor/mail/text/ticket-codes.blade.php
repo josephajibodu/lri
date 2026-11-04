@@ -1,4 +1,5 @@
-@props(['tickets'])
+@props(['tickets', 'numbered' => true, 'holders' => false])
 @foreach ($tickets as $ticket)
-Ticket {{ $loop->iteration }}: {{ $ticket->code }}
+Ticket{{ $numbered ? ' '.$loop->iteration : '' }}: {{ $ticket->code }}@if ($holders) ({{ $ticket->holder_name ?: 'no name yet' }})@endif
+
 @endforeach

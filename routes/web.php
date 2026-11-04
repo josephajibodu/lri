@@ -11,6 +11,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaceSettersController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\TicketController;
 use App\Http\Middleware\EnsureBarracksRegistrationIsOpen;
 use App\Http\Middleware\IdentifyVisitor;
 use Illuminate\Support\Facades\Route;
@@ -60,6 +61,15 @@ Route::middleware(['signed:checkout_id', IdentifyVisitor::class])->group(functio
 });
 
 Route::get('/receipts/{order:receipt_token}', [OrderController::class, 'receipt'])->name('receipts.show');
+Route::put('/receipts/{order:receipt_token}/tickets/{ticket}', [TicketController::class, 'update'])
+    ->scopeBindings()
+    ->middleware('throttle:20,1')
+    ->name('receipts.tickets.update');
+
+Route::get('/tickets/{ticket:claim_token}', [TicketController::class, 'show'])->name('tickets.show');
+Route::post('/tickets/{ticket:claim_token}', [TicketController::class, 'claim'])
+    ->middleware('throttle:10,1')
+    ->name('tickets.claim');
 
 Route::post('/webhooks/payments/{provider}', PaymentWebhookController::class)
     ->whereIn('provider', ['bachs'])

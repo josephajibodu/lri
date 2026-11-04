@@ -870,4 +870,23 @@ import.meta.glob("../fonts/*.woff2");
         })();
     }
 
+    /* Copy a ticket's own link, for the buyer to send to the friend it's for. Phones get the share sheet instead */
+    document.querySelectorAll("[data-copy]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            var url = button.dataset.copy;
+            var label = button.textContent;
+            function done() {
+                button.textContent = button.dataset.copied;
+                setTimeout(function () { button.textContent = label; }, 2500);
+            }
+            if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
+                navigator.share({ title: "Your ticket", url: url }).catch(function () {});
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(done, function () { window.prompt("Copy this link:", url); });
+            } else {
+                window.prompt("Copy this link:", url);
+            }
+        });
+    });
+
 })();
