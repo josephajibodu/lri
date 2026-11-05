@@ -353,7 +353,7 @@ The site tells Mailchimp when a buyer starts, abandons or pays for a checkout, a
 
 4. Build a Mailchimp automation flow that starts when the tag `checkout-abandoned` is added, and link its button to `*|RESUMEURL|*`.
 5. Make the flow stop for anyone who gets the tag `ticket-paid`, so paid buyers aren't chased. Check how your Mailchimp plan handles this.
-6. Try it with your own email address before turning it on for buyers, then check **System > Email tool** in the admin.
+6. Try it before turning it on for buyers, using an email address that isn't in the audience yet, then check **System > Email tool** in the admin. You should get Mailchimp's confirmation email when you place the order. Also check whether confirming after the order has been abandoned still starts the flow, because this hasn't been tried on a real Mailchimp account.
 
 Each update sets the contact's name, email and order number, and one of these tags, taking off the other two:
 
@@ -363,7 +363,18 @@ Each update sets the contact's name, email and order number, and one of these ta
 | `checkout-abandoned` | The order is abandoned | Set |
 | `ticket-paid` | The order is paid | Cleared |
 
-The resume link opens the buyer's order page, where their details are saved and they can pick a way to pay. Phone numbers aren't sent. Someone already in the audience keeps their subscription status, so a buyer who unsubscribed isn't signed back up.
+The resume link opens the buyer's order page, where their details are saved and they can pick a way to pay. Phone numbers aren't sent.
+
+Anyone can type any email on the ticket form, so ticking the box on an unpaid order doesn't prove the address belongs to them. What happens to each contact depends on where they stand:
+
+| Contact | What happens |
+| --- | --- |
+| New, on an unpaid order | Added as pending, not subscribed. Mailchimp sends one email asking them to confirm, and marketing emails wait until they do |
+| New, on a paid order | Subscribed |
+| Still pending, and pays | Subscribed, without having to confirm |
+| Unsubscribed or bounced | Stays that way, even if they pay |
+
+This means abandoned-checkout reminders only reach people who confirmed. Expect new buyers who tick the box to get the confirmation email when they place the order, even if they go on to pay straight away.
 
 Sending runs on the queue, so Mailchimp being slow or down can't hold up checkout. Outages are retried for about 80 minutes. A refusal fails straight away and shows Mailchimp's reason in the admin, where you can send it again.
 

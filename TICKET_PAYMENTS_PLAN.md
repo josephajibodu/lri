@@ -71,6 +71,7 @@ On hold until the email tool is chosen. The code stays, and nothing is sent whil
   - **Paid** (tag `ticket-paid`): so the tool stops the follow-up emails. It also clears the resume link, which by then leads to the receipt
 - [x] The resume link (audience field `RESUMEURL`) is the buyer's signed order page, which keeps their details and offers every way to pay
 - [x] Only people who ticked the consent box are sent, as Nigeria's Data Protection Act requires. Someone already in the audience keeps their subscription status, so anyone who unsubscribed isn't signed back up
+- [x] The consent has to come from the person themself, and anyone can type any email on an unpaid order. So a new contact from an unpaid order is added as pending, and Mailchimp asks them to confirm. Paying subscribes them, including anyone still pending. Abandoned-checkout reminders only reach people who confirmed
 - [x] Phone numbers aren't sent: follow-up emails don't need them, and Mailchimp's phone field can refuse Nigerian numbers
 - [x] Sent in the background: outages are retried, refusals fail straight away, and news that's no longer true (such as "abandoned" for someone who has since paid) is skipped
 - [x] The admin shows what was sent and anything that failed, under System > Email tool, with "Send again"
@@ -207,7 +208,7 @@ Lets organisers share discounts, and lets us try a live sale for a real ₦100 i
 - **Coupons and late bank transfers:** if a buyer's coupon ended and their abandoned order went back to full price, then a transfer for the old checkout still lands, the order counts as paid at full price in the reports although less came in. Very unlikely, and the payment attempt keeps the true amount.
 - **Coupons haven't been paid with on a real checkout:** the discounted amount was accepted by the Bachs sandbox and the full flow is covered by tests with Bachs faked, but nobody has yet paid a discounted order through the pop-up.
 - **Untested against real Bachs:** the webhook payloads and failure-reason wording come from Bachs's docs and haven't been checked against a real sandbox.
-- **Untested against real Mailchimp:** there's no API key yet, so phase 7 has only run against a stand-in for Mailchimp's API, built from its docs.
+- **Untested against real Mailchimp:** there's no API key yet, so phase 7 has only run against a stand-in for Mailchimp's API, built from its docs. Check three things on a real account: that a new contact on an unpaid order gets the confirmation email, that a pending contact who pays becomes subscribed, and whether someone who confirms after their order was abandoned still gets the reminder.
 - **No webhooks locally:** Bachs can't reach `lri.test`, so a local test purchase is confirmed by the order page asking Bachs directly. To try webhooks locally, share the site at a public address (`herd share`) and add that address as a webhook destination in the Bachs portal.
 - **No follow-up before submit:** someone who leaves before submitting the form can't be followed up by email, because we don't have their email yet. They only appear in the funnel.
 - **PHPUnit advisory:** `composer audit` reports a medium-severity issue in PHPUnit 13.4.3, which is only used for tests. It was already there before this work.
