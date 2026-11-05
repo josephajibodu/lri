@@ -93,6 +93,13 @@
                                 </div>
                             </details>
 
+                            @if (App\Support\BotCheck::isOn())
+                                <div class="cf-turnstile" data-sitekey="{{ App\Support\BotCheck::siteKey() }}" data-appearance="interaction-only" data-size="flexible"></div>
+                                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+                                <noscript><p class="dr-field-error">Turn on JavaScript in your browser to buy tickets. We use it to check you’re a real person.</p></noscript>
+                                <p class="dr-field-error" data-error-for="bot_check">@error('bot_check'){{ $message }}@enderror</p>
+                            @endif
+
                             <p class="dr-pay-heading" aria-hidden="true">Pay with</p>
                             @include('checkout.methods', ['channels' => $ticketing['channels']])
                             <p class="dr-field-error" data-error-for="channel">@error('channel'){{ $message }}@enderror</p>

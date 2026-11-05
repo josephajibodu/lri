@@ -6,6 +6,7 @@ use App\Actions\Checkout\RecordCheckoutStep;
 use App\Enums\CheckoutStep;
 use App\Http\Middleware\IdentifyVisitor;
 use App\Models\TicketType;
+use App\Support\BotCheck;
 use App\Support\PersonName;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
@@ -60,6 +61,20 @@ class StoreOrderRequest extends FormRequest
             'channel.required' => 'Choose how you’d like to pay.',
             'channel.exists' => 'That way to pay isn’t available right now. Choose another one.',
         ];
+    }
+
+    /**
+     * Check it's a real browser, once everything else on the form is fine, because the check's token only works once.
+     *
+     * @return list<callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            if ($validator->errors()->isEmpty() && ! BotCheck::passes($this->input('cf-turnstile-response'), $this->ip())) {
+                $validator->errors()->add('bot_check', 'We couldn’t confirm you’re a real person. Wait a few seconds and try again. If it keeps happening, refresh the page or turn off any ad blocker.');
+            }
+        }];
     }
 
     /**

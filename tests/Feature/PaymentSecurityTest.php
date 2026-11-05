@@ -3,6 +3,7 @@
 use App\Actions\Checkout\PlaceOrder;
 use App\Actions\Checkout\RecordPaymentUpdate;
 use App\Actions\Checkout\StartPayment;
+use App\Enums\CheckoutStep;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -12,6 +13,7 @@ use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Mail\TicketMail;
 use App\Mail\TicketsMail;
+use App\Models\CheckoutEvent;
 use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Payment;
@@ -25,6 +27,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Client\Request as ClientRequest;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Sleep;
@@ -1054,6 +1057,96 @@ test('phone numbers in the CSV download stay as they are', function () {
     $rows = array_map('str_getcsv', explode("\n", trim(base64_decode($download->effects['download']['content']))));
 
     expect($rows[1][9])->toBe('+2348031234567');
+});
+
+/* ---------------------------------------------------------------- Scripts placing orders in bulk */
+
+function turnOnBotCheck(array $answer = ['success' => true], int $status = 200): void
+{
+    config()->set('services.turnstile.site_key', 'site-key');
+    config()->set('services.turnstile.secret_key', 'secret-key');
+    Http::fake(['challenges.cloudflare.com/*' => Http::response($answer, $status)]);
+}
+
+test('with no keys set there is no bot check, on the page or when ordering', function () {
+    $this->get(route('disco-run'))->assertOk()->assertDontSee('cf-turnstile')->assertDontSee('challenges.cloudflare.com');
+
+    $this->post(route('orders.store'), attackForm())->assertRedirect();
+
+    expect(Order::query()->count())->toBe(1);
+    Http::assertNotSent(fn (ClientRequest $request): bool => str_contains($request->url(), 'challenges.cloudflare.com'));
+});
+
+test('with its keys set, the ticket form carries the bot check, and its secret stays off the page', function () {
+    turnOnBotCheck();
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSee('data-sitekey="site-key"', false)
+        ->assertSee('https://challenges.cloudflare.com/turnstile/v0/api.js', false)
+        ->assertDontSee('secret-key');
+});
+
+test('an order from something that didn’t pass the bot check is refused', function (array $form, array $answer) {
+    turnOnBotCheck($answer);
+
+    $this->post(route('orders.store'), attackForm($form))->assertSessionHasErrors('bot_check');
+
+    expect(Order::query()->count())->toBe(0);
+})->with([
+    'no token' => [[], ['success' => true]],
+    'an empty token' => [['cf-turnstile-response' => ''], ['success' => true]],
+    'a token sent as a list' => [['cf-turnstile-response' => ['a']], ['success' => true]],
+    'a token longer than any real one' => [['cf-turnstile-response' => str_repeat('a', 2049)], ['success' => true]],
+    'a made-up token' => [['cf-turnstile-response' => 'made-up'], ['success' => false, 'error-codes' => ['invalid-input-response']]],
+    'a token already used' => [['cf-turnstile-response' => 'used'], ['success' => false, 'error-codes' => ['timeout-or-duplicate']]],
+    'a request Cloudflare calls bad' => [['cf-turnstile-response' => 'odd'], ['success' => false, 'error-codes' => ['bad-request']]],
+    'an answer that makes no sense' => [['cf-turnstile-response' => 'odd'], []],
+]);
+
+test('an order that passes the bot check goes through, and Cloudflare is told who asked', function () {
+    turnOnBotCheck();
+
+    $this->post(route('orders.store'), attackForm(['cf-turnstile-response' => 'good-token']))->assertSessionDoesntHaveErrors();
+
+    expect(Order::query()->count())->toBe(1);
+    Http::assertSent(fn (ClientRequest $request): bool => $request->url() === 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+        && $request['secret'] === 'secret-key'
+        && $request['response'] === 'good-token'
+        && $request['remoteip'] === '127.0.0.1');
+});
+
+test('fixing a typo doesn’t use up the bot check’s token', function () {
+    turnOnBotCheck();
+
+    $this->post(route('orders.store'), attackForm(['email' => 'ada@', 'cf-turnstile-response' => 'good-token']))->assertSessionHasErrors('email');
+
+    Http::assertNotSent(fn (ClientRequest $request): bool => str_contains($request->url(), 'challenges.cloudflare.com'));
+});
+
+test('if Cloudflare can’t give an answer, or our key is wrong, the sale goes on and the problem is reported', function (Closure $answer) {
+    Exceptions::fake();
+    config()->set('services.turnstile.site_key', 'site-key');
+    config()->set('services.turnstile.secret_key', 'secret-key');
+    Http::fake(['challenges.cloudflare.com/*' => $answer()]);
+
+    $this->post(route('orders.store'), attackForm(['cf-turnstile-response' => 'good-token']))->assertSessionDoesntHaveErrors();
+
+    expect(Order::query()->count())->toBe(1);
+    Exceptions::assertReportedCount(1);
+})->with([
+    'it can’t be reached' => [fn () => Http::failedConnection()],
+    'it’s having problems' => [fn () => Http::response('Bad gateway', 502)],
+    'it had an internal error' => [fn () => Http::response(['success' => false, 'error-codes' => ['internal-error']])],
+    'our secret key is wrong' => [fn () => Http::response(['success' => false, 'error-codes' => ['invalid-input-secret']])],
+]);
+
+test('being refused by the bot check is noted in the buyer’s journey', function () {
+    turnOnBotCheck();
+
+    $this->post(route('orders.store'), attackForm());
+
+    expect(CheckoutEvent::query()->where('step', CheckoutStep::FormInvalid)->sole()->properties)->toBe(['fields' => ['bot_check']]);
 });
 
 /* ---------------------------------------------------------------- Browser protections */

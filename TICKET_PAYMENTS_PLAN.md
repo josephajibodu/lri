@@ -179,6 +179,7 @@ An attack review on 5 November found no way to get a ticket without Bachs report
 - [x] The live site refuses to open checkouts with a sandbox key or address
 - [x] Payments are judged on the money that arrived (`charge.amount_paid`, `received_amount`), not what the checkout asked for. A success that doesn't say how much arrived isn't believed
 - [x] Limits on unpaid tickets per email and connection, and on tries per order, so nobody can hold every ticket for free
+- [x] A bot check (Cloudflare Turnstile) on the ticket form, because emails and internet addresses are easy to change. It's off until its keys are set. If Cloudflare's server can't answer, orders go through. If the check can't load in buyers' browsers, nobody can order until its keys are emptied
 - [x] One unpaid use of a limited coupon per email or connection. A coupon that has ended comes off at the next try, and a lapsed order comes back at today's price
 - [x] Each step of buying has its own rate limit, because `throttle:10,1` shares one counter across routes, which locked buyers out of paying while their order page waited
 - [x] Names can't carry links into emails or formulas into the CSV download
@@ -193,6 +194,7 @@ The README's [first deploy](README.md#the-first-deploy) section has the setup st
 
 - [ ] Production `.env`: `APP_URL` (the real address), `DB_*` for MySQL, `BACHS_SECRET_KEY` (`sk_live_…`), `BACHS_WEBHOOK_SECRET`
 - [ ] In the Bachs developer portal, add `https://<domain>/webhooks/payments/bachs` as a webhook destination, subscribed to the checkout, collection, refund and dispute events
+- [ ] Create a Cloudflare Turnstile widget for the domain, put its keys in `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`, then buy a ticket on the live site to check it works
 - [ ] Set **Tickets available** on the ticket type: with it empty, sales are unlimited however many headsets there are
 - [ ] Check the site sees each visitor's real address (`request()->ip()`), since rate limits and unpaid limits go by it. Behind a proxy it isn't told to trust, every visitor looks like the same address
 - [ ] Update the Symfony packages that `composer audit` flags (see Known gaps)
