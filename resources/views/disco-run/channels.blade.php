@@ -9,12 +9,12 @@
                 @foreach ($discoRun['channels'] as $channel)
                     <button type="button" class="dr-tune dr-tone-{{ $channel['tone'] }}" data-channel-button="{{ $loop->index }}" data-tone="{{ $channel['tone'] }}" aria-pressed="{{ $loop->first ? 'true' : 'false' }}">
                         <span class="dr-tune-no">CH {{ $loop->iteration }}</span>
-                        <span class="dr-tune-name">{{ $channel['name'] }}</span>
-                        <span class="dr-tune-genre">{{ $channel['genre'] }}</span>
+                        <span class="dr-tune-name">Vibe {{ $loop->iteration }}</span>
+                        <span class="dr-tune-genre">Revealed on the night</span>
                     </button>
                 @endforeach
             </div>
-            <p class="dr-now" aria-live="polite">Now playing on <strong data-channel-name>{{ $discoRun['channels'][0]['name'] }}</strong></p>
+            <p class="dr-now" aria-live="polite">Tuned to <strong data-channel-name>Vibe 1</strong></p>
         </div>
 
         <div class="dr-crowd" aria-hidden="true">

@@ -53,11 +53,11 @@ test('the tickets email leads with the event poster instead of the logo, in the 
         ->assertSeeInHtml('Your ticket codes and receipt for the Ibadan Silent Disco Run.');
 });
 
-test('the tickets email sums up the event’s channels without naming them, and closes on its tagline', function () {
+test('the tickets email sums up the event’s channels and closes on its tagline', function () {
     config()->set('lri.disco_run.tagline', 'One night only.');
     config()->set('lri.disco_run.channels', [
-        ['name' => 'Afro Heat', 'genre' => 'Afrobeats', 'tone' => 'green'],
-        ['name' => 'Rewind', 'genre' => 'Throwbacks', 'tone' => 'no-such-tone'],
+        ['tone' => 'green'],
+        ['tone' => 'no-such-tone'],
     ]);
 
     $order = Order::factory()->paid()->for(TicketType::factory()->state(['event' => 'disco-run']))->create();
@@ -67,11 +67,8 @@ test('the tickets email sums up the event’s channels without naming them, and 
 
     $mail->assertSeeInHtml('2 channels. 2 vibes.')
         ->assertSeeInHtml('border-top: 3px solid #39E58C', false)
-        ->assertDontSeeInHtml('Afro Heat')
-        ->assertDontSeeInHtml('Afrobeats')
         ->assertSeeInHtml('One night only.')
         ->assertSeeInText('2 channels. 2 vibes. Your headset, your call.')
-        ->assertDontSeeInText('Afro Heat')
         ->assertSeeInText('One night only.');
 });
 
