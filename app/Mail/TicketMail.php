@@ -3,11 +3,13 @@
 namespace App\Mail;
 
 use App\Models\Ticket;
+use App\Support\PersonName;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Str;
 
 /**
  * One person's ticket, sent to them when someone else bought it and their name goes on it.
@@ -51,7 +53,8 @@ class TicketMail extends Mailable
             markdown: 'mail.ticket',
             with: [
                 'eventName' => $this->eventName(),
-                'buyerName' => $this->ticket->order->buyer_name,
+                'buyerName' => PersonName::forEmail($this->ticket->order->buyer_name),
+                'firstName' => Str::before(PersonName::forEmail($this->ticket->holder_name), ' '),
                 'bannerUrl' => filled($event['email_banner'] ?? null) ? asset($event['email_banner']) : null,
                 'accent' => $event['email_accent'] ?? null,
                 'gradient' => $event['email_gradient'] ?? null,

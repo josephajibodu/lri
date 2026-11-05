@@ -56,6 +56,32 @@ class ViewOrder extends ViewRecord
 
                     Notification::make()->title('Tickets sent to '.$record->buyer_email)->success()->send();
                 }),
+            Action::make('releaseTickets')
+                ->label('Release tickets')
+                ->icon(Heroicon::OutlinedLockOpen)
+                ->color('warning')
+                ->visible(fn (Order $record): bool => $record->status === OrderStatus::Disputed)
+                ->requiresConfirmation()
+                ->modalHeading('Let these tickets work again?')
+                ->modalDescription('Only do this once the dispute is over and Bachs has confirmed you keep the money. The buyer’s tickets work again straight away.')
+                ->action(function (Order $record): void {
+                    $record->update(['status' => OrderStatus::Paid]);
+                    $record->flagForReview('Tickets released from their dispute by '.auth()->user()->name.' on '.now('Africa/Lagos')->format('j M, g:i A').'.');
+
+                    Notification::make()->title('The tickets work again')->success()->send();
+                }),
+            Action::make('markLookedAt')
+                ->label('Mark as looked at')
+                ->icon(Heroicon::OutlinedCheck)
+                ->color('gray')
+                ->visible(fn (Order $record): bool => $record->review_note !== null)
+                ->requiresConfirmation()
+                ->modalDescription('Clears the note on this order. It doesn’t change the order or its tickets.')
+                ->action(function (Order $record): void {
+                    $record->update(['review_note' => null]);
+
+                    Notification::make()->title('Note cleared')->success()->send();
+                }),
             Action::make('openBuyerPage')
                 ->label('Buyer’s order page')
                 ->icon(Heroicon::OutlinedArrowTopRightOnSquare)

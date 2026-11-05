@@ -13,6 +13,7 @@ use App\Reports\PaymentMethodPerformance;
 use App\Reports\ReportPeriod;
 use App\Reports\SalesBySource;
 use App\Reports\SalesSummary;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -42,12 +43,23 @@ test('the funnel counts each person once per step and shows the drop between ste
 });
 
 test('reports only count what happened inside the period', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-04 00:30', 'Africa/Lagos')->utc());
+
     stepFor('visitor-a', CheckoutStep::TicketPageViewed, now()->subDays(40)->toDateTimeString());
     stepFor('visitor-b', CheckoutStep::TicketPageViewed);
 
-    $period = ReportPeriod::fromDates(now()->subDays(29)->toDateString(), now()->toDateString());
+    $period = ReportPeriod::fromDates('2026-11-04', '2026-11-04');
 
     expect(CheckoutFunnel::for($period)[0]['people'])->toBe(1);
+});
+
+test('an attempt that closes after a declined card counts as failed, not unfinished', function () {
+    Payment::factory()->method(PaymentMethod::Card)->create(['status' => PaymentStatus::Expired, 'failure_reason' => PaymentFailureReason::Declined]);
+    Payment::factory()->method(PaymentMethod::Card)->create(['status' => PaymentStatus::Expired]);
+
+    $row = PaymentMethodPerformance::for(new ReportPeriod)[0];
+
+    expect($row['failed'])->toBe(1)->and($row['unfinished'])->toBe(1);
 });
 
 test('each way to pay shows its success rate, leaving out attempts still open', function () {

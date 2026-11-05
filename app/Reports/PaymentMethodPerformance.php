@@ -45,8 +45,8 @@ final class PaymentMethodPerformance
             'label' => $method?->label() ?? 'Not chosen',
             'attempts' => $payments->count(),
             'succeeded' => $succeeded->count(),
-            'failed' => $payments->whereIn('status', [PaymentStatus::Failed, PaymentStatus::Underpaid])->count(),
-            'unfinished' => $payments->whereIn('status', [PaymentStatus::Open, PaymentStatus::Expired, PaymentStatus::Abandoned])->count(),
+            'failed' => $payments->filter(fn (Payment $payment): bool => self::endedInFailure($payment))->count(),
+            'unfinished' => $payments->whereIn('status', [PaymentStatus::Open, PaymentStatus::Expired, PaymentStatus::Abandoned])->reject(fn (Payment $payment): bool => self::endedInFailure($payment))->count(),
             'success_rate' => $ended->isNotEmpty() ? round($succeeded->count() / $ended->count() * 100, 1) : null,
             'revenue' => Money::of((int) $succeeded->sum('amount'), $currency),
             'median_minutes_to_pay' => $succeeded->isNotEmpty()
@@ -55,5 +55,15 @@ final class PaymentMethodPerformance
             'top_failure' => $failures->isNotEmpty() ? PaymentFailureReason::from($failures->keys()->first()) : null,
             'top_failure_count' => (int) $failures->first(),
         ];
+    }
+
+    /**
+     * Whether an attempt ended because paying failed. A declined card leaves the checkout open to try again, so one that
+     * then closes with a failure on record failed too, rather than being left unfinished.
+     */
+    private static function endedInFailure(Payment $payment): bool
+    {
+        return in_array($payment->status, [PaymentStatus::Failed, PaymentStatus::Underpaid], true)
+            || ($payment->status === PaymentStatus::Expired && $payment->failure_reason !== null);
     }
 }

@@ -184,6 +184,48 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Selar Product Widget
+    |--------------------------------------------------------------------------
+    |
+    | A Selar product sold on the home page through Selar's embed widget.
+    | The widget's look is set in the Selar dashboard; `variants` can draw it
+    | more than once with a different layout or button. Leave the product
+    | empty to hide the section. Locally the script comes from the Selar
+    | frontend's dev server.
+    |
+    */
+
+    'selar_embed' => [
+        'script' => env('SELAR_EMBED_SCRIPT', env('APP_ENV') === 'local'
+            ? 'http://localhost:3000/embed/v1/embed.js'
+            : 'https://selar.co/embed/v1/embed.js'),
+        'product' => env('SELAR_EMBED_PRODUCT', '945354'),
+
+        // Each entry draws the widget once, for `product` unless it names its
+        // own. Layout and action left out follow the settings saved in the
+        // Selar dashboard.
+        'variants' => [
+            ['label' => 'Go to checkout', 'layout' => 'full', 'action' => 'checkout'],
+            ['label' => 'Add to cart', 'layout' => 'full', 'action' => 'cart'],
+            ['label' => 'Buy button only', 'layout' => 'basic', 'action' => 'checkout'],
+            ['label' => 'Physical: Go to checkout', 'product' => 'u1lk', 'layout' => 'full', 'action' => 'checkout'],
+            ['label' => 'Physical: Add to cart', 'product' => 'u1lk', 'layout' => 'full', 'action' => 'cart'],
+            ['label' => 'Booking: Go to checkout', 'product' => '213c8y6316', 'layout' => 'full', 'action' => 'checkout'],
+            ['label' => 'Booking: Add to cart', 'product' => '213c8y6316', 'layout' => 'classic', 'action' => 'cart'],
+            ['label' => 'Booking: Buy button only', 'product' => '213c8y6316', 'layout' => 'basic', 'action' => 'checkout'],
+            ['label' => 'Subscription (2 plans): Go to checkout', 'product' => '2woz', 'layout' => 'full', 'action' => 'checkout'],
+            ['label' => 'Subscription (2 plans): Add to cart', 'product' => '2woz', 'layout' => 'classic', 'action' => 'cart'],
+            ['label' => 'Subscription (1 plan, 23 payments): Buy button only', 'product' => '7948w7', 'layout' => 'basic', 'action' => 'cart'],
+            ['label' => 'Flexible (1 plan, min $1,000): Add to cart', 'product' => '44xl', 'layout' => 'full', 'action' => 'cart'],
+            ['label' => 'Flexible (3 plans): Go to checkout', 'product' => 'n1m8', 'layout' => 'classic', 'action' => 'checkout'],
+            ['label' => 'Community (3 tiers, trial on Monthly): Add to cart', 'product' => 'e33x85j7nk', 'layout' => 'classic', 'action' => 'cart'],
+            ['label' => 'Community (3 tiers): Full card, goes to checkout', 'product' => 'e33x85j7nk', 'layout' => 'full', 'action' => 'cart'],
+            ['label' => 'Community (1 tier): Add to cart', 'product' => '3j5y938631', 'layout' => 'full', 'action' => 'cart'],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Instagram Highlights
     |--------------------------------------------------------------------------
     |

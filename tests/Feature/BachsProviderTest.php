@@ -305,14 +305,14 @@ test('a succeeded collection reads as paid with its method and fee', function ()
         ->and($event->payment->fee->equals(Money::of(30_000, 'NGN')))->toBeTrue();
 });
 
-test('a failed collection keeps Bachs’s wording and reads it as one of our reasons', function (string $reason, PaymentFailureReason $expected) {
+test('a failed collection leaves the checkout open, keeps Bachs’s wording and reads it as one of our reasons', function (string $reason, PaymentFailureReason $expected) {
     $event = bachs()->parseWebhook([
         'id' => 'evt_1',
         'type' => 'collection.failed',
         'data' => ['checkout_id' => 'chk_123', 'status' => 'FAILED', 'amount' => '20000.00', 'currency' => 'NGN', 'reason' => $reason],
     ]);
 
-    expect($event->payment->status)->toBe(PaymentStatus::Failed)
+    expect($event->payment->status)->toBe(PaymentStatus::Open)
         ->and($event->payment->failureReason)->toBe($expected)
         ->and($event->payment->failureMessage)->toBe($reason);
 })->with([

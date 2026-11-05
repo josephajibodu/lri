@@ -123,7 +123,7 @@ test('a failed payment is noted with its reason, and paying again is noted as a 
     $failed = CheckoutEvent::query()->where('step', CheckoutStep::PaymentFailed)->sole();
     $resumed = CheckoutEvent::query()->where('step', CheckoutStep::CheckoutResumed)->sole();
 
-    expect($failed->properties)->toBe(['reason' => 'insufficient_funds', 'can_retry' => false])
+    expect($failed->properties)->toBe(['reason' => 'insufficient_funds', 'can_retry' => true])
         ->and($resumed->properties)->toBe(['attempt' => 2, 'state' => 'failed']);
 });
 

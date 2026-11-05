@@ -14,6 +14,11 @@ class TicketsUnavailable extends RuntimeException
         return new self('Tickets aren’t on sale right now.');
     }
 
+    public static function tooManyUnpaid(): self
+    {
+        return new self('There are already unpaid tickets waiting for this email or connection. Pay for those first, or try again once their hold runs out.');
+    }
+
     public static function notEnough(?int $ticketsLeft): self
     {
         return new self(match ($ticketsLeft) {

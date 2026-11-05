@@ -30,11 +30,11 @@ class ListOrders extends ListRecords
      */
     private function downloadCsv(): StreamedResponse
     {
-        $query = $this->getFilteredSortedTableQuery()->with(['ticketType', 'latestPayment']);
+        $query = $this->getFilteredSortedTableQuery()->with(['ticketType', 'latestPayment', 'coupon']);
 
         return response()->streamDownload(function () use ($query): void {
             $csv = fopen('php://output', 'w');
-            fputcsv($csv, ['Reference', 'Status', 'Ticket', 'Quantity', 'Total', 'Buyer', 'Email', 'Phone', 'Event emails', 'Method', 'Source', 'Campaign', 'Placed', 'Paid']);
+            fputcsv($csv, ['Reference', 'Status', 'Ticket', 'Quantity', 'Coupon', 'Discount', 'Total', 'Buyer', 'Email', 'Phone', 'Event emails', 'Method', 'Source', 'Campaign', 'Placed', 'Paid']);
 
             $query->lazyById(500)->each(function (Order $order) use ($csv): void {
                 fputcsv($csv, [
@@ -42,14 +42,16 @@ class ListOrders extends ListRecords
                     $order->status->label(),
                     $order->ticketType->name,
                     $order->quantity,
+                    $order->coupon?->code,
+                    $order->discount()->toDecimal(),
                     $order->total()->toDecimal(),
-                    $order->buyer_name,
-                    $order->buyer_email,
+                    $this->safeForSpreadsheet($order->buyer_name),
+                    $this->safeForSpreadsheet($order->buyer_email),
                     $order->buyer_phone,
                     $order->marketing_consent ? 'Yes' : 'No',
                     $order->latestPayment?->method?->label(),
-                    SalesBySource::sourceOf($order),
-                    $order->attribution['campaign'] ?? null,
+                    $this->safeForSpreadsheet(SalesBySource::sourceOf($order)),
+                    $this->safeForSpreadsheet($order->attribution['campaign'] ?? null),
                     $order->created_at->timezone('Africa/Lagos')->format('Y-m-d H:i'),
                     $order->paid_at?->timezone('Africa/Lagos')->format('Y-m-d H:i'),
                 ]);
@@ -57,5 +59,14 @@ class ListOrders extends ListRecords
 
             fclose($csv);
         }, 'lri-orders-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv']);
+    }
+
+    /**
+     * Something a visitor typed or sent, made safe for an organiser's spreadsheet. A leading = + - or @ would run as a
+     * formula when the file is opened, so an apostrophe goes in front, which spreadsheets read as "this is just text".
+     */
+    private function safeForSpreadsheet(?string $value): ?string
+    {
+        return $value !== null && preg_match('/^[=+\-@\t\r]/', $value) ? "'".$value : $value;
     }
 }

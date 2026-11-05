@@ -10,6 +10,44 @@ use Throwable;
  */
 class CheckoutUnavailable extends RuntimeException
 {
+    /**
+     * Why, for the record of the buyer's journey.
+     */
+    public string $reason = 'provider_error';
+
+    /**
+     * The order's coupon stopped working while it wasn't held, so it went back to full price for the buyer to look at.
+     */
+    public static function couponEnded(string $code, string $newTotal): self
+    {
+        $exception = new self("Coupon {$code} has ended, so your order is back to full price: {$newTotal}. Choose how you’d like to pay to carry on.");
+        $exception->reason = 'coupon_ended';
+
+        return $exception;
+    }
+
+    /**
+     * The ticket's price changed while the order wasn't held, so it was brought up to date for the buyer to look at.
+     */
+    public static function priceChanged(string $newTotal): self
+    {
+        $exception = new self("The ticket price changed while your order wasn’t held, so your total is now {$newTotal}. Choose how you’d like to pay to carry on.");
+        $exception->reason = 'price_changed';
+
+        return $exception;
+    }
+
+    /**
+     * Each try keeps the tickets held for longer, so an order only gets so many.
+     */
+    public static function tooManyAttempts(): self
+    {
+        $exception = new self('This order has had too many tries at paying. Start a new order from the ticket page.');
+        $exception->reason = 'too_many_attempts';
+
+        return $exception;
+    }
+
     public static function alreadyPaid(): self
     {
         return new self('This order is already paid for.');

@@ -25,7 +25,9 @@ beforeEach(function () {
 
 function record(Payment $payment, PaymentStatus $status, array $details = []): Payment
 {
-    return app(RecordPaymentUpdate::class)->handle($payment, new PaymentUpdate(...['status' => $status, 'providerStatus' => $status->value, ...$details]));
+    $amountPaid = $status === PaymentStatus::Succeeded ? ['amount' => $payment->money()] : [];
+
+    return app(RecordPaymentUpdate::class)->handle($payment, new PaymentUpdate(...['status' => $status, 'providerStatus' => $status->value, ...$amountPaid, ...$details]));
 }
 
 test('a succeeded payment marks the order paid and issues one ticket per seat, once', function () {

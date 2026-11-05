@@ -7,6 +7,7 @@ use App\Support\Money;
 use App\Support\ReadableCode;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,13 +26,17 @@ use Illuminate\Support\Str;
     'quantity',
     'unit_price',
     'amount',
+    'coupon_id',
+    'discount_amount',
     'currency',
     'status',
+    'review_note',
     'buyer_name',
     'buyer_email',
     'buyer_phone',
     'marketing_consent',
     'visitor_id',
+    'ip_address',
     'attribution',
     'expires_at',
     'paid_at',
@@ -52,6 +57,7 @@ class Order extends Model
     protected $attributes = [
         'status' => 'pending',
         'marketing_consent' => false,
+        'discount_amount' => 0,
     ];
 
     /**
@@ -85,6 +91,7 @@ class Order extends Model
             'quantity' => 'integer',
             'unit_price' => 'integer',
             'amount' => 'integer',
+            'discount_amount' => 'integer',
             'marketing_consent' => 'boolean',
             'attribution' => 'array',
             'expires_at' => 'datetime',
@@ -101,6 +108,16 @@ class Order extends Model
     public function ticketType(): BelongsTo
     {
         return $this->belongsTo(TicketType::class);
+    }
+
+    /**
+     * The coupon that took money off this order, if any.
+     *
+     * @return BelongsTo<Coupon, $this>
+     */
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     /**
@@ -140,6 +157,39 @@ class Order extends Model
     }
 
     /**
+     * Limit the query to orders that count against a limit: paid, disputed (the tickets may yet stand), or held while
+     * their checkout is still open.
+     *
+     * @param  Builder<Order>  $query
+     */
+    public function scopeHoldingTickets(Builder $query): void
+    {
+        $query->where(fn (Builder $query) => $query
+            ->whereIn('status', [OrderStatus::Paid, OrderStatus::Disputed])
+            ->orWhere(fn (Builder $query) => $query->unpaidHold()));
+    }
+
+    /**
+     * Limit the query to orders holding tickets without having paid for them yet.
+     *
+     * @param  Builder<Order>  $query
+     */
+    public function scopeUnpaidHold(Builder $query): void
+    {
+        $query->where('status', OrderStatus::Pending)->where('expires_at', '>', now());
+    }
+
+    /**
+     * Leave a note for organisers about something on this order a person should look at. The same note isn't added twice.
+     */
+    public function flagForReview(string $reason): void
+    {
+        if (! str_contains((string) $this->review_note, $reason)) {
+            $this->update(['review_note' => trim($this->review_note."\n".$reason)]);
+        }
+    }
+
+    /**
      * The price of one ticket when the order was placed.
      */
     public function unitPrice(): Money
@@ -148,7 +198,23 @@ class Order extends Model
     }
 
     /**
-     * What the buyer owes for the whole order.
+     * The tickets' full price, before any coupon.
+     */
+    public function subtotal(): Money
+    {
+        return $this->unitPrice()->times($this->quantity);
+    }
+
+    /**
+     * What the coupon took off.
+     */
+    public function discount(): Money
+    {
+        return Money::of($this->discount_amount, $this->currency);
+    }
+
+    /**
+     * What the buyer owes for the whole order, after any coupon.
      */
     public function total(): Money
     {

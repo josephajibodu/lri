@@ -1,7 +1,7 @@
 <x-mail::message :preheader="'Your ticket QR code for the '.$eventName.'.'" :banner-url="$bannerUrl" :banner-alt="$eventName">
 <x-mail::eyebrow :accent="$accent">A ticket for you</x-mail::eyebrow>
 
-# You’re in, {{ Str::before($ticket->holder_name, ' ') }}.
+# You’re in, {{ $firstName }}.
 
 {{ $buyerName }} got you a ticket for the **{{ $eventName }}**.
 

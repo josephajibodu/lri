@@ -6,9 +6,11 @@ use App\Actions\Checkout\RecordCheckoutStep;
 use App\Enums\CheckoutStep;
 use App\Http\Middleware\IdentifyVisitor;
 use App\Models\TicketType;
+use App\Support\PersonName;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StoreOrderRequest extends FormRequest
@@ -33,10 +35,11 @@ class StoreOrderRequest extends FormRequest
         return [
             'ticket_type' => ['required', 'string', Rule::exists('ticket_types', 'slug')],
             'quantity' => ['required', 'integer', 'min:1', 'max:'.($ticketType?->max_per_order ?? 10)],
-            'name' => ['required', 'string', 'max:120'],
+            'name' => ['required', 'string', 'max:120', 'not_regex:'.PersonName::NotAllowed],
             'email' => ['required', 'email:rfc', 'max:190'],
             'phone' => ['nullable', 'string', 'regex:/^\+\d{10,15}$/'],
             'marketing_consent' => ['boolean'],
+            'coupon' => ['nullable', 'string', 'max:40'],
             'channel' => ['required', 'integer', Rule::exists('payment_channels', 'id')->where('is_enabled', true)],
         ];
     }
@@ -50,8 +53,10 @@ class StoreOrderRequest extends FormRequest
     {
         return [
             'quantity.max' => 'You can buy up to :max tickets in one order.',
+            'name.not_regex' => PersonName::NotAllowedMessage,
             'email.email' => 'Enter an email address like name@example.com. Your ticket goes there.',
             'phone.regex' => 'Enter a phone number like 0803 123 4567.',
+            'coupon.max' => 'We can’t find that coupon. Check the spelling and try again.',
             'channel.required' => 'Choose how you’d like to pay.',
             'channel.exists' => 'That way to pay isn’t available right now. Choose another one.',
         ];
@@ -78,21 +83,34 @@ class StoreOrderRequest extends FormRequest
     }
 
     /**
-     * Store Nigerian numbers the international way (0803… becomes +234803…), so providers and messaging tools accept them.
+     * Tidy what was typed. Anything that isn't text, such as a field sent as a list, is left for the rules to refuse.
      */
     protected function prepareForValidation(): void
     {
-        $phone = preg_replace('/[\s().-]/', '', (string) $this->input('phone'));
+        $name = $this->input('name');
+        $email = $this->input('email');
+        $phone = $this->input('phone');
 
         $this->merge([
-            'email' => strtolower(trim((string) $this->input('email'))),
-            'phone' => match (true) {
-                $phone === '' => null,
-                (bool) preg_match('/^0\d{10}$/', $phone) => '+234'.substr($phone, 1),
-                (bool) preg_match('/^234\d{10}$/', $phone) => '+'.$phone,
-                default => $phone,
-            },
+            'name' => is_string($name) ? Str::squish($name) : $name,
+            'email' => is_array($email) ? $email : strtolower(trim((string) $email)),
+            'phone' => is_array($phone) ? $phone : $this->internationalPhone((string) $phone),
             'marketing_consent' => $this->boolean('marketing_consent'),
         ]);
+    }
+
+    /**
+     * Store Nigerian numbers the international way (0803… becomes +234803…), so providers and messaging tools accept them.
+     */
+    private function internationalPhone(string $typed): ?string
+    {
+        $phone = preg_replace('/[\s().-]/', '', $typed);
+
+        return match (true) {
+            $phone === '' => null,
+            (bool) preg_match('/^0\d{10}$/', $phone) => '+234'.substr($phone, 1),
+            (bool) preg_match('/^234\d{10}$/', $phone) => '+'.$phone,
+            default => $phone,
+        };
     }
 }

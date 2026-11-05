@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminInvitationController;
 use App\Http\Controllers\BarracksRegistrationController;
 use App\Http\Controllers\BirthdayController;
 use App\Http\Controllers\CheckoutEventController;
+use App\Http\Controllers\CouponController;
 use App\Http\Controllers\DiscoRunController;
 use App\Http\Controllers\FoundersController;
 use App\Http\Controllers\HomeController;
@@ -48,23 +49,28 @@ Route::middleware(EnsureBarracksRegistrationIsOpen::class)->group(function () {
 });
 
 Route::post('/silent-disco-run/tickets', [OrderController::class, 'store'])
-    ->middleware(['throttle:10,1', IdentifyVisitor::class])
+    ->middleware(['throttle:orders', IdentifyVisitor::class])
     ->name('orders.store');
+Route::post('/silent-disco-run/coupons', CouponController::class)
+    ->middleware('throttle:coupon-checks')
+    ->name('coupons.check');
 Route::post('/checkout-events', CheckoutEventController::class)
-    ->middleware(['throttle:60,1', IdentifyVisitor::class])
+    ->middleware(['throttle:checkout-events', IdentifyVisitor::class])
     ->name('checkout-events.store');
 Route::middleware(['signed:checkout_id', IdentifyVisitor::class])->group(function () {
-    Route::get('/orders/{order:reference}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order:reference}', [OrderController::class, 'show'])
+        ->middleware('throttle:order-pages')
+        ->name('orders.show');
     Route::get('/orders/{order:reference}/status', [OrderController::class, 'status'])
-        ->middleware('throttle:30,1')
+        ->middleware('throttle:order-status')
         ->name('orders.status');
     Route::post('/orders/{order:reference}/payments', [OrderController::class, 'pay'])
-        ->middleware('throttle:10,1')
+        ->middleware('throttle:order-payments')
         ->name('orders.pay');
 });
 
 Route::get('/receipts/{order:receipt_token}', [OrderController::class, 'receipt'])->name('receipts.show');
-Route::scopeBindings()->middleware('throttle:20,1')->prefix('/receipts/{order:receipt_token}/tickets/{ticket}')->group(function () {
+Route::scopeBindings()->middleware('throttle:ticket-changes')->prefix('/receipts/{order:receipt_token}/tickets/{ticket}')->group(function () {
     Route::put('/', [TicketController::class, 'update'])->name('receipts.tickets.update');
     Route::post('/link', [TicketController::class, 'shareLink'])->name('receipts.tickets.share-link');
     Route::delete('/link', [TicketController::class, 'cancelLink'])->name('receipts.tickets.cancel-link');
@@ -73,7 +79,7 @@ Route::scopeBindings()->middleware('throttle:20,1')->prefix('/receipts/{order:re
 
 Route::get('/tickets/{ticket:claim_token}', [TicketController::class, 'show'])->name('tickets.show');
 Route::post('/tickets/{ticket:claim_token}', [TicketController::class, 'claim'])
-    ->middleware('throttle:10,1')
+    ->middleware('throttle:ticket-claims')
     ->name('tickets.claim');
 
 Route::prefix('/invitations/{token}')->group(function () {
@@ -93,7 +99,7 @@ Route::prefix('/invitations/{token}')->group(function () {
 
 Route::post('/webhooks/payments/{provider}', PaymentWebhookController::class)
     ->whereIn('provider', ['bachs'])
-    ->middleware('throttle:240,1')
+    ->middleware('throttle:payment-webhooks')
     ->name('webhooks.payments');
 
 if (! app()->isProduction()) {

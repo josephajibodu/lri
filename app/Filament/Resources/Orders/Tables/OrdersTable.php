@@ -19,7 +19,7 @@ class OrdersTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['ticketType', 'latestPayment']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['ticketType', 'latestPayment', 'coupon']))
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('reference')
@@ -38,8 +38,14 @@ class OrdersTable
                     ->formatStateUsing(fn (Order $order): string => $order->total()->format())
                     ->alignEnd()
                     ->sortable(),
+                TextColumn::make('coupon.code')
+                    ->label('Coupon')
+                    ->description(fn (Order $order): ?string => $order->coupon ? '−'.$order->discount()->format() : null)
+                    ->placeholder('–')
+                    ->toggleable(),
                 TextColumn::make('status')
-                    ->badge(),
+                    ->badge()
+                    ->description(fn (Order $order): ?string => $order->review_note === null ? null : 'Needs a look'),
                 TextColumn::make('latestPayment.method')
                     ->label('Method')
                     ->badge()
@@ -64,6 +70,10 @@ class OrdersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Filter::make('needs_look')
+                    ->label('Needs a look')
+                    ->toggle()
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('review_note')),
                 SelectFilter::make('status')
                     ->options(OrderStatus::class)
                     ->multiple(),
@@ -77,6 +87,10 @@ class OrdersTable
                 SelectFilter::make('ticket_type_id')
                     ->label('Ticket')
                     ->relationship('ticketType', 'name'),
+                SelectFilter::make('coupon_id')
+                    ->label('Coupon')
+                    ->relationship('coupon', 'code')
+                    ->searchable(),
                 Filter::make('placed')
                     ->schema([
                         DatePicker::make('from')->label('Placed from'),

@@ -16,6 +16,9 @@ final readonly class PaymentUpdate
 {
     /**
      * @param  string  $providerStatus  The provider's own status, kept for debugging.
+     * @param  ?Money  $amount  The money actually received, not what the checkout asked for. Without it, a success isn't believed.
+     * @param  ?string  $refundedAmount  How much went back, as a decimal in the payment's own currency. Refund messages don't name a currency.
+     * @param  bool  $endsDispute  The bank ruled for us, which is the only thing that lets a disputed payment count as paid again.
      */
     public function __construct(
         public PaymentStatus $status,
@@ -29,5 +32,7 @@ final readonly class PaymentUpdate
         public ?PaymentFailureReason $failureReason = null,
         public ?string $failureMessage = null,
         public ?CarbonImmutable $occurredAt = null,
+        public ?string $refundedAmount = null,
+        public bool $endsDispute = false,
     ) {}
 }

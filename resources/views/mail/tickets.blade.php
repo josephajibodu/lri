@@ -1,7 +1,7 @@
 <x-mail::message :preheader="($order->quantity === 1 ? 'Your ticket code' : 'Your ticket codes').' and receipt for the '.$eventName.'.'" :banner-url="$bannerUrl" :banner-alt="$eventName">
 <x-mail::eyebrow :accent="$accent">Payment confirmed</x-mail::eyebrow>
 
-# You’re in, {{ Str::before($order->buyer_name, ' ') }}.
+# You’re in, {{ $firstName }}.
 
 Your {{ $order->quantity === 1 ? 'ticket' : $order->quantity.' tickets' }} for the **{{ $eventName }}** {{ $order->quantity === 1 ? 'is' : 'are' }} paid for.
 

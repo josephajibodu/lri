@@ -150,7 +150,7 @@ class BachsProvider implements PaymentProvider
             paymentId: $charge['payment_id'] ?? null,
             reference: $session['reference'] ?? null,
             method: $this->methodFrom($session['payment_method'] ?? $charge['payment_method'] ?? null),
-            amount: $this->money($session['amount'] ?? null, $session['currency'] ?? null),
+            amount: $this->moneyInSession($session, $chargeStatus),
             fee: $this->money($charge['fees']['amount'] ?? null, $charge['fees']['currency'] ?? null),
             failureReason: $chargeStatus === 'failed' ? $this->failureReasonFrom($failureMessage) : null,
             failureMessage: $failureMessage,
@@ -206,13 +206,16 @@ class BachsProvider implements PaymentProvider
                     reference: $data['reference'] ?? null,
                     occurredAt: $this->date($payload['created_at'] ?? null),
                 ),
+                'refund.paid' => $this->updateFromRefund($data, $payload),
+                'dispute.created', 'dispute.updated' => $this->updateFromDispute($data, $payload),
                 default => null,
             },
         );
     }
 
     /**
-     * Read a collection.* event: a charge on a checkout succeeded, failed or came up short.
+     * Read a collection.* event: a charge on a checkout succeeded, failed or came up short. A failed charge leaves the
+     * checkout open for the buyer to try again, unless it failed because the checkout closed.
      *
      * @param  array<string, mixed>  $data
      * @param  array<string, mixed>  $payload
@@ -221,9 +224,11 @@ class BachsProvider implements PaymentProvider
     {
         $providerStatus = strtolower($data['status'] ?? '');
 
+        $isFailedTry = $payload['type'] === 'collection.failed' && $providerStatus !== 'expired';
+
         $status = match ($payload['type']) {
             'collection.underpaid' => PaymentStatus::Underpaid,
-            'collection.failed' => $providerStatus === 'expired' ? PaymentStatus::Expired : PaymentStatus::Failed,
+            'collection.failed' => $isFailedTry ? PaymentStatus::Open : PaymentStatus::Expired,
             default => PaymentStatus::Succeeded,
         };
 
@@ -234,16 +239,17 @@ class BachsProvider implements PaymentProvider
             paymentId: $data['charge_id'] ?? null,
             reference: $data['reference'] ?? null,
             method: $this->methodFrom($data['payment_method_details']['type'] ?? null),
-            amount: $this->money($data['amount'] ?? null, $data['currency'] ?? null),
+            amount: $this->moneyInCollection($data, $providerStatus),
             fee: $this->money($data['processing_fee'] ?? null, $data['processing_fee_currency'] ?? null),
-            failureReason: $status === PaymentStatus::Failed ? $this->failureReasonFrom($data['reason'] ?? null) : null,
-            failureMessage: $status === PaymentStatus::Failed ? ($data['reason'] ?? null) : null,
+            failureReason: $isFailedTry ? $this->failureReasonFrom($data['reason'] ?? null) : null,
+            failureMessage: $isFailedTry ? ($data['reason'] ?? null) : null,
             occurredAt: $this->date($payload['created_at'] ?? null),
         );
     }
 
     /**
-     * Read a checkout.completed event for a paid checkout. It can arrive before or after collection.succeeded.
+     * Read a checkout.completed event for a paid checkout. It can arrive before or after collection.succeeded. Its own
+     * amount is what the checkout asked for; what was charged is on the charge.
      *
      * @param  array<string, mixed>  $data
      * @param  array<string, mixed>  $payload
@@ -256,9 +262,84 @@ class BachsProvider implements PaymentProvider
             checkoutId: $data['checkout_id'] ?? null,
             paymentId: $data['charge']['id'] ?? null,
             reference: $data['reference'] ?? null,
-            amount: $this->money($data['amount'] ?? null, $data['currency'] ?? null),
+            amount: $this->moneyInSession($data, isset($data['charge']['status']) ? strtolower($data['charge']['status']) : null),
             occurredAt: $this->date($payload['created_at'] ?? null),
         );
+    }
+
+    /**
+     * Read a refund.paid event: the money has left for the buyer. It names the charge, and its reference is the one
+     * given to the refund, not to the payment. It doesn't say whether that was all of the payment.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $payload
+     */
+    private function updateFromRefund(array $data, array $payload): PaymentUpdate
+    {
+        return new PaymentUpdate(
+            status: PaymentStatus::Refunded,
+            providerStatus: 'refund:'.strtolower($data['status'] ?? 'success'),
+            paymentId: $data['charge_id'] ?? null,
+            occurredAt: $this->date($payload['created_at'] ?? null),
+            refundedAmount: $data['refunded_amount'] ?? $data['requested_amount'] ?? null,
+        );
+    }
+
+    /**
+     * Read a dispute event: the buyer's bank is questioning a charge. Only won and lost settle it. A dispute that closed
+     * without a ruling, or ended in a refund, stays disputed here: an organiser or the refund itself decides what's next.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $payload
+     */
+    private function updateFromDispute(array $data, array $payload): PaymentUpdate
+    {
+        $disputeStatus = strtolower($data['status'] ?? 'open');
+
+        return new PaymentUpdate(
+            status: match ($disputeStatus) {
+                'won' => PaymentStatus::Succeeded,
+                'lost' => PaymentStatus::Refunded,
+                default => PaymentStatus::Disputed,
+            },
+            providerStatus: "dispute:{$disputeStatus}",
+            paymentId: $data['charge_id'] ?? null,
+            amount: $disputeStatus === 'won' ? $this->money($data['charge_amount'] ?? null, $data['charge_currency'] ?? null) : null,
+            occurredAt: $this->date($payload['created_at'] ?? null),
+            refundedAmount: $disputeStatus === 'lost' ? ($data['amount'] ?? null) : null,
+            endsDispute: $disputeStatus === 'won',
+        );
+    }
+
+    /**
+     * The money a collection event says arrived. An overpayment says how much came in, and "accepted" means it wasn't the
+     * amount asked for, so that one's amount says nothing about what arrived unless it also says what was received.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function moneyInCollection(array $data, string $providerStatus): ?Money
+    {
+        $received = $data['received_amount'] ?? null;
+
+        return $received === null && $providerStatus === 'accepted'
+            ? null
+            : $this->money($received ?? $data['amount'] ?? null, $data['currency'] ?? null);
+    }
+
+    /**
+     * The money a checkout session says arrived. It's on the charge: the session's own amount is only what it asked for,
+     * which is good enough for a charge that succeeded but not for one that was "accepted" at some other amount.
+     *
+     * @param  array<string, mixed>  $session
+     */
+    private function moneyInSession(array $session, ?string $chargeStatus): ?Money
+    {
+        $charge = $session['charge'] ?? [];
+        $paid = $charge['amount_paid'] ?? $charge['amount'] ?? null;
+
+        return $paid === null && $chargeStatus === 'accepted'
+            ? null
+            : $this->money($paid ?? $session['amount'] ?? null, $charge['currency'] ?? $session['currency'] ?? null);
     }
 
     /**
@@ -383,6 +464,10 @@ class BachsProvider implements PaymentProvider
 
         if (blank($secretKey)) {
             throw new PaymentProviderException('Bachs is not set up: BACHS_SECRET_KEY is empty.', 'bachs');
+        }
+
+        if (app()->isProduction() && (! str_starts_with($secretKey, 'sk_live_') || ($this->config['base_url'] ?: self::LiveUrl) !== self::LiveUrl)) {
+            throw new PaymentProviderException('Bachs is in sandbox mode on the live site, where anyone could get real tickets with test payments: BACHS_SECRET_KEY must start with sk_live_, and BACHS_BASE_URL must be empty.', 'bachs');
         }
 
         return Http::baseUrl($this->config['base_url'] ?: (str_starts_with($secretKey, 'sk_live_') ? self::LiveUrl : self::SandboxUrl))

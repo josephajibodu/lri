@@ -43,6 +43,11 @@
                             <p class="dr-sub">The money went back to where it came from. Message <a href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">@@letsrunibadan</a> if anything looks wrong.</p>
                             @break
 
+                        @case('disputed')
+                            <h1 class="dr-order-title">This payment is being <em>questioned</em>.</h1>
+                            <p class="dr-sub">Your bank has raised a dispute about it, so your {{ Str::plural('ticket', $order->quantity) }} {{ $order->quantity === 1 ? 'is' : 'are' }} on hold until that’s settled. Message <a href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">@@letsrunibadan</a> with your order number if you didn’t ask for this.</p>
+                            @break
+
                         @default
                             <h1 class="dr-order-title">You haven’t <em>paid</em> yet.</h1>
                             <p class="dr-sub">
@@ -55,6 +60,9 @@
 
                     <dl class="dr-order-summary">
                         <div><dt>Tickets</dt><dd>{{ $order->quantity }} × {{ $order->unitPrice()->format() }}</dd></div>
+                        @if ($order->coupon)
+                            <div><dt>Coupon {{ $order->coupon->code }}</dt><dd>−{{ $order->discount()->format() }}</dd></div>
+                        @endif
                         <div><dt>Total</dt><dd>{{ $order->total()->format() }}</dd></div>
                         <div><dt>Name</dt><dd>{{ $order->buyer_name }}</dd></div>
                         <div><dt>Email</dt><dd>{{ $order->buyer_email }}</dd></div>

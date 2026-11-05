@@ -1,6 +1,6 @@
 @props(['eventName', 'details' => [], 'ticket' => null, 'message' => null, 'label' => 'Admit one', 'accent' => '#FEB203', 'gradient' => null])
 @php
-$fields = collect($details)->merge($ticket ? ['Name' => $ticket->holder_name] : [])->filter();
+$fields = collect($details)->merge($ticket ? ['Name' => App\Support\PersonName::forEmail($ticket->holder_name)] : [])->filter();
 $qrCode = $ticket ? App\Support\TicketQrCode::png($ticket) : null;
 @endphp
 <table class="pass" width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="#FFFFFF">

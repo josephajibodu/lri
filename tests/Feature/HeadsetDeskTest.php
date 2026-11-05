@@ -110,7 +110,7 @@ test('the desk shows each ticket as ready, already given, or needing a name with
 
 test('staff name a blank ticket and give its headset in one step, and the person is emailed their ticket', function () {
     desk()
-        ->callAction(TestAction::make('saveAndGiveHeadset')->table($this->blank), ['name' => 'Tunde Okafor', 'email' => 'tunde@example.com'])
+        ->callAction(TestAction::make('saveAndGiveHeadset')->table($this->blank), ['code' => $this->blank->code, 'name' => 'Tunde Okafor', 'email' => 'tunde@example.com'])
         ->assertHasNoFormErrors();
 
     expect($this->blank->fresh())
@@ -118,6 +118,53 @@ test('staff name a blank ticket and give its headset in one step, and the person
         ->holder_email->toBe('tunde@example.com')
         ->checked_in_by->toBe($this->staff->id);
     Mail::assertQueued(TicketMail::class, fn (TicketMail $mail): bool => $mail->hasTo('tunde@example.com'));
+});
+
+test('a blank ticket’s headset needs its code, so nobody gets one just by saying a buyer got them a ticket', function (string $typed, array $errors) {
+    desk()
+        ->callAction(TestAction::make('saveAndGiveHeadset')->table($this->blank), ['code' => $typed, 'name' => 'Stranger', 'email' => 'stranger@example.com'])
+        ->assertHasFormErrors($errors);
+
+    expect($this->blank->fresh())->holder_name->toBeNull()->checked_in_at->toBeNull();
+})->with([
+    'no code' => ['', ['code' => 'required']],
+    'the wrong code' => ['AAAA-AAAA', ['code']],
+]);
+
+test('a blank ticket’s code can be typed in any case, with or without its dash', function () {
+    $typed = str_replace('-', '', strtolower($this->blank->code));
+
+    desk()
+        ->callAction(TestAction::make('saveAndGiveHeadset')->table($this->blank), ['code' => $typed, 'name' => 'Tunde Okafor', 'email' => 'tunde@example.com'])
+        ->assertHasNoFormErrors();
+
+    expect($this->blank->fresh()->checked_in_at)->not->toBeNull();
+});
+
+test('a blank ticket’s code stays hidden from staff until it’s searched for in full', function () {
+    desk()->assertDontSeeText($this->blank->code)->assertSeeText('••••-••••');
+
+    desk()
+        ->searchTable($this->blank->code)
+        ->assertSeeText($this->blank->code)
+        ->mountAction(TestAction::make('saveAndGiveHeadset')->table($this->blank))
+        ->assertSchemaStateSet(['code' => $this->blank->code]);
+});
+
+test('a name at the desk can’t carry a link', function () {
+    desk()
+        ->callAction(TestAction::make('saveAndGiveHeadset')->table($this->blank), ['code' => $this->blank->code, 'name' => '[Renew](https://evil.example)', 'email' => 'tunde@example.com'])
+        ->assertHasFormErrors(['name']);
+});
+
+test('the desk says when a ticket’s payment is being disputed, and offers nothing', function () {
+    $this->order->update(['status' => 'disputed']);
+
+    desk()
+        ->assertActionHidden(TestAction::make('giveHeadset')->table($this->named))
+        ->assertActionHidden(TestAction::make('saveAndGiveHeadset')->table($this->blank))
+        ->searchTable($this->named->code)
+        ->assertSeeText('Payment disputed');
 });
 
 test('staff can fix a name at the desk before giving the headset', function () {
