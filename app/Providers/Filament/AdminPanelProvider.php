@@ -25,6 +25,27 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
+    /**
+     * LRI yellow (#FEB203) is shade 400, because Filament puts light-mode buttons on 400 and their hovers on 300. The
+     * tints and the gold (700, for yellow text that's readable on a light background) come from the site's own colours.
+     * The darkest shades are the site's ink, which is what Filament then uses for the text on those buttons.
+     *
+     * @var array<int, string>
+     */
+    private const array BRAND_YELLOW = [
+        50 => '#FFF9E8',
+        100 => '#FFF1CC',
+        200 => '#FFE28A',
+        300 => '#FFC83D',
+        400 => '#FEB203',
+        500 => '#E09C00',
+        600 => '#B87F00',
+        700 => '#8A5A00',
+        800 => '#1C1917',
+        900 => '#1C1917',
+        950 => '#1C1917',
+    ];
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -32,13 +53,17 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(Login::class)
-            ->renderHook(PanelsRenderHook::HEAD_END, fn (): View => view('filament.auth.login-styles'), scopes: Login::class)
+            ->renderHook(PanelsRenderHook::HEAD_END, fn (): View => view('filament.brand-styles'))
             ->renderHook(PanelsRenderHook::SIMPLE_PAGE_START, fn (): View => view('filament.auth.login-logo'), scopes: Login::class)
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn (): View => view('filament.auth.login-back-link'), scopes: Login::class)
             ->brandName('LRI Admin')
+            ->brandLogo(asset('images/lri-logo-email.png'))
+            ->darkModeBrandLogo(asset('images/lri-logo-on-dark.png'))
+            ->brandLogoHeight('2.5rem')
             ->favicon(asset('favicon.svg'))
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => self::BRAND_YELLOW,
+                'gray' => Color::Stone,
             ])
             ->navigationGroups([
                 NavigationGroup::make('Tickets'),
