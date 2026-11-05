@@ -232,6 +232,19 @@ The README's [first deploy](README.md#the-first-deploy) section has the setup st
 - **No OPay.** Card and bank transfer through Bachs are enough. We won't chase OPay with Bachs or add a second provider for it. The provider layer still allows one later if this changes.
 - **No cookie notice.** The visitor and source cookies go ahead without one.
 
+## Later
+
+### Two-step login for the admin (optional)
+The admin only asks for a password today, and one stolen password can be costly: anyone with the Coupons section can make a 99% coupon, and anyone with Ticket types can change prices. This adds an optional second step, a code from an authenticator app on your phone. Each person chooses whether to turn it on and nobody is made to, so anyone who leaves it off is still protected only by their password and the sign-in limit of 5 tries a minute.
+
+- [ ] Add two nullable `text` columns to `users`, `app_authentication_secret` and `app_authentication_recovery_codes`, and give `User` the `HasAppAuthentication` and `HasAppAuthenticationRecovery` interfaces with their traits
+- [ ] Turn it on in `AdminPanelProvider.php` with `multiFactorAuthentication([AppAuthentication::make()->recoverable()])`, leaving `isRequired` off. No new package is needed, because Filament already requires `pragmarx/google2fa` and `pragmarx/google2fa-qrcode` itself
+- [ ] Give people somewhere to turn it on. Filament puts this on the profile page, and the panel doesn't have one. `->profile()` adds it, but that page also has fields for name, email and password, so decide whether to allow those or build a smaller page
+- [ ] Recovery codes work, for signing in when the phone isn't to hand
+- [ ] A super admin can reset someone who has lost both their phone and their recovery codes, from Settings > People
+- [ ] Tests beside `tests/Feature/AdminPanelTest.php`: signing in asks for the code once it's on, a wrong code is refused, a recovery code works only once, someone who hasn't turned it on signs in as before, and a reset clears it
+- [ ] Explain it in the README's admin section
+
 ## Known gaps
 
 - **Coupons and late bank transfers:** if a buyer's coupon ended and their abandoned order went back to full price, then a transfer for the old checkout still lands, the order counts as paid at full price in the reports although less came in. Very unlikely, and the payment attempt keeps the true amount.
