@@ -8,6 +8,7 @@ use App\Mail\TicketsMail;
 use App\Models\Order;
 use App\Models\Ticket;
 use App\Models\TicketType;
+use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -19,9 +20,20 @@ use Illuminate\View\View;
 class MailPreviewController extends Controller
 {
     /**
-     * List the emails, with the chosen one shown beside the list.
+     * The screen sizes an email can be previewed at, in pixels. Desktop has none because it fills the page.
+     *
+     * @var array<string, array{name: string, width: int|null, height: int|null}>
      */
-    public function index(?string $preview = null): View
+    private const DEVICES = [
+        'desktop' => ['name' => 'Desktop', 'width' => null, 'height' => null],
+        'tablet' => ['name' => 'Tablet', 'width' => 768, 'height' => 1024],
+        'mobile' => ['name' => 'Mobile', 'width' => 390, 'height' => 844],
+    ];
+
+    /**
+     * List the emails, with the chosen one shown at the chosen screen size.
+     */
+    public function index(Request $request, ?string $preview = null): View
     {
         $previews = $this->previews();
         $selected = $preview ?? $previews->keys()->first();
@@ -29,6 +41,8 @@ class MailPreviewController extends Controller
         abort_unless($previews->has($selected), 404);
 
         return view('mail-previews.index', [
+            'devices' => self::DEVICES,
+            'device' => in_array($request->query('device'), array_keys(self::DEVICES), true) ? $request->query('device') : 'desktop',
             'previews' => $previews->map(fn (array $preview): array => [
                 ...$preview,
                 'subject' => $preview['mail']()->envelope()->subject,
