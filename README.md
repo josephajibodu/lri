@@ -121,6 +121,8 @@ Each section of the page is its own Blade file:
 
 The colours are CSS custom properties at the top of the page styles in `resources/css/app.css`. The main ones are `--yellow` (`#FEB203`, the LRI yellow), `--bg` (the off-white base) and `--ink` (text). Yellow is never used for text on the light background, because it is hard to read there. Text sits on a yellow block instead, as in the hero and the section headings.
 
+The admin uses the same colours, and follows the same rule: its yellow buttons have dark text. The shades of yellow are in `app/Providers/Filament/AdminPanelProvider.php`. The background, the yellow stripe and the other small touches are in `resources/views/filament/brand-styles.blade.php`.
+
 The logo is an SVG redraw of the LRI logo in `resources/views/components/logo.blade.php` (full logo), `resources/views/components/logo-mark.blade.php` (the LRI mark) and `public/favicon.svg`. Replace them with the original artwork when it is available.
 
 ## Ticket payments

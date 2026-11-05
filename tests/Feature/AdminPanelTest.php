@@ -10,6 +10,7 @@ use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\CheckoutEventsRelationManager;
 use App\Filament\Resources\PaymentChannels\Pages\ManagePaymentChannels;
 use App\Filament\Resources\TicketTypes\Pages\CreateTicketType;
+use App\Filament\Resources\TicketTypes\Pages\EditTicketType;
 use App\Filament\Resources\WebhookCalls\Pages\ManageWebhookCalls;
 use App\Filament\Widgets\CheckoutFunnelTable;
 use App\Filament\Widgets\PaymentMethodsTable;
@@ -199,6 +200,55 @@ test('a ticket type’s price is entered in naira and stored in kobo', function 
     expect(TicketType::query()->where('slug', 'disco-run-early-bird')->sole())
         ->price->toBe(750_000)
         ->max_per_order->toBe(4);
+});
+
+test('a new ticket type gets the only event and currency without anyone choosing them', function () {
+    $this->actingAs($this->admin);
+
+    Livewire::test(CreateTicketType::class)
+        ->fillForm(['name' => 'Early bird', 'slug' => 'disco-run-early-bird', 'price' => '7500'])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(TicketType::query()->where('slug', 'disco-run-early-bird')->sole())
+        ->event->toBe('disco-run')
+        ->currency->toBe('NGN');
+});
+
+test('the event and currency hidden on a ticket type can’t be swapped for others', function () {
+    $this->actingAs($this->admin);
+
+    Livewire::test(CreateTicketType::class)
+        ->fillForm(['name' => 'Early bird', 'slug' => 'disco-run-early-bird', 'price' => '7500', 'event' => 'another-event', 'currency' => 'USD'])
+        ->call('create')
+        ->assertHasFormErrors(['event' => 'in', 'currency' => 'in']);
+
+    expect(TicketType::query()->where('slug', 'disco-run-early-bird')->exists())->toBeFalse();
+});
+
+test('a ticket type still needs its name, slug, price and order limit, even without the asterisks', function () {
+    $this->actingAs($this->admin);
+
+    Livewire::test(CreateTicketType::class)
+        ->fillForm(['name' => null, 'slug' => null, 'price' => null, 'max_per_order' => null])
+        ->call('create')
+        ->assertHasFormErrors(['name' => 'required', 'slug' => 'required', 'price' => 'required', 'max_per_order' => 'required']);
+});
+
+test('saving a ticket type keeps its price, event and currency', function () {
+    $this->actingAs($this->admin);
+    $ticketType = TicketType::factory()->create(['price' => 1_000_000]);
+
+    Livewire::test(EditTicketType::class, ['record' => $ticketType->getRouteKey()])
+        ->fillForm(['name' => 'Renamed ticket'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($ticketType->refresh())
+        ->name->toBe('Renamed ticket')
+        ->price->toBe(1_000_000)
+        ->event->toBe('disco-run')
+        ->currency->toBe('NGN');
 });
 
 test('a way to pay can be featured from the list', function () {

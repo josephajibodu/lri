@@ -6,8 +6,8 @@ use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Schemas\Components\Component;
 
 /**
- * The admin's sign-in page in the club's own colours, with its logo and a way back to the website, because anyone who
- * scans a ticket's QR code lands here. The logo, colours and link are added in AdminPanelProvider, for this page only.
+ * The admin's sign-in page, with the club's logo and a way back to the website, because anyone who scans a ticket's QR
+ * code lands here. The logo and link are added in AdminPanelProvider, for this page only.
  */
 class Login extends BaseLogin
 {
