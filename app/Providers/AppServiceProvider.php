@@ -27,31 +27,6 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Each step of buying a ticket has its own counter, because a plain throttle:10,1 shares one counter with every other
-     * such route. Otherwise the order page checking on a payment every few seconds would lock its buyer out of paying.
-     * Steps tied to one order or ticket count per address, since people on one mobile network can share an IP address.
-     */
-    private function defineBuyingRateLimits(): void
-    {
-        $perPageAndAddress = fn (Request $request): string => $request->path().'|'.$request->ip();
-
-        RateLimiter::for('orders', fn (Request $request): array => [
-            Limit::perMinute(30)->by('address:'.$request->ip()),
-            Limit::perMinute(5)->by('email:'.(is_string($request->input('email')) ? strtolower(trim($request->input('email'))) : '')),
-        ]);
-        RateLimiter::for('coupon-checks', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
-        RateLimiter::for('checkout-events', fn (Request $request): Limit => Limit::perMinute(60)->by($request->ip()));
-        RateLimiter::for('order-pages', fn (Request $request): Limit => Limit::perMinute(60)->by($perPageAndAddress($request)));
-        RateLimiter::for('order-status', fn (Request $request): Limit => Limit::perMinute(30)->by($perPageAndAddress($request)));
-        RateLimiter::for('order-payments', fn (Request $request): Limit => Limit::perMinute(10)->by($perPageAndAddress($request)));
-        RateLimiter::for('ticket-claims', fn (Request $request): Limit => Limit::perMinute(10)->by($perPageAndAddress($request)));
-        RateLimiter::for('payment-webhooks', fn (Request $request): Limit => Limit::perMinute(240)->by($request->ip()));
-
-        /* Per receipt, not per ticket: naming a ticket emails someone, and one receipt can have many tickets. */
-        RateLimiter::for('ticket-changes', fn (Request $request): Limit => Limit::perMinute(20)->by((string) $request->segment(2)));
-    }
-
-    /**
      * Bootstrap any application services.
      */
     public function boot(): void
@@ -62,13 +37,61 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Role::class, RolePolicy::class);
 
-        $this->defineBuyingRateLimits();
-
         /*
          * Super admins hold every admin permission, including ones added later. This only answers the permission
          * checks themselves, so rules on top of them (such as nobody removing themselves) still apply.
          */
         Gate::before(fn (User $user, string $ability): ?bool => $user->isSuperAdmin() && AdminPermission::tryFrom($ability) ? true : null);
         Gate::define('viewLogViewer', fn (?User $user): bool => $user?->can(AdminPermission::ViewLogs->value) ?? false);
+
+        $this->configureRateLimits();
+    }
+
+    /**
+     * Give each public action its own count of how often a visitor used it in the last minute. A limit written straight
+     * on a route, like throttle:10,1, adds to one count per visitor that all such routes share, so an order page checking
+     * on its payment would use up the tries for "Pay now". Steps tied to one order or ticket count per address and page,
+     * since people on one mobile network can share an address.
+     */
+    private function configureRateLimits(): void
+    {
+        $perAddress = [
+            'birthday-submissions' => 10,
+            'barracks-registrations' => 10,
+            'barracks-passports' => 20,
+            'coupon-checks' => 10,
+            'checkout-events' => 60,
+            'invitation-pages' => 30,
+            'invitation-answers' => 10,
+            'payment-webhooks' => 240,
+        ];
+
+        foreach ($perAddress as $limiter => $limit) {
+            RateLimiter::for($limiter, fn (Request $request): Limit => Limit::perMinute($limit)->by($request->ip()));
+        }
+
+        $perAddressAndPage = [
+            'order-pages' => 60,
+            'order-status-checks' => 30,
+            'order-payments' => 10,
+            'ticket-claims' => 10,
+        ];
+
+        foreach ($perAddressAndPage as $limiter => $limit) {
+            RateLimiter::for($limiter, fn (Request $request): Limit => Limit::perMinute($limit)->by($request->path().'|'.$request->ip()));
+        }
+
+        /* A shared address gets plenty of room for separate buyers, and one email gets much less. */
+        RateLimiter::for('order-placements', function (Request $request): array {
+            $email = $request->input('email');
+
+            return array_filter([
+                Limit::perMinute(30)->by('address:'.$request->ip()),
+                is_string($email) && $email !== '' ? Limit::perMinute(5)->by('email:'.strtolower(trim($email))) : null,
+            ]);
+        });
+
+        /* Per receipt, not per ticket: naming a ticket emails someone, and one receipt can have many tickets. */
+        RateLimiter::for('ticket-changes', fn (Request $request): Limit => Limit::perMinute(20)->by((string) $request->segment(2)));
     }
 }

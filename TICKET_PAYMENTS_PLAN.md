@@ -181,7 +181,7 @@ An attack review on 5 November found no way to get a ticket without Bachs report
 - [x] Limits on unpaid tickets per email and connection, and on tries per order, so nobody can hold every ticket for free
 - [x] A bot check (Cloudflare Turnstile) on the ticket form, because emails and internet addresses are easy to change. It's off until its keys are set. If Cloudflare's server can't answer, orders go through. If the check can't load in buyers' browsers, nobody can order until its keys are emptied
 - [x] One unpaid use of a limited coupon per email or connection. A coupon that has ended comes off at the next try, and a lapsed order comes back at today's price
-- [x] Each step of buying has its own rate limit, because `throttle:10,1` shares one counter across routes, which locked buyers out of paying while their order page waited
+- [x] Buying now counts per address and page where it can, and order placing per email as well, so separate buyers on one mobile network don't block each other. This builds on giving each action its own rate limit
 - [x] Names can't carry links into emails or formulas into the CSV download
 - [x] A declined card leaves the payment open, as Bachs does, so a later success is still noticed if its webhook is lost
 - [x] A blank ticket's headset needs the ticket's code, which staff can't see until it's searched for in full
