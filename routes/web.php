@@ -30,17 +30,17 @@ Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 Route::get('/birthdays/share', [BirthdayController::class, 'create'])->name('birthdays.create');
 Route::post('/birthdays', [BirthdayController::class, 'store'])
-    ->middleware('throttle:10,1')
+    ->middleware('throttle:birthday-submissions')
     ->name('birthdays.store');
 Route::get('/birthdays', fn () => redirect('/admin/birthdays'));
 
 Route::middleware(EnsureBarracksRegistrationIsOpen::class)->group(function () {
     Route::get('/akobo/barracks', [BarracksRegistrationController::class, 'create'])->name('barracks.create');
     Route::post('/akobo/barracks', [BarracksRegistrationController::class, 'store'])
-        ->middleware('throttle:10,1')
+        ->middleware('throttle:barracks-registrations')
         ->name('barracks.store');
     Route::post('/akobo/barracks/passport', [BarracksRegistrationController::class, 'uploadPassport'])
-        ->middleware('throttle:20,1')
+        ->middleware('throttle:barracks-passports')
         ->name('barracks.passport');
     Route::get('/akobo/barracks/registrations', fn () => redirect('/admin/barracks-registrations'));
     Route::get('/akobo/barracks/registrations/print/{registration?}', [BarracksRegistrationController::class, 'print'])
@@ -49,26 +49,26 @@ Route::middleware(EnsureBarracksRegistrationIsOpen::class)->group(function () {
 });
 
 Route::post('/silent-disco-run/tickets', [OrderController::class, 'store'])
-    ->middleware(['throttle:10,1', IdentifyVisitor::class])
+    ->middleware(['throttle:order-placements', IdentifyVisitor::class])
     ->name('orders.store');
 Route::post('/silent-disco-run/coupons', CouponController::class)
     ->middleware('throttle:coupon-checks')
     ->name('coupons.check');
 Route::post('/checkout-events', CheckoutEventController::class)
-    ->middleware(['throttle:60,1', IdentifyVisitor::class])
+    ->middleware(['throttle:checkout-events', IdentifyVisitor::class])
     ->name('checkout-events.store');
 Route::middleware(['signed:checkout_id', IdentifyVisitor::class])->group(function () {
     Route::get('/orders/{order:reference}', [OrderController::class, 'show'])->name('orders.show');
     Route::get('/orders/{order:reference}/status', [OrderController::class, 'status'])
-        ->middleware('throttle:30,1')
+        ->middleware('throttle:order-status-checks')
         ->name('orders.status');
     Route::post('/orders/{order:reference}/payments', [OrderController::class, 'pay'])
-        ->middleware('throttle:10,1')
+        ->middleware('throttle:order-payments')
         ->name('orders.pay');
 });
 
 Route::get('/receipts/{order:receipt_token}', [OrderController::class, 'receipt'])->name('receipts.show');
-Route::scopeBindings()->middleware('throttle:20,1')->prefix('/receipts/{order:receipt_token}/tickets/{ticket}')->group(function () {
+Route::scopeBindings()->middleware('throttle:ticket-changes')->prefix('/receipts/{order:receipt_token}/tickets/{ticket}')->group(function () {
     Route::put('/', [TicketController::class, 'update'])->name('receipts.tickets.update');
     Route::post('/link', [TicketController::class, 'shareLink'])->name('receipts.tickets.share-link');
     Route::delete('/link', [TicketController::class, 'cancelLink'])->name('receipts.tickets.cancel-link');
@@ -77,27 +77,27 @@ Route::scopeBindings()->middleware('throttle:20,1')->prefix('/receipts/{order:re
 
 Route::get('/tickets/{ticket:claim_token}', [TicketController::class, 'show'])->name('tickets.show');
 Route::post('/tickets/{ticket:claim_token}', [TicketController::class, 'claim'])
-    ->middleware('throttle:10,1')
+    ->middleware('throttle:ticket-claims')
     ->name('tickets.claim');
 
 Route::prefix('/invitations/{token}')->group(function () {
     Route::get('/', [AdminInvitationController::class, 'show'])
-        ->middleware('throttle:30,1')
+        ->middleware('throttle:invitation-pages')
         ->name('invitations.show');
     Route::post('/', [AdminInvitationController::class, 'accept'])
-        ->middleware('throttle:10,1')
+        ->middleware('throttle:invitation-answers')
         ->name('invitations.accept');
     Route::get('/decline', [AdminInvitationController::class, 'confirmDecline'])
-        ->middleware('throttle:30,1')
+        ->middleware('throttle:invitation-pages')
         ->name('invitations.decline-form');
     Route::post('/decline', [AdminInvitationController::class, 'decline'])
-        ->middleware('throttle:10,1')
+        ->middleware('throttle:invitation-answers')
         ->name('invitations.decline');
 });
 
 Route::post('/webhooks/payments/{provider}', PaymentWebhookController::class)
     ->whereIn('provider', ['bachs'])
-    ->middleware('throttle:240,1')
+    ->middleware('throttle:payment-webhooks')
     ->name('webhooks.payments');
 
 if (! app()->isProduction()) {

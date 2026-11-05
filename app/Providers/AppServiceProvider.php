@@ -46,5 +46,34 @@ class AppServiceProvider extends ServiceProvider
          */
         Gate::before(fn (User $user, string $ability): ?bool => $user->isSuperAdmin() && AdminPermission::tryFrom($ability) ? true : null);
         Gate::define('viewLogViewer', fn (?User $user): bool => $user?->can(AdminPermission::ViewLogs->value) ?? false);
+
+        $this->configureRateLimits();
+    }
+
+    /**
+     * Give each public action its own count of how often a visitor used it in the last minute. A limit written straight
+     * on a route, like throttle:10,1, adds to one count per visitor that all such routes share, so an order page checking
+     * on its payment would use up the tries for "Pay now".
+     */
+    private function configureRateLimits(): void
+    {
+        $requestsPerMinute = [
+            'birthday-submissions' => 10,
+            'barracks-registrations' => 10,
+            'barracks-passports' => 20,
+            'order-placements' => 10,
+            'checkout-events' => 60,
+            'order-status-checks' => 30,
+            'order-payments' => 10,
+            'ticket-changes' => 20,
+            'ticket-claims' => 10,
+            'invitation-pages' => 30,
+            'invitation-answers' => 10,
+            'payment-webhooks' => 240,
+        ];
+
+        foreach ($requestsPerMinute as $limiter => $limit) {
+            RateLimiter::for($limiter, fn (Request $request): Limit => Limit::perMinute($limit)->by($request->ip()));
+        }
     }
 }
