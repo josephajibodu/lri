@@ -1636,6 +1636,14 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-pay-more { border-top: 1px solid var(--glass-line); padding-top: 10px; }
 .dr-pay-more summary { padding: 4px 0 10px; color: var(--dim); font-size: .88rem; font-weight: 600; cursor: pointer; }
 .dr-pay-more summary:hover { color: var(--label); }
+.dr-coupon summary { color: var(--label); font-size: .9rem; font-weight: 600; cursor: pointer; }
+.dr-coupon .dr-field { margin-top: 12px; }
+.dr-coupon-row { display: flex; align-items: center; gap: 12px; }
+.dr-coupon-row .dr-input { flex: 1; min-width: 0; text-transform: uppercase; }
+.dr-coupon-row .dr-input[readonly] { background: var(--glass); cursor: default; }
+.dr-coupon-row .btn, .dr-coupon-row .dr-order-link { flex: none; }
+.dr-coupon-applied { margin: 0; color: var(--label); font-size: .88rem; font-weight: 600; }
+.dr-coupon [hidden] { display: none; }
 .dr-checkout-status { margin: 0; color: var(--dim); font-size: .88rem; }
 .dr-checkout-status[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) { .dr-pay, .dr-pay:active, .dr-pay::after { transition: none; transform: none; } .dr-pay:hover::after { translate: none; } }

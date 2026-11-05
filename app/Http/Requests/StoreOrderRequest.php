@@ -37,6 +37,7 @@ class StoreOrderRequest extends FormRequest
             'email' => ['required', 'email:rfc', 'max:190'],
             'phone' => ['nullable', 'string', 'regex:/^\+\d{10,15}$/'],
             'marketing_consent' => ['boolean'],
+            'coupon' => ['nullable', 'string', 'max:40'],
             'channel' => ['required', 'integer', Rule::exists('payment_channels', 'id')->where('is_enabled', true)],
         ];
     }
@@ -52,6 +53,7 @@ class StoreOrderRequest extends FormRequest
             'quantity.max' => 'You can buy up to :max tickets in one order.',
             'email.email' => 'Enter an email address like name@example.com. Your ticket goes there.',
             'phone.regex' => 'Enter a phone number like 0803 123 4567.',
+            'coupon.max' => 'We can’t find that coupon. Check the spelling and try again.',
             'channel.required' => 'Choose how you’d like to pay.',
             'channel.exists' => 'That way to pay isn’t available right now. Choose another one.',
         ];

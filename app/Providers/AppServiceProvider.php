@@ -7,7 +7,10 @@ use App\Enums\AdminPermission;
 use App\Models\User;
 use App\Payments\PaymentManager;
 use App\Policies\RolePolicy;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Spatie\Permission\Models\Role;
@@ -33,6 +36,9 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Gate::policy(Role::class, RolePolicy::class);
+
+        /* Its own counter, so nobody can sit guessing coupon codes, and other pages' requests don't use up a buyer's tries. */
+        RateLimiter::for('coupon-checks', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
 
         /*
          * Super admins hold every admin permission, including ones added later. This only answers the permission

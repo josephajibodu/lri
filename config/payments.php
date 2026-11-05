@@ -28,6 +28,18 @@ return [
 
     'checkout_expires_in_minutes' => (int) env('PAYMENTS_CHECKOUT_EXPIRES_IN', 60),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Smallest Charge
+    |--------------------------------------------------------------------------
+    |
+    | The least a checkout can ask for, in kobo. Bachs refuses anything under
+    | NGN 100, so a coupon always leaves at least this much to pay.
+    |
+    */
+
+    'minimum_charge' => 10_000,
+
     'providers' => [
 
         /*

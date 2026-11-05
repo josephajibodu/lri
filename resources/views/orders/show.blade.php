@@ -55,6 +55,9 @@
 
                     <dl class="dr-order-summary">
                         <div><dt>Tickets</dt><dd>{{ $order->quantity }} × {{ $order->unitPrice()->format() }}</dd></div>
+                        @if ($order->coupon)
+                            <div><dt>Coupon {{ $order->coupon->code }}</dt><dd>−{{ $order->discount()->format() }}</dd></div>
+                        @endif
                         <div><dt>Total</dt><dd>{{ $order->total()->format() }}</dd></div>
                         <div><dt>Name</dt><dd>{{ $order->buyer_name }}</dd></div>
                         <div><dt>Email</dt><dd>{{ $order->buyer_email }}</dd></div>

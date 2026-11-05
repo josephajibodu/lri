@@ -7,6 +7,7 @@ use App\Enums\PaymentFailureReason;
 use App\Enums\PaymentStatus;
 use App\Exceptions\CheckoutUnavailable;
 use App\Exceptions\TicketsUnavailable;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\PaymentChannel;
 use App\Models\TicketType;
@@ -62,7 +63,7 @@ class StartPayment
                 cancelUrl: $order->statusUrl(['from' => 'cancelled']),
                 methods: [$channel->method],
                 expiresInMinutes: $expiresInMinutes,
-                metadata: ['order' => $order->reference, 'ticket_type' => $order->ticketType->slug],
+                metadata: array_filter(['order' => $order->reference, 'ticket_type' => $order->ticketType->slug, 'coupon' => $order->coupon?->code]),
             ));
         } catch (PaymentProviderException $exception) {
             report($exception);
@@ -93,9 +94,12 @@ class StartPayment
     }
 
     /**
-     * Hold the order's tickets again when its hold has lapsed or it was abandoned.
+     * Hold the order's tickets again when its hold has lapsed or it was abandoned. Its coupon gave up its use when the
+     * hold lapsed, so it's checked again: one that no longer works comes off, and the buyer sees the new total before
+     * being asked to pay it.
      *
      * @throws TicketsUnavailable
+     * @throws CheckoutUnavailable
      */
     private function holdTickets(Order $order): void
     {
@@ -103,7 +107,7 @@ class StartPayment
             return;
         }
 
-        DB::transaction(function () use ($order): void {
+        $endedCoupon = DB::transaction(function () use ($order): ?Coupon {
             $ticketType = TicketType::query()->onSale()->lockForUpdate()->find($order->ticket_type_id)
                 ?? throw TicketsUnavailable::notOnSale();
 
@@ -113,11 +117,23 @@ class StartPayment
                 throw TicketsUnavailable::notEnough($ticketsLeft);
             }
 
+            $coupon = $order->coupon_id === null ? null : Coupon::query()->lockForUpdate()->find($order->coupon_id);
+            $couponEnded = $coupon?->whyUnusableOn($ticketType) !== null;
+
             $order->update([
                 'status' => OrderStatus::Pending,
                 'abandoned_at' => null,
                 'expires_at' => now()->addMinutes(config('payments.checkout_expires_in_minutes')),
+                ...($couponEnded ? ['coupon_id' => null, 'discount_amount' => 0, 'amount' => $order->subtotal()->amount] : []),
             ]);
+
+            return $couponEnded ? $coupon : null;
         });
+
+        if ($endedCoupon !== null) {
+            $order->unsetRelation('coupon');
+
+            throw CheckoutUnavailable::couponEnded($endedCoupon->code, $order->total()->format());
+        }
     }
 }

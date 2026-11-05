@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminInvitationController;
 use App\Http\Controllers\BarracksRegistrationController;
 use App\Http\Controllers\BirthdayController;
 use App\Http\Controllers\CheckoutEventController;
+use App\Http\Controllers\CouponController;
 use App\Http\Controllers\DiscoRunController;
 use App\Http\Controllers\FoundersController;
 use App\Http\Controllers\HomeController;
@@ -50,6 +51,9 @@ Route::middleware(EnsureBarracksRegistrationIsOpen::class)->group(function () {
 Route::post('/silent-disco-run/tickets', [OrderController::class, 'store'])
     ->middleware(['throttle:10,1', IdentifyVisitor::class])
     ->name('orders.store');
+Route::post('/silent-disco-run/coupons', CouponController::class)
+    ->middleware('throttle:coupon-checks')
+    ->name('coupons.check');
 Route::post('/checkout-events', CheckoutEventController::class)
     ->middleware(['throttle:60,1', IdentifyVisitor::class])
     ->name('checkout-events.store');

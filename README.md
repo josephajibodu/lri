@@ -135,6 +135,21 @@ Silent Disco Run tickets are sold on the site, paid through [Bachs](https://docs
 4. Once it's paid, the buyer moves on to their receipt at `/receipts/{code}`, an address they can always come back to, and their tickets are emailed from the queue. The first ticket already carries the buyer's name and email.
 5. An order that isn't paid is marked abandoned about 10 minutes after its hold runs out, and its tickets go back on sale. The buyer can still pay from their order page while tickets are left.
 
+### Coupons
+
+Organisers make coupons in the admin under Tickets > Coupons. Buyers tap "Have a coupon?" on the ticket form, type the code and press Apply, and the total drops before they choose how to pay.
+
+- **What it takes off:** a percentage (up to 99%) or a naira amount, off the order's total.
+- **Limits you can set:** when it starts and ends, how many orders can use it, how many tickets it covers in one order (any more are full price; percentage coupons only), and which tickets it works on.
+- **A coupon can't be edited.** Once it's made, it can only be disabled, or turned back on. Anyone already paying with it keeps their discount until the hold on their tickets runs out.
+- **The buyer always pays at least ₦100** (`payments.minimum_charge`), because Bachs refuses anything less. So a coupon can't make a ticket free.
+- **What counts as a use:** paid orders and orders still being paid for. An abandoned or refunded order gives its use back.
+- **Coming back to an abandoned order:** the coupon is checked again. If it no longer works, the order goes back to full price and the buyer is told before they're asked to pay.
+
+The coupon's code and what it took off show on the order page, the receipt, the tickets email, the order in the admin and the CSV download. To see every order that used a coupon, press Orders on its row.
+
+**To try a live sale cheaply:** make a coupon for ₦10,000 off, switch on "Limit how many orders can use it" and set it to 1, then buy one ticket with it. You pay a real ₦100. Disable the coupon afterwards.
+
 ### A name on every ticket
 
 There is one ticket type at one price. Each ticket is for one person, and each person picks up their own headset, so every ticket needs that person's name and email. The buyer only enters their own details at checkout; the other tickets are named after paying:
@@ -286,6 +301,7 @@ It uses the club's official email look: a white card with the logo and a stripe 
 | Headset desk | On the day: find a ticket, fill in a missing name and email, and hand over one headset per paid ticket |
 | Orders | Search and download orders, see each buyer's payment attempts and journey, check a payment with Bachs and email tickets again |
 | Ticket types | Prices in naira and the ticket limit, which is the number of headsets |
+| Coupons | Make coupons, see how much each has been used, and disable them. They can't be edited |
 | Ways to pay | Switch methods on or off, feature them at checkout and reorder them |
 | System > Webhooks | What Bachs sent, with the option to handle a failed one again |
 | System > Email tool | What Mailchimp was told, with the option to send a failed one again |

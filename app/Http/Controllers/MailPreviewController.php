@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CouponDiscountType;
 use App\Enums\OrderStatus;
 use App\Enums\StaffRole;
 use App\Mail\AdminInvitationMail;
 use App\Mail\TicketMail;
 use App\Mail\TicketsMail;
 use App\Models\AdminInvitation;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Ticket;
 use App\Models\TicketType;
@@ -98,6 +100,11 @@ class MailPreviewController extends Controller
                 'description' => 'The same email when the buyer paid for more than one ticket.',
                 'mail' => fn (): Mailable => new TicketsMail($this->sampleOrder(quantity: 3)),
             ],
+            'tickets-coupon' => [
+                'name' => 'Tickets, with a coupon',
+                'description' => 'The same email when a coupon took money off the order.',
+                'mail' => fn (): Mailable => new TicketsMail($this->sampleOrder(quantity: 2, withCoupon: true)),
+            ],
             'ticket' => [
                 'name' => 'One person’s ticket',
                 'description' => 'Sent to a friend the buyer got a ticket for, once their name goes on it.',
@@ -129,7 +136,7 @@ class MailPreviewController extends Controller
     /**
      * A paid Disco Run order with its tickets, built in memory so nothing touches the database.
      */
-    private function sampleOrder(int $quantity): Order
+    private function sampleOrder(int $quantity, bool $withCoupon = false): Order
     {
         $ticketType = new TicketType([
             'event' => 'disco-run',
@@ -152,6 +159,13 @@ class MailPreviewController extends Controller
         ]);
 
         $order->setRelation('ticketType', $ticketType);
+
+        if ($withCoupon) {
+            $coupon = new Coupon(['code' => 'LRILOVE', 'discount_type' => CouponDiscountType::Percentage, 'discount_value' => 20]);
+            $discount = $coupon->discountFor($order->unitPrice(), $quantity)->amount;
+
+            $order->forceFill(['discount_amount' => $discount, 'amount' => $order->amount - $discount])->setRelation('coupon', $coupon);
+        }
 
         $tickets = collect([
             ['7K3Q-9PXM', 'Ada Bello', 'ada@example.com'],

@@ -761,12 +761,19 @@ import.meta.glob("../fonts/*.woff2");
             var minQuantity = Number(quantity.min);
             var maxQuantity = Number(quantity.max);
             var stepButtons = form.querySelectorAll("[data-checkout-step]");
+            var couponBox = form.querySelector("[data-coupon]");
+            var appliedCoupon = null;
 
             /* Keep the quantity a whole number the ticket allows, with the total and the − and + buttons to match. */
             var setQuantity = function (value) {
                 var count = Math.min(Math.max(Math.round(value) || minQuantity, minQuantity), maxQuantity);
                 quantity.value = count;
-                total.textContent = format.format(Number(total.dataset.unitPrice) * count / 100);
+                var discount = appliedCoupon ? appliedCoupon.discounts[count] || 0 : 0;
+                var toPay = Number(total.dataset.unitPrice) * count - discount;
+                total.textContent = format.format(toPay / 100);
+                if (appliedCoupon) {
+                    couponBox.querySelector("[data-coupon-applied]").textContent = appliedCoupon.description + ": −" + format.format(discount / 100) + ". You pay " + format.format(toPay / 100) + ".";
+                }
                 stepButtons.forEach(function (button) {
                     var isAtLimit = Number(button.dataset.checkoutStep) < 0 ? count <= minQuantity : count >= maxQuantity;
                     button.setAttribute("aria-disabled", String(isAtLimit));
@@ -782,6 +789,83 @@ import.meta.glob("../fonts/*.woff2");
                 });
             });
             setQuantity(Number(quantity.value));
+
+            /*
+             * "Have a coupon?": ask the site what the code takes off at each quantity, so the total stays right as the
+             * number of tickets changes. The code also goes with the form and is checked again when the order is
+             * placed, which is the only check without JavaScript.
+             */
+            if (couponBox) {
+                var couponInput = couponBox.querySelector("[data-coupon-input]");
+                var couponApply = couponBox.querySelector("[data-coupon-apply]");
+                var couponRemove = couponBox.querySelector("[data-coupon-remove]");
+                var couponApplied = couponBox.querySelector("[data-coupon-applied]");
+                var couponError = couponBox.querySelector('[data-error-for="coupon"]');
+
+                var useCoupon = function (coupon) {
+                    appliedCoupon = coupon;
+                    if (coupon) couponInput.value = coupon.code;
+                    couponInput.readOnly = Boolean(coupon);
+                    couponInput.removeAttribute("aria-invalid");
+                    couponError.textContent = "";
+                    couponApply.hidden = Boolean(coupon);
+                    couponRemove.hidden = !coupon;
+                    couponApplied.hidden = !coupon;
+                    setQuantity(Number(quantity.value));
+                };
+
+                var couponProblem = function (message) {
+                    couponError.textContent = message;
+                    couponInput.setAttribute("aria-invalid", "true");
+                    couponInput.focus();
+                };
+
+                var applyCoupon = function () {
+                    var code = couponInput.value.trim();
+                    if (!code) {
+                        couponProblem("Type your coupon code first.");
+                        return;
+                    }
+
+                    var data = new FormData();
+                    data.set("_token", form.querySelector("input[name=_token]").value);
+                    data.set("ticket_type", form.querySelector("input[name=ticket_type]").value);
+                    data.set("coupon", code);
+                    couponApply.disabled = true;
+
+                    fetch(couponBox.dataset.couponUrl, { method: "POST", body: data, headers: { Accept: "application/json" }, credentials: "same-origin" })
+                        .then(function (response) {
+                            return response.json().then(function (json) { return { status: response.status, json: json }; });
+                        })
+                        .then(function (result) {
+                            if (result.status === 200) {
+                                useCoupon(result.json);
+                                return;
+                            }
+                            couponProblem((result.json.errors && result.json.errors.coupon && result.json.errors.coupon[0])
+                                || (result.status === 429 ? "Too many tries. Wait a minute and try again." : "We couldn’t check that coupon. Refresh the page and try again."));
+                        })
+                        .catch(function () { couponProblem("We couldn’t check that coupon. Try again."); })
+                        .then(function () { couponApply.disabled = false; });
+                };
+
+                /* The Apply button starts hidden, so without JavaScript the box just goes with the form. */
+                couponBox.querySelector("[data-coupon-hint]").hidden = true;
+                couponApply.hidden = false;
+                couponApply.addEventListener("click", applyCoupon);
+                /* Enter here applies the coupon. Left alone, it would submit the form with the first way to pay. */
+                couponInput.addEventListener("keydown", function (event) {
+                    if (event.key !== "Enter") return;
+                    event.preventDefault();
+                    if (!appliedCoupon) applyCoupon();
+                });
+                couponRemove.addEventListener("click", function () {
+                    useCoupon(null);
+                    couponInput.value = "";
+                    couponInput.focus();
+                });
+                if (couponInput.value) applyCoupon();
+            }
         }
 
         function busy(isBusy, message) {
@@ -803,6 +887,9 @@ import.meta.glob("../fonts/*.woff2");
                 if (input) {
                     input.setAttribute("aria-invalid", "true");
                     first = first || input;
+                    /* A field folded away, like the coupon, has to open for its error to be seen. */
+                    var folded = input.closest("details");
+                    if (folded) folded.open = true;
                 }
             });
             if (first) first.focus();
@@ -824,6 +911,8 @@ import.meta.glob("../fonts/*.woff2");
                 .then(function (result) {
                     if (result.status === 422) {
                         busy(false);
+                        /* A coupon that stopped working since it was applied no longer counts in the total shown. */
+                        if (useCoupon && result.json.errors && result.json.errors.coupon) useCoupon(null);
                         showErrors(result.json.errors || {});
                         return;
                     }

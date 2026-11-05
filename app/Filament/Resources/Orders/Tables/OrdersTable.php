@@ -19,7 +19,7 @@ class OrdersTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['ticketType', 'latestPayment']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['ticketType', 'latestPayment', 'coupon']))
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('reference')
@@ -38,6 +38,11 @@ class OrdersTable
                     ->formatStateUsing(fn (Order $order): string => $order->total()->format())
                     ->alignEnd()
                     ->sortable(),
+                TextColumn::make('coupon.code')
+                    ->label('Coupon')
+                    ->description(fn (Order $order): ?string => $order->coupon ? '−'.$order->discount()->format() : null)
+                    ->placeholder('–')
+                    ->toggleable(),
                 TextColumn::make('status')
                     ->badge(),
                 TextColumn::make('latestPayment.method')
@@ -77,6 +82,10 @@ class OrdersTable
                 SelectFilter::make('ticket_type_id')
                     ->label('Ticket')
                     ->relationship('ticketType', 'name'),
+                SelectFilter::make('coupon_id')
+                    ->label('Coupon')
+                    ->relationship('coupon', 'code')
+                    ->searchable(),
                 Filter::make('placed')
                     ->schema([
                         DatePicker::make('from')->label('Placed from'),

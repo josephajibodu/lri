@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\OrderStatus;
 use App\Support\Money;
 use Database\Factories\TicketTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -90,11 +89,7 @@ class TicketType extends Model
      */
     public function ticketsTaken(): int
     {
-        return (int) $this->orders()
-            ->where(fn (Builder $query) => $query
-                ->where('status', OrderStatus::Paid)
-                ->orWhere(fn (Builder $query) => $query->where('status', OrderStatus::Pending)->where('expires_at', '>', now())))
-            ->sum('quantity');
+        return (int) $this->orders()->holdingTickets()->sum('quantity');
     }
 
     /**
