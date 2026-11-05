@@ -66,23 +66,30 @@ class MailchimpProvider implements EmailTool
     }
 
     /**
-     * Add or update the contact, then give them the tag for this news and take off the others. Someone already in the
-     * audience keeps their subscription status, so a buyer who unsubscribed is never signed back up. Paying clears the
-     * resume link, because that link leads to the receipt and its ticket codes once the order is paid.
+     * Add or update the contact, then give them the tag for this news and take off the others. Anyone can type any email
+     * on an unpaid order, so a new contact from one stays pending, and Mailchimp asks them to confirm. Paying subscribes
+     * them, and moves them on if they were still pending. Everyone else keeps their subscription status, so a buyer who
+     * unsubscribed is never signed back up. Paying clears the resume link, because that link leads to the receipt and
+     * its ticket codes once the order is paid.
      */
     public function send(EmailToolEvent $event, Order $order): void
     {
         $memberPath = $this->audiencePath().'/members/'.md5(Str::lower($order->buyer_email));
+        $isPaid = $event === EmailToolEvent::OrderPaid;
 
-        $this->request(fn (PendingRequest $http) => $http->put($memberPath, [
+        $member = $this->request(fn (PendingRequest $http) => $http->put($memberPath, [
             'email_address' => $order->buyer_email,
-            'status_if_new' => 'subscribed',
+            'status_if_new' => $isPaid ? 'subscribed' : 'pending',
             'merge_fields' => array_filter([
                 'FNAME' => Str::before($order->buyer_name, ' '),
                 'LNAME' => Str::contains($order->buyer_name, ' ') ? Str::after($order->buyer_name, ' ') : null,
                 'ORDERREF' => $order->reference,
-            ]) + ['RESUMEURL' => $event === EmailToolEvent::OrderPaid ? '' : $order->statusUrl()],
+            ]) + ['RESUMEURL' => $isPaid ? '' : $order->statusUrl()],
         ]));
+
+        if ($isPaid && $member->json('status') === 'pending') {
+            $this->request(fn (PendingRequest $http) => $http->patch($memberPath, ['status' => 'subscribed']));
+        }
 
         $this->request(fn (PendingRequest $http) => $http->post($memberPath.'/tags', [
             'tags' => array_map(fn (EmailToolEvent $case): array => [
