@@ -9,7 +9,6 @@
     <main>
         @include('home.hero')
         @include('home.next-run', ['nextRun' => $nextRun])
-        @include('home.tickets')
         @include('home.marquee')
         @include('home.pace')
         @include('home.schedule')
