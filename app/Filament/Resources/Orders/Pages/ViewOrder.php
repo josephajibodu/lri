@@ -51,10 +51,10 @@ class ViewOrder extends ViewRecord
                 ->requiresConfirmation()
                 ->modalDescription(fn (Order $record): string => "The tickets go to {$record->buyer_email} again.")
                 ->action(function (Order $record): void {
-                    Mail::to($record->buyer_email, $record->buyer_name)->send(new TicketsMail($record->load(['ticketType', 'tickets'])));
+                    Mail::to($record->buyer_email, $record->buyer_name)->queue(new TicketsMail($record->load(['ticketType', 'tickets'])));
                     $record->update(['tickets_emailed_at' => now()]);
 
-                    Notification::make()->title('Tickets sent to '.$record->buyer_email)->success()->send();
+                    Notification::make()->title('Tickets on their way to '.$record->buyer_email)->success()->send();
                 }),
             Action::make('releaseTickets')
                 ->label('Release tickets')
