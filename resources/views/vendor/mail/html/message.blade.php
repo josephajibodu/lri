@@ -1,11 +1,13 @@
 @props(['preheader' => null, 'bannerUrl' => null, 'bannerAlt' => null])
 <x-mail::layout :preheader="$preheader" :banner-url="$bannerUrl" :banner-alt="$bannerAlt">
-{{-- Header --}}
+{{-- Header: an event's poster already carries the club's name, so the logo only leads when there's no poster --}}
+@unless ($bannerUrl)
 <x-slot:header>
 <x-mail::header :url="config('app.url')">
 {{ config('lri.site.name') }}
 </x-mail::header>
 </x-slot:header>
+@endunless
 
 {{-- Body --}}
 {!! $slot !!}

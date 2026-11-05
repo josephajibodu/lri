@@ -8,44 +8,69 @@
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
 <style>
-@media only screen and (max-width: 600px) {
-.wrapper-cell {
-padding: 16px 12px !important;
-}
-
-.inner-body,
-.footer {
-width: 100% !important;
-}
-
+@media only screen and (max-width: 620px) {
 .content-cell {
-padding: 28px 22px !important;
+padding-left: 20px !important;
+padding-right: 20px !important;
 }
 
 h1 {
+font-size: 38px !important;
+}
+
+.pass-event,
+.channels-title {
+font-size: 22px !important;
+}
+
+.sign-off-tagline {
 font-size: 26px !important;
 }
+
+.pass-strip,
+.pass-body,
+.pass-stub {
+padding-left: 20px !important;
+padding-right: 20px !important;
+}
+
+.ticket-label {
+padding-left: 14px !important;
+width: 76px !important;
+}
+
+.ticket-code {
+font-size: 16px !important;
+}
+}
+</style>
+<style>
+a[x-apple-data-detectors] {
+color: inherit !important;
+font: inherit !important;
+text-decoration: none !important;
 }
 </style>
 {!! $head ?? '' !!}
 </head>
-<body>
+<body bgcolor="#0B0A10">
 @if ($preheader)
 <div class="preheader">{{ $preheader }}</div>
 @endif
 
-<table class="wrapper" width="100%" cellpadding="0" cellspacing="0" role="presentation">
+<table class="wrapper" width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="#0B0A10">
 <tr>
 <td class="wrapper-cell" align="center">
+<!--[if mso]><table align="center" width="600" cellpadding="0" cellspacing="0" role="presentation"><tr><td><![endif]-->
 <table class="content" width="100%" cellpadding="0" cellspacing="0" role="presentation">
 <tr>
 <td>
-<table class="inner-body" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation">
+<table class="inner-body" align="center" width="600" cellpadding="0" cellspacing="0" role="presentation">
 {!! $header ?? '' !!}
 @if ($bannerUrl)
 <tr>
 <td class="banner">
-<img src="{{ $bannerUrl }}" width="570" alt="{{ $bannerAlt }}">
+<img src="{{ $bannerUrl }}" width="600" alt="{{ $bannerAlt }}">
 </td>
 </tr>
 @endif
@@ -64,6 +89,7 @@ font-size: 26px !important;
 
 {!! $footer ?? '' !!}
 </table>
+<!--[if mso]></td></tr></table><![endif]-->
 </td>
 </tr>
 </table>

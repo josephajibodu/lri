@@ -44,12 +44,17 @@ class TicketsMail extends Mailable
                 'eventName' => $event['title'] ?? $this->order->ticketType->name,
                 'bannerUrl' => filled($event['email_banner'] ?? null) ? asset($event['email_banner']) : null,
                 'accent' => $event['email_accent'] ?? null,
+                'gradient' => $event['email_gradient'] ?? null,
+                'tagline' => $event['tagline'] ?? null,
+                'channels' => $event['channels'] ?? [],
                 'details' => array_filter([
                     'When' => $this->order->ticketType->eventWhen(),
                     'Where' => $event['venue'] ?? null,
+                ]),
+                'receipt' => [
                     'Paid' => $this->order->quantity.' × '.$this->order->unitPrice()->format().' = '.$this->order->total()->format(),
                     'Order' => $this->order->reference,
-                ]),
+                ],
                 'receiptUrl' => $this->order->receiptUrl(),
                 'unnamedTickets' => $this->order->tickets->reject->isNamed()->count(),
                 'ownTicket' => $this->order->tickets->first(fn (Ticket $ticket): bool => $ticket->isNamed() && $ticket->isBuyers()),
