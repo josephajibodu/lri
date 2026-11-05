@@ -14,6 +14,27 @@ test('the email previews page lists every email and shows the first one', functi
         ->assertSee(route('mail-previews.show', 'tickets'), false);
 });
 
+test('the email previews page shows the email at the chosen screen size and keeps it when switching emails', function () {
+    $this->get('/mail-previews/ticket?device=mobile')
+        ->assertOk()
+        ->assertSee('data-width="390"', false)
+        ->assertSee(route('mail-previews.index', ['preview' => 'tickets', 'device' => 'mobile']), false);
+
+    $this->get('/mail-previews/ticket?device=tablet')
+        ->assertOk()
+        ->assertSee('data-width="768"', false);
+});
+
+test('the email previews page falls back to desktop for an unknown screen size', function () {
+    $this->get('/mail-previews?device=watch')
+        ->assertOk()
+        ->assertDontSee('data-width="', false);
+
+    $this->get('/mail-previews?device[]=mobile')
+        ->assertOk()
+        ->assertDontSee('data-width="', false);
+});
+
 test('each email renders with sample data and saves nothing', function () {
     $this->get('/mail-previews/tickets/render')
         ->assertOk()

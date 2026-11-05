@@ -54,8 +54,10 @@ class TicketMail extends Mailable
                 'buyerName' => $this->ticket->order->buyer_name,
                 'bannerUrl' => filled($event['email_banner'] ?? null) ? asset($event['email_banner']) : null,
                 'accent' => $event['email_accent'] ?? null,
+                'gradient' => $event['email_gradient'] ?? null,
+                'tagline' => $event['tagline'] ?? null,
+                'channels' => $event['channels'] ?? [],
                 'details' => array_filter([
-                    'Name' => $this->ticket->holder_name,
                     'When' => $this->ticket->ticketType->eventWhen(),
                     'Where' => $event['venue'] ?? null,
                 ]),

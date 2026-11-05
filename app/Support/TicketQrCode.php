@@ -4,8 +4,7 @@ namespace App\Support;
 
 use App\Models\Ticket;
 use chillerlan\QRCode\Common\EccLevel;
-use chillerlan\QRCode\Output\QRGdImagePNG;
-use chillerlan\QRCode\Output\QRMarkupSVG;
+use chillerlan\QRCode\Output\QROutputInterface;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 
@@ -21,7 +20,7 @@ class TicketQrCode
     public static function svg(Ticket $ticket): string
     {
         return (new QRCode(new QROptions([
-            'outputInterface' => QRMarkupSVG::class,
+            'outputType' => QROutputInterface::MARKUP_SVG,
             'outputBase64' => false,
             'eccLevel' => EccLevel::M,
             'svgAddXmlHeader' => false,
@@ -35,7 +34,7 @@ class TicketQrCode
     public static function png(Ticket $ticket): string
     {
         return (new QRCode(new QROptions([
-            'outputInterface' => QRGdImagePNG::class,
+            'outputType' => QROutputInterface::GDIMAGE_PNG,
             'outputBase64' => false,
             'eccLevel' => EccLevel::M,
             'scale' => 8,

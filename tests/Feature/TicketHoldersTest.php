@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Ticket;
 use App\Models\TicketType;
 use App\Support\TicketQrCode;
+use chillerlan\QRCode\QRCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Mail;
@@ -264,6 +265,7 @@ test('the one-person ticket email gives the code, who bought it and a link to th
         ->assertSeeInHtml('Ada Bello got you a ticket')
         ->assertSeeInHtml($this->friendsTicket->code)
         ->assertSeeInHtml('alt="QR code for ticket '.$this->friendsTicket->code.'"', false)
+        ->assertSeeInText('Name: Tunde Okafor')
         ->assertSeeInHtml(e($this->friendsTicket->claimUrl()), false);
 });
 
@@ -286,10 +288,11 @@ test('a ticket’s QR code opens the headset desk on that ticket', function () {
 test('the buyer’s tickets email carries the QR code of their own ticket', function () {
     (new TicketsMail($this->order->load(['ticketType', 'tickets'])))
         ->assertSeeInHtml('alt="QR code for ticket '.$this->buyersTicket->code.'"', false)
+        ->assertSeeInHtml('Admit one')
         ->assertDontSeeInHtml('alt="QR code for ticket '.$this->friendsTicket->code.'"', false);
 });
 
-test('a sent ticket email attaches the QR code as an image inside the email', function () {
+test('a sent ticket email attaches a QR code image that scans back to the desk link', function () {
     $this->friendsTicket->update(['holder_name' => 'Tunde Okafor', 'holder_email' => 'tunde@example.com']);
 
     $mailer = (new MailManager(app()))->mailer('array');
@@ -299,6 +302,7 @@ test('a sent ticket email attaches the QR code as an image inside the email', fu
     $qr = collect($email->getAttachments())->first(fn ($part): bool => $part->getFilename() === 'ticket-'.$this->friendsTicket->code.'.png');
 
     expect($qr)->not->toBeNull()
+        ->and((new QRCode)->readFromBlob($qr->getBody())->data)->toBe($this->friendsTicket->deskUrl())
         ->and($email->getHtmlBody())->toContain('cid:')
         ->not->toContain('data:image/png');
 });

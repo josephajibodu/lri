@@ -31,10 +31,11 @@ test('the tickets email gives each ticket code, the event and a link to the rece
         ->assertSeeInHtml(e($order->receiptUrl()), false);
 });
 
-test('the tickets email shows the club logo and the event banner and accent from the config', function () {
+test('the tickets email leads with the event poster instead of the logo, in the event’s colours from the config', function () {
     config()->set('lri.disco_run.title', 'Ibadan Silent Disco Run');
-    config()->set('lri.disco_run.email_banner', 'images/disco-run/email-banner.jpg');
+    config()->set('lri.disco_run.email_banner', 'images/disco-run/email-hero.jpg');
     config()->set('lri.disco_run.email_accent', '#123456');
+    config()->set('lri.disco_run.email_gradient', 'linear-gradient(90deg, #111111, #222222)');
 
     $order = Order::factory()->paid()->for(TicketType::factory()->state(['event' => 'disco-run']))
         ->create(['quantity' => 2]);
@@ -42,12 +43,36 @@ test('the tickets email shows the club logo and the event banner and accent from
 
     $mail = new TicketsMail($order->load('tickets'));
 
-    $mail->assertSeeInHtml(asset('images/lri-logo-email.png'))
+    $mail->assertSeeInHtml(asset('images/lri-logo-on-dark.png'))
         ->assertSeeInHtml('alt="Let\'s Run Ibadan"', false)
-        ->assertSeeInHtml(asset('images/disco-run/email-banner.jpg'))
+        ->assertDontSeeInHtml('class="logo"', false)
+        ->assertSeeInHtml(asset('images/disco-run/email-hero.jpg'))
         ->assertSeeInHtml('alt="Ibadan Silent Disco Run"', false)
         ->assertSeeInHtml('border-right: 1px dashed #123456', false)
+        ->assertSeeInHtml('background-image: linear-gradient(90deg, #111111, #222222)', false)
         ->assertSeeInHtml('Your ticket codes and receipt for the Ibadan Silent Disco Run.');
+});
+
+test('the tickets email sums up the event’s channels without naming them, and closes on its tagline', function () {
+    config()->set('lri.disco_run.tagline', 'One night only.');
+    config()->set('lri.disco_run.channels', [
+        ['name' => 'Afro Heat', 'genre' => 'Afrobeats', 'tone' => 'green'],
+        ['name' => 'Rewind', 'genre' => 'Throwbacks', 'tone' => 'no-such-tone'],
+    ]);
+
+    $order = Order::factory()->paid()->for(TicketType::factory()->state(['event' => 'disco-run']))->create();
+    Ticket::factory()->for($order)->create(['ticket_type_id' => $order->ticket_type_id]);
+
+    $mail = new TicketsMail($order->load('tickets'));
+
+    $mail->assertSeeInHtml('2 channels. 2 vibes.')
+        ->assertSeeInHtml('border-top: 3px solid #39E58C', false)
+        ->assertDontSeeInHtml('Afro Heat')
+        ->assertDontSeeInHtml('Afrobeats')
+        ->assertSeeInHtml('One night only.')
+        ->assertSeeInText('2 channels. 2 vibes. Your headset, your call.')
+        ->assertDontSeeInText('Afro Heat')
+        ->assertSeeInText('One night only.');
 });
 
 test('the tickets email falls back to the ticket name and club colours when the event has no details', function () {
@@ -60,6 +85,10 @@ test('the tickets email falls back to the ticket name and club colours when the 
     $mail->assertSeeInHtml('Your ticket codes and receipt for the Community Run ticket.')
         ->assertSeeInHtml('border-right: 1px dashed #FEB203', false)
         ->assertDontSeeInHtml('class="banner"', false)
+        ->assertSeeInHtml('class="logo"', false)
+        ->assertDontSeeInHtml('background-image', false)
+        ->assertDontSeeInHtml('vibes.')
+        ->assertDontSeeInHtml('Admit one')
         ->assertDontSeeInText('When:')
         ->assertDontSeeInText('Where:');
 });

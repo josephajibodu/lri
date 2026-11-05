@@ -1,6 +1,10 @@
 /*
- * Let's Run Ibadan's email theme, inlined into every email. It uses the site's colours (resources/css/app.css)
- * with system fonts, because most mail apps won't load ours. Phone sizes are in layout.blade.php: they can't be inlined.
+ * Let's Run Ibadan's email theme, inlined into every email. A night-time poster: the site's darkest colour
+ * (#0B0A10) with a white paper ticket as the brightest thing on the page. An event brings its own art and colours
+ * (config/lri.php); without them the email falls back to the club's yellow.
+ *
+ * Most mail apps won't load our fonts, so headlines use the heaviest system font each device has. Gradients sit on
+ * top of a solid colour for apps that drop them. Phone sizes are in layout.blade.php: they can't be inlined.
  */
 
 /* Base */
@@ -19,8 +23,8 @@ h3 {
 
 body {
     -webkit-text-size-adjust: none;
-    background-color: #EEECE7;
-    color: #1C1917;
+    background-color: #0B0A10;
+    color: #C9C6D3;
     height: 100%;
     line-height: 1.5;
     margin: 0;
@@ -32,15 +36,19 @@ p,
 ul,
 ol,
 blockquote {
-    color: #1C1917;
+    color: #C9C6D3;
     font-size: 16px;
-    line-height: 1.55;
+    line-height: 1.6;
     margin-top: 0;
     text-align: left;
 }
 
+strong {
+    color: #FFFFFF;
+}
+
 a {
-    color: #1C1917;
+    color: #FFFFFF;
 }
 
 a img {
@@ -54,12 +62,13 @@ img {
 /* Typography */
 
 h1 {
-    color: #1C1917;
-    font-family: 'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 30px;
+    color: #FFFFFF;
+    font-family: 'Arial Black', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 46px;
+    font-style: italic;
     font-weight: 900;
     letter-spacing: -0.02em;
-    line-height: 1.1;
+    line-height: 1.02;
     margin-top: 0;
     margin-bottom: 14px;
     text-align: left;
@@ -67,19 +76,45 @@ h1 {
 }
 
 h2 {
-    color: #1C1917;
-    font-size: 18px;
-    font-weight: bold;
+    color: #FFFFFF;
+    font-family: 'Arial Black', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 24px;
+    font-style: italic;
+    font-weight: 900;
+    line-height: 1.1;
     margin-top: 0;
     text-align: left;
+    text-transform: uppercase;
 }
 
 h3 {
-    color: #1C1917;
-    font-size: 16px;
+    color: #9A96A8;
+    font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    font-size: 12px;
     font-weight: bold;
-    margin-top: 0;
+    letter-spacing: 0.14em;
+    margin-top: 28px;
+    margin-bottom: 12px;
     text-align: left;
+    text-transform: uppercase;
+}
+
+.eyebrow {
+    font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.16em;
+    line-height: 1.4;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.note {
+    color: #9A96A8;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 28px;
+    text-align: center;
 }
 
 /* Inbox preview line, hidden in the email itself */
@@ -98,14 +133,14 @@ h3 {
 /* Layout */
 
 .wrapper {
-    background-color: #EEECE7;
+    background-color: #0B0A10;
     margin: 0;
     padding: 0;
     width: 100%;
 }
 
 .wrapper-cell {
-    padding: 32px 16px;
+    padding: 0;
 }
 
 .content {
@@ -115,23 +150,21 @@ h3 {
 }
 
 .inner-body {
-    background-color: #FFFFFF;
-    border: 1px solid #DCD8D0;
-    border-collapse: separate;
-    border-radius: 20px;
+    background-color: #0B0A10;
     margin: 0 auto;
+    max-width: 600px;
     padding: 0;
-    width: 570px;
+    width: 100%;
 }
 
 .content-cell {
-    padding: 32px;
+    padding: 4px 32px 8px;
 }
 
-/* Header */
+/* Header, for emails without an event poster */
 
 .header {
-    padding: 22px 32px 18px;
+    padding: 40px 32px 28px;
     text-align: center;
 }
 
@@ -141,28 +174,159 @@ h3 {
     width: 88px;
 }
 
-/* Event banner, with its name showing on black when a mail app blocks images */
+/* Event poster, with its name showing on the dark background when a mail app blocks images */
 
 .banner {
-    background-color: #000000;
+    background-color: #0B0A10;
     padding: 0;
 }
 
 .banner img {
     color: #FFFFFF;
     display: block;
-    font-size: 22px;
-    font-weight: bold;
+    font-size: 26px;
+    font-weight: 900;
     height: auto;
     line-height: 1.3;
     text-align: center;
     width: 100%;
 }
 
-/* Ticket codes */
+/* The ticket: paper with a torn-off stub for the QR code */
+
+.pass {
+    background-color: #FFFFFF;
+    border-collapse: separate;
+    border-radius: 20px;
+    margin: 24px 0 8px;
+}
+
+.pass-strip {
+    background-color: #17151F;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 24px 18px;
+}
+
+.pass-label {
+    font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.18em;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.pass-event {
+    color: #FFFFFF;
+    font-family: 'Arial Black', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 25px;
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    line-height: 1.08;
+    margin-bottom: 0;
+    text-transform: uppercase;
+}
+
+.pass-body {
+    padding: 20px 24px 6px;
+}
+
+.pass-field-label {
+    color: #67615B;
+    font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    line-height: 1.4;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+}
+
+.pass-field-lead {
+    color: #1C1917;
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 16px;
+}
+
+.pass-field {
+    padding: 0 10px 14px 0;
+}
+
+.pass-field-value {
+    color: #1C1917;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 0;
+}
+
+.pass-tear {
+    padding: 0;
+}
+
+.pass-notch {
+    background-color: #0B0A10;
+    font-size: 0;
+    line-height: 0;
+}
+
+.pass-notch-left {
+    border-radius: 0 13px 13px 0;
+}
+
+.pass-notch-right {
+    border-radius: 13px 0 0 13px;
+}
+
+.pass-perforation {
+    padding: 0 10px;
+}
+
+.pass-perforation-line {
+    border-top: 2px dashed #CFCBC3;
+    font-size: 0;
+    height: 0;
+    line-height: 0;
+}
+
+.pass-stub {
+    padding: 10px 24px 24px;
+    text-align: center;
+}
+
+.pass-qr {
+    display: block;
+    height: 220px;
+    margin: 0 auto;
+    width: 220px;
+}
+
+.pass-code {
+    color: #1C1917;
+    font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    line-height: 1.2;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.pass-hint {
+    color: #67615B;
+    font-size: 13px;
+    line-height: 1.45;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+/* The buyer's other tickets */
 
 .tickets {
-    margin: 22px 0 8px;
+    margin: 0 0 16px;
 }
 
 .tickets-row {
@@ -170,7 +334,7 @@ h3 {
 }
 
 .ticket {
-    background-color: #0B0A10;
+    background-color: #17151F;
     border-collapse: separate;
     border-radius: 14px;
 }
@@ -179,7 +343,7 @@ h3 {
     font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
     font-size: 11px;
     letter-spacing: 0.12em;
-    padding: 18px 0 18px 18px;
+    padding: 14px 0 14px 18px;
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -187,58 +351,33 @@ h3 {
 .ticket-code {
     color: #FFFFFF;
     font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
-    font-size: 19px;
+    font-size: 18px;
     font-weight: bold;
     letter-spacing: 0.08em;
-    padding: 18px 12px;
-    text-align: center;
+    line-height: 1.35;
+    padding: 12px 14px 12px 18px;
+    text-align: left;
     white-space: nowrap;
 }
 
 .ticket-holder {
-    color: #B9B6C3;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    font-size: 12px;
+    color: #9A96A8;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 13px;
     font-weight: normal;
     letter-spacing: 0;
 }
 
-/* Ticket QR code */
-
-.ticket-qr {
-    margin: 22px 0 8px;
-}
-
-.ticket-qr-image {
-    background-color: #FFFFFF;
-    border: 1px solid #E5E3DE;
-    border-radius: 14px;
-    display: block;
-    height: 200px;
-    margin: 0 auto;
-    padding: 10px;
-    width: 200px;
-}
-
-.ticket-qr-code {
-    font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
-    font-size: 19px;
-    font-weight: bold;
-    letter-spacing: 0.08em;
-    margin: 10px 0 0;
-    text-align: center;
-}
-
-/* Details */
+/* Receipt lines */
 
 .details {
-    border-top: 1px solid #DCD8D0;
-    margin: 12px 0 0;
+    border-top: 1px solid #2C2935;
+    margin: 0 0 8px;
 }
 
 .details-label {
-    border-bottom: 1px solid #DCD8D0;
-    color: #67615B;
+    border-bottom: 1px solid #2C2935;
+    color: #9A96A8;
     font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
     font-size: 11px;
     letter-spacing: 0.1em;
@@ -248,24 +387,85 @@ h3 {
 }
 
 .details-value {
-    border-bottom: 1px solid #DCD8D0;
-    color: #1C1917;
+    border-bottom: 1px solid #2C2935;
+    color: #FFFFFF;
     font-size: 15px;
     font-weight: 600;
     line-height: 20px;
     padding: 11px 0;
 }
 
+/* The event's channels */
+
+.channels-title {
+    color: #FFFFFF;
+    font-family: 'Arial Black', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 26px;
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    margin-top: 32px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.channels-text {
+    margin-bottom: 16px;
+}
+
+.channels {
+    border-collapse: separate;
+}
+
+.channel {
+    background-color: #17151F;
+    border-radius: 12px;
+    font-family: SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 0.14em;
+    padding: 14px 6px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+/* Sign-off */
+
+.sign-off {
+    margin: 36px 0 0;
+}
+
+.sign-off-cell {
+    padding: 0 0 24px;
+}
+
+.sign-off-tagline {
+    color: #FFFFFF;
+    font-family: 'Arial Black', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 32px;
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -0.015em;
+    line-height: 1.06;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+.sign-off-text {
+    margin-bottom: 0;
+}
+
 /* Subcopy */
 
 .subcopy {
-    border-top: 1px solid #DCD8D0;
+    border-top: 1px solid #2C2935;
     margin-top: 24px;
     padding-top: 24px;
 }
 
 .subcopy p {
-    color: #67615B;
+    color: #9A96A8;
     font-size: 14px;
 }
 
@@ -273,28 +473,37 @@ h3 {
 
 .footer {
     margin: 0 auto;
+    max-width: 600px;
     padding: 0;
     text-align: center;
-    width: 570px;
+    width: 100%;
 }
 
 .footer .content-cell {
-    padding: 24px 16px 8px;
+    border-top: 1px solid #2C2935;
+    padding: 32px 16px 40px;
+}
+
+.footer-logo {
+    display: block;
+    height: 76px;
+    margin: 0 auto 18px;
+    width: 64px;
 }
 
 .footer p {
-    color: #67615B;
+    color: #9A96A8;
     font-size: 13px;
     margin-bottom: 8px;
     text-align: center;
 }
 
 .footer strong {
-    color: #1C1917;
+    color: #FFFFFF;
 }
 
 .footer a {
-    color: #67615B;
+    color: #C9C6D3;
     text-decoration: underline;
 }
 
@@ -306,14 +515,15 @@ h3 {
 }
 
 .table th {
-    border-bottom: 1px solid #DCD8D0;
+    border-bottom: 1px solid #2C2935;
+    color: #FFFFFF;
     margin: 0;
     padding-bottom: 8px;
     text-align: left;
 }
 
 .table td {
-    color: #1C1917;
+    color: #C9C6D3;
     font-size: 15px;
     line-height: 18px;
     margin: 0;
@@ -323,58 +533,55 @@ h3 {
 /* Buttons */
 
 .action {
-    margin: 26px auto;
+    border-collapse: separate;
+    margin: 24px 0 12px;
     padding: 0;
-    text-align: center;
     width: 100%;
+}
+
+.button-cell {
+    border-radius: 999px;
+    mso-padding-alt: 18px 24px;
+    text-align: center;
 }
 
 .button {
     -webkit-text-size-adjust: none;
     border-radius: 999px;
-    color: #1C1917;
-    display: inline-block;
+    display: block;
+    font-family: 'Arial Black', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     font-size: 16px;
-    font-weight: 600;
-    line-height: 1;
-    padding: 15px 30px;
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+    padding: 18px 24px;
     text-align: center;
     text-decoration: none;
-}
-
-.button-blue,
-.button-primary {
-    background-color: #FEB203;
-    border: 2px solid #1C1917;
-}
-
-.button-green,
-.button-success {
-    background-color: #3DAE6E;
-    border: 2px solid #1C1917;
-}
-
-.button-red,
-.button-error {
-    background-color: #FF7A66;
-    border: 2px solid #1C1917;
+    text-transform: uppercase;
 }
 
 /* Panels */
 
 .panel {
-    border-left: #FEB203 solid 4px;
+    border-left: #FEB203 solid 3px;
     margin: 20px 0;
 }
 
 .panel-content {
-    background-color: #F7F6F3;
-    color: #1C1917;
+    background-color: #17151F;
+    border-radius: 0 12px 12px 0;
+    color: #C9C6D3;
     padding: 16px;
 }
 
 .panel-item {
     padding: 0;
+}
+
+.panel-item p {
+    font-size: 15px;
+    line-height: 1.5;
 }
 
 .panel-item p:last-of-type {
