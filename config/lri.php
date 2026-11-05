@@ -107,6 +107,8 @@ return [
     | the email's background, #0B0A10). They colour the ticket's top band and
     | the button with email_gradient (a CSS gradient; it needs to carry white
     | text), the small labels with email_accent, and close on the tagline.
+    | Each channel only has a colour: what it plays stays a surprise until
+    | the night.
     |
     | Tickets are sold on the page itself: the ticket card takes orders while
     | a "disco-run" ticket type is on sale and at least one way to pay is
@@ -137,9 +139,9 @@ return [
             'The rave after the run',
         ],
         'channels' => [
-            ['name' => 'Afro Heat', 'genre' => 'Afrobeats · Street pop', 'tone' => 'coral'],
-            ['name' => 'Piano Hours', 'genre' => 'Amapiano · Log drums', 'tone' => 'green'],
-            ['name' => 'Rewind', 'genre' => 'Throwbacks · 2000s jams', 'tone' => 'sky'],
+            ['tone' => 'coral'],
+            ['tone' => 'green'],
+            ['tone' => 'sky'],
         ],
     ],
 

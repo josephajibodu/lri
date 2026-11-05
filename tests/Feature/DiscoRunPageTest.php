@@ -23,9 +23,9 @@ test('the disco run page shows the run, its channels and the date window until a
         ->assertSee('<title>Silent Disco Run · Let’s Run Ibadan</title>', false)
         ->assertSee('<link rel="canonical" href="'.route('disco-run').'">', false)
         ->assertSeeText('First two weeks of December')
-        ->assertSeeText('Afro Heat')
-        ->assertSeeText('Piano Hours')
-        ->assertSeeText('Rewind');
+        ->assertSeeText('Vibe 3')
+        ->assertSeeText('Revealed on the night')
+        ->assertDontSeeText('Afro Heat');
 });
 
 test('the disco run page shows the start time once a date is set', function () {
