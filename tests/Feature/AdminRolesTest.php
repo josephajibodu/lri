@@ -28,6 +28,7 @@ test('each part of the admin opens only for roles that include it', function (st
     'birthdays' => ['/admin/birthdays', AdminPermission::ManageBirthdays],
     'barracks permits' => ['/admin/barracks-registrations', AdminPermission::ManageBarracksRegistrations],
     'people' => ['/admin/users', AdminPermission::ManagePeople],
+    'invitations' => ['/admin/invitations', AdminPermission::ManagePeople],
     'roles' => ['/admin/roles', AdminPermission::ManagePeople],
     'webhooks' => ['/admin/webhook-calls', AdminPermission::ManageWebhooks],
     'email tool' => ['/admin/email-tool-sends', AdminPermission::ManageEmailTool],

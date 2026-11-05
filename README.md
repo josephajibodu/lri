@@ -189,17 +189,14 @@ There's no fake payment mode. Local purchases go through the Bachs sandbox, so n
    ```
 
 2. With Herd, set `APP_URL=https://lri.test`. Links made in the background are signed for the exact address, so `http` links stop working when Herd moves the browser to `https`.
-3. Add the ticket and the ways to pay, match them to what's switched on at Bachs, and create an admin login:
+3. Add the default admin, the ticket and the ways to pay, then match them to what's switched on at Bachs:
 
    ```bash
-   php artisan db:seed --class=TicketTypeSeeder
-   php artisan db:seed --class=PaymentChannelSeeder
+   php artisan db:seed
    php artisan payments:sync-channels
-   php artisan make:filament-user
-   php artisan permission:assign-role "Super admin" 1
    ```
 
-   The last line makes that login a super admin. Use its id if it isn't 1. A login with no role can't get into the admin.
+   This creates `joseph@gmail.com` as a super admin and shows its password once, so save it. See [The first login](#the-first-login) for choosing the password or using a different login.
 
 4. Run `composer run dev`, which includes the queue worker that sends ticket emails. It doesn't run the scheduler, so run `php artisan schedule:work` as well if you want the 5-minute checks. Emails go to `storage/logs/laravel.log` until a mail service is set up.
 5. Buy a ticket at `/silent-disco-run`, then look at the order in `/admin`.
@@ -230,6 +227,59 @@ Roles are set up under **Settings > Roles** by ticking the sections a role can s
 
 Nobody can change their own roles or remove their own login, so nobody locks themselves out. A role still given to someone can't be removed. **People and roles** lets someone give anyone any role except Super admin, so only tick it for people you trust with everything.
 
+### The first login
+
+The database starts with no logins, so one has to be made from the terminal. There are two ways, and you only need one.
+
+**Use the seeder.** This creates `joseph@gmail.com` as a super admin. It doesn't use factories, so it works on a production install, and it's safe to run again: it won't change the password of a login that already exists.
+
+```bash
+php artisan db:seed --class=AdminUserSeeder --force
+```
+
+With no password set, it makes a random one and shows it once in the terminal, so save it. To choose the login yourself, set these in `.env` before running it. Take the password out of `.env` once you've signed in.
+
+```bash
+DEFAULT_ADMIN_EMAIL=joseph@gmail.com
+DEFAULT_ADMIN_PASSWORD=choose-a-long-password
+```
+
+**Or use Filament's command**, which asks for a name, email and password. It makes a login with no role, and a login with no role can't sign in, so give it the Super admin role afterwards. Use the id the login got; `php artisan permission:show` lists who has which role.
+
+```bash
+php artisan make:filament-user
+```
+
+```bash
+php artisan permission:assign-role "Super admin" 1
+```
+
+If every super admin is ever locked out, either way gets you back in with a new login.
+
+### Inviting people
+
+Everyone after the first login is best invited, so nobody has to send a password around. Anyone whose roles include **People and roles** can do it.
+
+1. Go to **Settings > Invitations** and press **Invite someone**. The same button is on **Settings > People**.
+2. Enter their email address and tick their roles. Only a super admin can invite another super admin.
+3. They get an email with **Accept invitation** and **Decline this invitation** links.
+4. If they accept, they add their name and choose a password of at least 12 characters, and they're signed straight in. If they decline, they're asked to confirm, and no login is made.
+
+**Settings > Invitations** shows where each invitation stands, and the menu shows how many are waiting for a reply.
+
+- **A link works for 24 hours and only once.** To change the time, edit `admin_invitations.lifetime_hours` in `config/lri.php`.
+- **Send again** emails a new link with the full time again, and the old link stops working. Use it for an invitation that's waiting or has expired. For one that was declined or cancelled, invite them again.
+- **Cancel** stops a waiting invitation's link straight away.
+- **Opening a link changes nothing.** Mail apps and scanners open links on their own, so only pressing a button on the page accepts or declines.
+- **Someone who already has a login can't be invited.** Change their roles under **Settings > People**. A role promised in a waiting invitation can't be removed until that invitation closes.
+- **Invitation emails go through the queue**, so a queue worker has to be running and a mail service set up. If an email can't reach someone, **Add without an invite** on **Settings > People** still lets you set a password for them yourself.
+
+To see the email while working locally, open `/mail-previews/admin-invitation`. Its links open sample versions of the accept and decline pages, with the buttons switched off. The real pages are normal site pages at `/invitations/{link}`, in `resources/views/admin-invitations/`.
+
+It uses the club's official email look: a white card with the logo and a stripe of yellow. Use that for anything that isn't about an event, and leave the dark poster look to event emails. To use it on a new email, set `public $theme = 'official'` on the mailable and wrap its view in `<x-mail::official.message>`. The components are in `resources/views/vendor/mail/html/official/`, the colours in `themes/official.css`, and the plain-text versions in `resources/views/vendor/mail/text/official/`.
+
+### What's in the admin
+
 | Section | What it's for |
 | --- | --- |
 | Dashboard | Sales, tickets per day, the checkout funnel, how each way to pay performs and where buyers come from |
@@ -240,7 +290,7 @@ Nobody can change their own roles or remove their own login, so nobody locks the
 | System > Webhooks | What Bachs sent, with the option to handle a failed one again |
 | System > Email tool | What Mailchimp was told, with the option to send a failed one again |
 | Club > Birthdays, Barracks permits | Birthdays members shared and barracks permit sign-ups (permits only while that registration is switched on) |
-| Settings > People and Roles | Who can sign in, and which sections each role sees |
+| Settings > People, Invitations and Roles | Who can sign in, who's been invited, and which sections each role sees |
 | `/log-viewer` | The application logs |
 
 ### Commands
@@ -252,6 +302,8 @@ Nobody can change their own roles or remove their own login, so nobody locks the
 | `php artisan orders:abandon-unpaid` | Marks orders abandoned once their hold has run out. Scheduled every 5 minutes |
 | `php artisan payments:replay-webhook {id}` | Handles a stored webhook again. The id is its row in `webhook_calls` |
 | `php artisan email-tools:prepare` | Adds the audience fields Mailchimp needs. Safe to run again |
+| `php artisan db:seed --class=AdminUserSeeder --force` | Creates the default admin, `joseph@gmail.com`, as a super admin. Safe to run again |
+| `php artisan make:filament-user` | Creates a login from the terminal. It has no role until you give it one with the next command |
 | `php artisan permission:assign-role "Super admin" {id}` | Gives a login a role. Use it for the first login, or if every super admin is locked out |
 | `php artisan permission:show` | Lists the roles and what each one can see |
 | `php artisan permission:cache-reset` | Clears the saved copy of the roles and permissions, if a change in the admin doesn't seem to take effect |
@@ -363,22 +415,16 @@ Do these once, in order, when the site goes live.
    php artisan migrate:fresh --force
    ```
 
-5. **Add the ticket and the ways to pay**, and match them to what's switched on at Bachs:
+5. **Add the default admin, the ticket and the ways to pay**, and match them to what's switched on at Bachs:
 
    ```bash
-   php artisan db:seed --class=TicketTypeSeeder --force
-   php artisan db:seed --class=PaymentChannelSeeder --force
+   php artisan db:seed --force
    php artisan payments:sync-channels
    ```
 
-   Don't run plain `php artisan db:seed` in production: it also creates a test user.
+   Run `db:seed` once, on the first deploy. Running all of it again puts the ticket's price and limit back to what's in `TicketTypeSeeder`, undoing any change made in the admin.
 
-6. **Create the first login and make it a super admin.** The database starts with no logins, and a login with no role can't get into the admin. Use its id if it isn't 1; `php artisan permission:show` lists who has which role.
-
-   ```bash
-   php artisan make:filament-user
-   php artisan permission:assign-role "Super admin" 1
-   ```
+6. **Save the first login's password.** The seeder creates `joseph@gmail.com` as a super admin and shows its password once in the terminal. If your deploy tool keeps its output in logs, set `DEFAULT_ADMIN_PASSWORD` in `.env` first so the password isn't printed. [The first login](#the-first-login) covers this, and how to create the login with `php artisan make:filament-user` instead.
 
 7. **Cache the config, routes and views** so the site runs faster:
 
@@ -403,7 +449,7 @@ Do these once, in order, when the site goes live.
 10. **Finish in the admin** at `/admin`, signed in as the super admin:
     - Set the price and the ticket limit (the number of headsets) under **Ticket types**.
     - Check **Ways to pay** shows the methods you expect.
-    - Add everyone else under **Settings > People**. Before the event, give each person working the headset desk the **Headset desk** role.
+    - [Invite everyone else](#inviting-people) under **Settings > Invitations**. Before the event, invite each person working the headset desk with the **Headset desk** role.
 11. **Try it for real.** Buy one ticket with a real payment, check it arrives by email with its QR code, and find it on the headset desk. `TICKET_PAYMENTS_PLAN.md` has the full go-live checklist.
 12. If you're using follow-up emails, [connect Mailchimp](#follow-up-emails-with-mailchimp).
 

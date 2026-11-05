@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\AdminPermission;
+use App\Http\Controllers\AdminInvitationController;
 use App\Http\Controllers\BarracksRegistrationController;
 use App\Http\Controllers\BirthdayController;
 use App\Http\Controllers\CheckoutEventController;
@@ -75,12 +76,30 @@ Route::post('/tickets/{ticket:claim_token}', [TicketController::class, 'claim'])
     ->middleware('throttle:10,1')
     ->name('tickets.claim');
 
+Route::prefix('/invitations/{token}')->group(function () {
+    Route::get('/', [AdminInvitationController::class, 'show'])
+        ->middleware('throttle:30,1')
+        ->name('invitations.show');
+    Route::post('/', [AdminInvitationController::class, 'accept'])
+        ->middleware('throttle:10,1')
+        ->name('invitations.accept');
+    Route::get('/decline', [AdminInvitationController::class, 'confirmDecline'])
+        ->middleware('throttle:30,1')
+        ->name('invitations.decline-form');
+    Route::post('/decline', [AdminInvitationController::class, 'decline'])
+        ->middleware('throttle:10,1')
+        ->name('invitations.decline');
+});
+
 Route::post('/webhooks/payments/{provider}', PaymentWebhookController::class)
     ->whereIn('provider', ['bachs'])
     ->middleware('throttle:240,1')
     ->name('webhooks.payments');
 
 if (! app()->isProduction()) {
+    Route::get('/mail-previews/admin-invitation/{page}', [MailPreviewController::class, 'invitationPage'])
+        ->whereIn('page', ['accept', 'decline'])
+        ->name('mail-previews.invitation-page');
     Route::get('/mail-previews/{preview?}', [MailPreviewController::class, 'index'])->name('mail-previews.index');
     Route::get('/mail-previews/{preview}/render', [MailPreviewController::class, 'show'])->name('mail-previews.show');
 }

@@ -1725,3 +1725,13 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-q p { margin: 0; padding: 0 20px 20px; color: var(--dim); }
 @media (max-width: 900px) { .dr-faq { grid-template-columns: 1fr; } }
 
+
+/* Admin invitations: the invited person's accept and decline pages. The form itself uses the birthday form's styles. */
+.invite-wrap { max-width: 620px; }
+.invite-wrap .sec-head { margin-bottom: clamp(24px, 4vw, 36px); }
+.invite-card { gap: 20px; }
+.invite-card .input:disabled { color: var(--muted); cursor: not-allowed; }
+.invite-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.invite-actions .btn { cursor: pointer; }
+.invite-actions .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+.invite-link { color: var(--muted); font-size: .92rem; }

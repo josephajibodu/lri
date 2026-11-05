@@ -3,15 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
+use App\Enums\StaffRole;
+use App\Mail\AdminInvitationMail;
 use App\Mail\TicketMail;
 use App\Mail\TicketsMail;
+use App\Models\AdminInvitation;
 use App\Models\Order;
 use App\Models\Ticket;
 use App\Models\TicketType;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Role;
 
 /**
  * Every email the site sends, filled with sample data so it can be checked in the browser. Nothing is saved or
@@ -62,6 +67,20 @@ class MailPreviewController extends Controller
     }
 
     /**
+     * The page a link in the previewed invitation email opens, filled with the same sample data. Its buttons are
+     * switched off, because there's no real invitation to answer.
+     */
+    public function invitationPage(string $page): View
+    {
+        return view("admin-invitations.{$page}", [
+            'invitation' => $this->sampleInvitation(),
+            'acceptUrl' => route('mail-previews.invitation-page', 'accept'),
+            'declineUrl' => route('mail-previews.invitation-page', 'decline'),
+            'isPreview' => true,
+        ]);
+    }
+
+    /**
      * The emails to preview, keyed by the name used in the link.
      *
      * @return Collection<string, array{name: string, description: string, mail: callable(): Mailable}>
@@ -84,7 +103,27 @@ class MailPreviewController extends Controller
                 'description' => 'Sent to a friend the buyer got a ticket for, once their name goes on it.',
                 'mail' => fn (): Mailable => new TicketMail($this->sampleOrder(quantity: 3)->tickets[1]),
             ],
+            'admin-invitation' => [
+                'name' => 'Invitation to the admin',
+                'description' => 'Sent when an organiser invites someone to help run the admin. Our official look, for anything that isn’t about an event.',
+                'mail' => fn (): Mailable => new AdminInvitationMail(
+                    $this->sampleInvitation(),
+                    acceptUrl: route('mail-previews.invitation-page', 'accept'),
+                    declineUrl: route('mail-previews.invitation-page', 'decline'),
+                ),
+            ],
         ]);
+    }
+
+    /**
+     * An invitation with its roles and who sent it, built in memory so nothing touches the database.
+     */
+    private function sampleInvitation(): AdminInvitation
+    {
+        return (new AdminInvitation(['email' => 'kemi@example.com']))
+            ->forceFill(['expires_at' => now()->addHours(config('lri.admin_invitations.lifetime_hours'))])
+            ->setRelation('invitedBy', new User(['name' => 'Joseph Ajibodu']))
+            ->setRelation('roles', collect([new Role(['name' => StaffRole::HeadsetDesk->value])]));
     }
 
     /**

@@ -1,0 +1,231 @@
+/*
+ * Let's Run Ibadan's official email look, inlined into the email, for anything that isn't about an event: a white
+ * card on the site's warm grey, the club's logo and a thin stripe of its yellow, and plain, readable type. Event
+ * emails have their own night-time poster look in lri.css.
+ *
+ * To use it, set `public $theme = 'official'` on the mailable and wrap the view in <x-mail::official.message>.
+ * Phone sizes are in official/message.blade.php: they can't be inlined.
+ */
+
+/* Base */
+
+body,
+table,
+td,
+p,
+a,
+li,
+h1,
+h2,
+h3 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    -webkit-text-size-adjust: none;
+    background-color: #F3F2EE;
+    color: #45434E;
+    height: 100%;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+    width: 100% !important;
+}
+
+p {
+    color: #45434E;
+    font-size: 16px;
+    line-height: 1.6;
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+strong {
+    color: #17161C;
+}
+
+a {
+    color: #17161C;
+}
+
+a img {
+    border: none;
+}
+
+img {
+    max-width: 100%;
+}
+
+h1 {
+    color: #17161C;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    margin-top: 0;
+    margin-bottom: 14px;
+    text-align: left;
+}
+
+/* Inbox preview line, hidden in the email itself */
+
+.preheader {
+    display: none;
+    font-size: 1px;
+    line-height: 1px;
+    max-height: 0;
+    max-width: 0;
+    mso-hide: all;
+    opacity: 0;
+    overflow: hidden;
+}
+
+/* Layout */
+
+.wrapper {
+    background-color: #F3F2EE;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.wrapper-cell {
+    padding: 40px 16px 32px;
+}
+
+.card {
+    background-color: #FFFFFF;
+    border: 1px solid #E6E3DB;
+    border-collapse: separate;
+    border-radius: 14px;
+    margin: 0 auto;
+    max-width: 560px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.brand-stripe {
+    background-color: #FEB203;
+    border-radius: 13px 13px 0 0;
+    font-size: 0;
+    height: 5px;
+    line-height: 0;
+}
+
+.card-header {
+    padding: 36px 40px 0;
+}
+
+.logo {
+    border: none;
+    display: block;
+    height: 74px;
+    width: 62px;
+}
+
+.card-body {
+    padding: 24px 40px 36px;
+}
+
+/* Labelled rows, such as who it's for and when it runs out */
+
+.details {
+    background-color: #F8F7F3;
+    border: 1px solid #ECEAE3;
+    border-collapse: separate;
+    border-radius: 10px;
+    margin: 4px 0 24px;
+    width: 100%;
+}
+
+.details-label {
+    color: #77747F;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 10px 8px 10px 16px;
+    white-space: nowrap;
+    width: 92px;
+}
+
+.details-value {
+    color: #17161C;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    padding: 10px 16px 10px 8px;
+    word-break: break-word;
+}
+
+/* The main button */
+
+.action {
+    margin: 0 0 16px;
+    width: 100%;
+}
+
+.button-cell {
+    background-color: #0B0A10;
+    border-radius: 10px;
+}
+
+.button {
+    color: #FFFFFF;
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+    padding: 15px 24px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.secondary-link {
+    color: #77747F;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+.secondary-link a {
+    color: #17161C;
+    font-weight: 600;
+}
+
+.fine-print {
+    border-top: 1px solid #ECEAE3;
+    color: #77747F;
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 28px 0 0;
+    padding-top: 20px;
+}
+
+/* Footer */
+
+.footer {
+    margin: 0 auto;
+    max-width: 560px;
+    width: 100%;
+}
+
+.footer-cell {
+    padding: 22px 16px 0;
+}
+
+.footer-cell p {
+    color: #8A8791;
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 0;
+    text-align: center;
+}
+
+.footer-cell strong {
+    color: #5C5A64;
+}
+
+.footer-cell a {
+    color: #5C5A64;
+}

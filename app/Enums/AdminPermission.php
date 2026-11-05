@@ -50,7 +50,7 @@ enum AdminPermission: string implements HasDescription, HasLabel
             self::ManagePaymentMethods => 'Switch ways to pay on or off and choose the featured ones.',
             self::ManageBirthdays => 'Birthdays members have shared.',
             self::ManageBarracksRegistrations => 'Barracks permit sign-ups, and printing their forms.',
-            self::ManagePeople => 'Add people, and create roles and give them out. Only for people you trust with everything.',
+            self::ManagePeople => 'Invite and add people, and create roles and give them out. Only for people you trust with everything.',
             self::ManageWebhooks => 'Payment provider notifications, and replaying them.',
             self::ManageEmailTool => 'What was sent to the email tool, and sending again.',
             self::ViewLogs => 'The site’s error and activity logs.',

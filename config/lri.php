@@ -145,6 +145,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Admin Logins
+    |--------------------------------------------------------------------------
+    |
+    | default_admin is the first login, a super admin made by AdminUserSeeder.
+    | With no password set here, the seeder makes one and shows it once.
+    | admin_invitations is how long an emailed invitation's link works, and
+    | the timezone its expiry is shown in. Sending one again gives it a new
+    | link and the full time again.
+    |
+    */
+
+    'default_admin' => [
+        'email' => env('DEFAULT_ADMIN_EMAIL', 'joseph@gmail.com'),
+        'password' => env('DEFAULT_ADMIN_PASSWORD'),
+    ],
+
+    'admin_invitations' => [
+        'lifetime_hours' => 24,
+        'timezone' => 'Africa/Lagos',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Community Links
     |--------------------------------------------------------------------------
     */
