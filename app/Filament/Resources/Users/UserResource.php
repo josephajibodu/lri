@@ -56,13 +56,7 @@ class UserResource extends Resource
                     ->multiple()
                     ->preload()
                     ->required()
-                    ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
-                        $offered = static::assignableRoles(Role::query())->pluck('id')->all();
-
-                        if (array_diff(array_map('intval', (array) $value), $offered) !== []) {
-                            $fail('You can’t give out that role.');
-                        }
-                    })
+                    ->rule(fn (): Closure => static::onlyAssignableRoles())
                     ->disabled(fn (?User $record): bool => $record?->is(auth()->user()) ?? false)
                     ->helperText(fn (?User $record): string => $record?->is(auth()->user())
                         ? 'You can’t change your own roles. Ask another admin.'
@@ -104,6 +98,20 @@ class UserResource extends Resource
             ! auth()->user()?->isSuperAdmin(),
             fn (Builder $query): Builder => $query->where('name', '!=', StaffRole::SuperAdmin->value),
         );
+    }
+
+    /**
+     * A validation rule refusing any role the signed-in person may not give out.
+     */
+    public static function onlyAssignableRoles(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            $offered = static::assignableRoles(Role::query())->pluck('id')->all();
+
+            if (array_diff(array_map('intval', (array) $value), $offered) !== []) {
+                $fail('You can’t give out that role.');
+            }
+        };
     }
 
     public static function getPages(): array

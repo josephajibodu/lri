@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\AdminInvitation;
 use App\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -49,6 +50,45 @@ test('each email renders with sample data and saves nothing', function () {
         ->assertSeeText('3 × ₦10,000 = ₦30,000');
 
     expect(Order::count())->toBe(0);
+});
+
+test('the admin invitation can be previewed with sample data and saves nothing', function () {
+    $this->get('/mail-previews/admin-invitation')
+        ->assertOk()
+        ->assertSeeText('Invitation to the admin');
+
+    $this->get('/mail-previews/admin-invitation/render')
+        ->assertOk()
+        ->assertSeeText('You’re invited to join the team')
+        ->assertSeeText('Joseph Ajibodu')
+        ->assertSeeText('Headset desk')
+        ->assertSeeText('Accept invitation')
+        ->assertSeeText('Decline this invitation');
+
+    expect(AdminInvitation::count())->toBe(0);
+});
+
+test('the links in the previewed invitation open sample accept and decline pages that can’t be submitted', function () {
+    $this->get('/mail-previews/admin-invitation/render')
+        ->assertOk()
+        ->assertSee(route('mail-previews.invitation-page', 'accept'), false)
+        ->assertSee(route('mail-previews.invitation-page', 'decline'), false);
+
+    $this->get(route('mail-previews.invitation-page', 'accept'))
+        ->assertOk()
+        ->assertSeeText('Preview only')
+        ->assertSeeText('Joseph Ajibodu invited you')
+        ->assertSee('type="submit" disabled', false);
+
+    $this->get(route('mail-previews.invitation-page', 'decline'))
+        ->assertOk()
+        ->assertSeeText('Preview only')
+        ->assertSeeText('Decline this invitation?')
+        ->assertSee('type="submit" disabled', false);
+
+    $this->get('/mail-previews/admin-invitation/closed')->assertNotFound();
+
+    expect(AdminInvitation::count())->toBe(0);
 });
 
 test('an unknown email is not found', function () {
