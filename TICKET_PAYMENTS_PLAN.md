@@ -150,6 +150,28 @@ Already in place from phases 8 and 9: a holder name and email on each ticket, a 
 - [x] The friend's page shows no price, other tickets or buyer details
 - [x] Desk: each of the three results, and Save and give headset in one step
 
+### ✅ Phase 11: Coupons
+
+Lets organisers share discounts, and lets us try a live sale for a real ₦100 instead of the full ticket price.
+
+**Rules**
+- [x] Takes a percentage (up to 99%) or a naira amount off the order's total, and always leaves ₦100, the least Bachs will charge (it refuses anything lower, and ₦0). So there are no free tickets yet
+- [x] Optional limits: start and end, how many orders can use it, how many tickets it covers in one order (any more are full price), and which tickets it works on
+- [x] Can't be edited once made: the admin has no edit or delete button, and the model refuses any change except switching it off or on
+- [x] Uses count like ticket holds: paid orders and orders still being paid for. Abandoned and refunded orders give their use back. The coupon's row is locked while counting, so two buyers can't both take its last use
+
+**Buyer**
+- [x] "Have a coupon?" on the ticket form, with Apply and Remove. The total follows the number of tickets. The code is checked again when the order is placed, which is also how it works without JavaScript
+- [x] Checking a code is limited to 10 tries a minute per visitor, so codes can't be guessed
+- [x] The order keeps its coupon and the amount taken off. `amount` is still what the buyer owes, so payments and sales reports need no changes
+- [x] An abandoned order coming back has its coupon checked again. If it no longer works, the order goes back to full price and the buyer is told before paying
+
+**Shown on**
+- [x] The order page, the receipt, the tickets email (with a mail preview), the admin's order screen and list (with a filter), the CSV download, the buyer's journey, and what Bachs is told about the checkout
+
+**Admin** ([CouponResource.php](app/Filament/Resources/Coupons/CouponResource.php))
+- [x] Tickets > Coupons, with its own "Coupons" permission: create, view, disable, turn back on, and a link to the orders that used it
+
 ## Before going live
 
 - [ ] Production `.env`: `APP_URL` (the real address), `DB_*` for MySQL, `BACHS_SECRET_KEY` (`sk_live_…`), `BACHS_WEBHOOK_SECRET`
@@ -182,6 +204,8 @@ Already in place from phases 8 and 9: a holder name and email on each ticket, a 
 
 ## Known gaps
 
+- **Coupons and late bank transfers:** if a buyer's coupon ended and their abandoned order went back to full price, then a transfer for the old checkout still lands, the order counts as paid at full price in the reports although less came in. Very unlikely, and the payment attempt keeps the true amount.
+- **Coupons haven't been paid with on a real checkout:** the discounted amount was accepted by the Bachs sandbox and the full flow is covered by tests with Bachs faked, but nobody has yet paid a discounted order through the pop-up.
 - **Untested against real Bachs:** the webhook payloads and failure-reason wording come from Bachs's docs and haven't been checked against a real sandbox.
 - **Untested against real Mailchimp:** there's no API key yet, so phase 7 has only run against a stand-in for Mailchimp's API, built from its docs.
 - **No webhooks locally:** Bachs can't reach `lri.test`, so a local test purchase is confirmed by the order page asking Bachs directly. To try webhooks locally, share the site at a public address (`herd share`) and add that address as a webhook destination in the Bachs portal.

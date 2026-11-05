@@ -15,6 +15,7 @@ enum AdminPermission: string implements HasDescription, HasLabel
     case ManageOrders = 'manage orders';
     case UseHeadsetDesk = 'use headset desk';
     case ManageTicketTypes = 'manage ticket types';
+    case ManageCoupons = 'manage coupons';
     case ManagePaymentMethods = 'manage payment methods';
     case ManageBirthdays = 'manage birthdays';
     case ManageBarracksRegistrations = 'manage barracks registrations';
@@ -30,6 +31,7 @@ enum AdminPermission: string implements HasDescription, HasLabel
             self::ManageOrders => 'Orders',
             self::UseHeadsetDesk => 'Headset desk',
             self::ManageTicketTypes => 'Ticket types',
+            self::ManageCoupons => 'Coupons',
             self::ManagePaymentMethods => 'Ways to pay',
             self::ManageBirthdays => 'Birthdays',
             self::ManageBarracksRegistrations => 'Barracks permits',
@@ -47,6 +49,7 @@ enum AdminPermission: string implements HasDescription, HasLabel
             self::ManageOrders => 'Every order with the buyer’s details, payments and journey. Can email tickets again.',
             self::UseHeadsetDesk => 'Find tickets, fill in names and hand over headsets on the day.',
             self::ManageTicketTypes => 'Prices, ticket limits and when sales open.',
+            self::ManageCoupons => 'Create coupons, see how much they’ve been used, and disable them.',
             self::ManagePaymentMethods => 'Switch ways to pay on or off and choose the featured ones.',
             self::ManageBirthdays => 'Birthdays members have shared.',
             self::ManageBarracksRegistrations => 'Barracks permit sign-ups, and printing their forms.',

@@ -78,6 +78,21 @@
                                 <span>Email me about LRI runs and events. You can stop any time.</span>
                             </label>
 
+                            <details class="dr-coupon" data-coupon data-coupon-url="{{ route('coupons.check') }}" @if (old('coupon') || $errors->has('coupon')) open @endif>
+                                <summary>Have a coupon?</summary>
+                                <div class="dr-field">
+                                    <label for="coupon">Coupon code</label>
+                                    <div class="dr-coupon-row">
+                                        <input class="dr-input" id="coupon" name="coupon" type="text" value="{{ old('coupon') }}" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" data-coupon-input>
+                                        <button class="btn btn-sm dr-btn" type="button" data-coupon-apply hidden>Apply</button>
+                                        <button class="dr-order-link" type="button" data-coupon-remove hidden>Remove</button>
+                                    </div>
+                                    <p class="dr-field-hint" data-coupon-hint>It comes off your total when you choose how to pay.</p>
+                                    <p class="dr-coupon-applied" role="status" data-coupon-applied hidden></p>
+                                    <p class="dr-field-error" data-error-for="coupon">@error('coupon'){{ $message }}@enderror</p>
+                                </div>
+                            </details>
+
                             <p class="dr-pay-heading" aria-hidden="true">Pay with</p>
                             @include('checkout.methods', ['channels' => $ticketing['channels']])
                             <p class="dr-field-error" data-error-for="channel">@error('channel'){{ $message }}@enderror</p>

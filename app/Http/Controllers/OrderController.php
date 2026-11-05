@@ -10,6 +10,7 @@ use App\Enums\CheckoutStep;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Exceptions\CheckoutUnavailable;
+use App\Exceptions\CouponUnavailable;
 use App\Exceptions\TicketsUnavailable;
 use App\Http\Middleware\IdentifyVisitor;
 use App\Http\Requests\StoreOrderRequest;
@@ -46,7 +47,7 @@ class OrderController extends Controller
                 'email' => $request->validated('email'),
                 'phone' => $request->validated('phone'),
                 'marketing_consent' => $request->validated('marketing_consent'),
-            ], IdentifyVisitor::visitorId($request), IdentifyVisitor::attributionFor($request));
+            ], IdentifyVisitor::visitorId($request), IdentifyVisitor::attributionFor($request), $request->validated('coupon'));
         } catch (TicketsUnavailable $exception) {
             $this->recordCheckoutStep->handle(CheckoutStep::FormInvalid, IdentifyVisitor::visitorId($request), properties: [
                 'fields' => ['quantity'],
@@ -55,12 +56,21 @@ class OrderController extends Controller
 
             throw ValidationException::withMessages(['quantity' => $exception->getMessage()])
                 ->redirectTo(strtok(url()->previous(), '#').'#tickets');
+        } catch (CouponUnavailable $exception) {
+            $this->recordCheckoutStep->handle(CheckoutStep::FormInvalid, IdentifyVisitor::visitorId($request), properties: [
+                'fields' => ['coupon'],
+                'reason' => 'coupon_unavailable',
+            ]);
+
+            throw ValidationException::withMessages(['coupon' => $exception->getMessage()])
+                ->redirectTo(strtok(url()->previous(), '#').'#tickets');
         }
 
         $this->recordCheckoutStep->handle(CheckoutStep::DetailsSubmitted, order: $order, properties: [
             'quantity' => $order->quantity,
             'marketing_consent' => $order->marketing_consent,
             'phone_given' => $order->buyer_phone !== null,
+            'coupon' => $order->coupon?->code,
         ]);
 
         return $this->openCheckout($request, $order, PaymentChannel::query()->findOrFail($request->validated('channel')), $startPayment);
@@ -91,7 +101,7 @@ class OrderController extends Controller
             return redirect()->to($order->receiptUrl());
         }
 
-        $order->load('ticketType');
+        $order->load(['ticketType', 'coupon']);
 
         return view('orders.show', [
             'order' => $order,
@@ -114,7 +124,7 @@ class OrderController extends Controller
             return redirect()->to($order->statusUrl());
         }
 
-        $order->load(['ticketType', 'tickets', 'latestPayment']);
+        $order->load(['ticketType', 'tickets', 'latestPayment', 'coupon']);
 
         return view('orders.receipt', [
             'order' => $order,
@@ -169,14 +179,16 @@ class OrderController extends Controller
             $started = $startPayment->handle($order, $channel);
         } catch (CheckoutUnavailable|TicketsUnavailable $exception) {
             $this->recordCheckoutStep->handle(CheckoutStep::CheckoutUnavailable, $visitorId, $order, $order->latestPayment()->first(), $channel->method, [
-                'reason' => $exception instanceof TicketsUnavailable ? 'tickets_unavailable' : 'provider_error',
+                'reason' => $exception instanceof TicketsUnavailable ? 'tickets_unavailable' : $exception->reason,
             ]);
+
+            $request->session()->flash('checkout_error', $exception->getMessage());
 
             if ($request->expectsJson()) {
                 return response()->json(['message' => $exception->getMessage(), 'status_url' => $order->statusUrl()], 409);
             }
 
-            return redirect()->to($order->statusUrl())->with('checkout_error', $exception->getMessage());
+            return redirect()->to($order->statusUrl());
         }
 
         $this->recordCheckoutStep->handle(CheckoutStep::CheckoutOpened, $visitorId, $order, $started->payment, properties: [

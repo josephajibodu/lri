@@ -30,11 +30,11 @@ class ListOrders extends ListRecords
      */
     private function downloadCsv(): StreamedResponse
     {
-        $query = $this->getFilteredSortedTableQuery()->with(['ticketType', 'latestPayment']);
+        $query = $this->getFilteredSortedTableQuery()->with(['ticketType', 'latestPayment', 'coupon']);
 
         return response()->streamDownload(function () use ($query): void {
             $csv = fopen('php://output', 'w');
-            fputcsv($csv, ['Reference', 'Status', 'Ticket', 'Quantity', 'Total', 'Buyer', 'Email', 'Phone', 'Event emails', 'Method', 'Source', 'Campaign', 'Placed', 'Paid']);
+            fputcsv($csv, ['Reference', 'Status', 'Ticket', 'Quantity', 'Coupon', 'Discount', 'Total', 'Buyer', 'Email', 'Phone', 'Event emails', 'Method', 'Source', 'Campaign', 'Placed', 'Paid']);
 
             $query->lazyById(500)->each(function (Order $order) use ($csv): void {
                 fputcsv($csv, [
@@ -42,6 +42,8 @@ class ListOrders extends ListRecords
                     $order->status->label(),
                     $order->ticketType->name,
                     $order->quantity,
+                    $order->coupon?->code,
+                    $order->discount()->toDecimal(),
                     $order->total()->toDecimal(),
                     $order->buyer_name,
                     $order->buyer_email,

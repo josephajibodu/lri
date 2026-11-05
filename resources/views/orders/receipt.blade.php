@@ -89,6 +89,9 @@
                             <div><dt>Where</dt><dd>{{ $event['venue'] }}</dd></div>
                         @endif
                         <div><dt>Tickets</dt><dd>{{ $order->quantity }} × {{ $order->unitPrice()->format() }}</dd></div>
+                        @if ($order->coupon)
+                            <div><dt>Coupon {{ $order->coupon->code }}</dt><dd>−{{ $order->discount()->format() }}</dd></div>
+                        @endif
                         <div><dt>Total paid</dt><dd>{{ $order->total()->format() }}</dd></div>
                         @if ($order->paid_at)
                             <div><dt>Paid on</dt><dd>{{ $order->paid_at->timezone('Africa/Lagos')->format('j M Y, g:i A') }}</dd></div>

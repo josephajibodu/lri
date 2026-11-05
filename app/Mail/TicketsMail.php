@@ -51,14 +51,31 @@ class TicketsMail extends Mailable
                     'When' => $this->order->ticketType->eventWhen(),
                     'Where' => $event['venue'] ?? null,
                 ]),
-                'receipt' => [
-                    'Paid' => $this->order->quantity.' × '.$this->order->unitPrice()->format().' = '.$this->order->total()->format(),
-                    'Order' => $this->order->reference,
-                ],
+                'receipt' => $this->receipt(),
                 'receiptUrl' => $this->order->receiptUrl(),
                 'unnamedTickets' => $this->order->tickets->reject->isNamed()->count(),
                 'ownTicket' => $this->order->tickets->first(fn (Ticket $ticket): bool => $ticket->isNamed() && $ticket->isBuyers()),
             ],
         );
+    }
+
+    /**
+     * What the buyer paid, with the coupon spelled out if there was one.
+     *
+     * @return array<string, string>
+     */
+    private function receipt(): array
+    {
+        $tickets = $this->order->quantity.' × '.$this->order->unitPrice()->format();
+        $coupon = $this->order->coupon;
+
+        return [
+            ...($coupon === null ? ['Paid' => $tickets.' = '.$this->order->total()->format()] : [
+                'Tickets' => $tickets.' = '.$this->order->subtotal()->format(),
+                "Coupon {$coupon->code}" => '−'.$this->order->discount()->format(),
+                'Paid' => $this->order->total()->format(),
+            ]),
+            'Order' => $this->order->reference,
+        ];
     }
 }

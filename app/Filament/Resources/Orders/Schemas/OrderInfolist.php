@@ -24,7 +24,13 @@ class OrderInfolist
                         TextEntry::make('ticketType.name')->label('Ticket'),
                         TextEntry::make('amount')
                             ->label('Total')
-                            ->formatStateUsing(fn (Order $order): string => $order->quantity.' × '.$order->unitPrice()->format().' = '.$order->total()->format()),
+                            ->formatStateUsing(fn (Order $order): string => $order->quantity.' × '.$order->unitPrice()->format().($order->coupon ? ' − '.$order->discount()->format() : '').' = '.$order->total()->format()),
+                        TextEntry::make('coupon.code')
+                            ->label('Coupon')
+                            ->placeholder('None')
+                            ->copyable()
+                            ->fontFamily('mono')
+                            ->helperText(fn (Order $order): ?string => $order->coupon?->describe()),
                         TextEntry::make('created_at')->label('Placed')->dateTime('j M Y, g:i A', 'Africa/Lagos'),
                         TextEntry::make('paid_at')->label('Paid')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('Not paid'),
                         TextEntry::make('expires_at')->label('Tickets held until')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('–'),
