@@ -177,7 +177,7 @@ test('an organiser can email a paid order’s tickets again', function () {
         ->assertActionVisible('resendTickets')
         ->callAction('resendTickets');
 
-    Mail::assertSent(TicketsMail::class, fn (TicketsMail $mail): bool => $mail->hasTo($order->buyer_email));
+    Mail::assertQueued(TicketsMail::class, fn (TicketsMail $mail): bool => $mail->hasTo($order->buyer_email));
     expect($order->fresh()->tickets_emailed_at)->not->toBeNull();
 });
 
