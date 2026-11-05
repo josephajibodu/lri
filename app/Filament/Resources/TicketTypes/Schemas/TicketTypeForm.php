@@ -49,7 +49,7 @@ class TicketTypeForm
                             ->required()
                             ->formatStateUsing(fn (?int $state): ?string => $state === null ? null : rtrim(rtrim(number_format($state / 100, 2, '.', ''), '0'), '.'))
                             ->dehydrateStateUsing(fn (string $state): int => (int) round(((float) $state) * 100))
-                            ->helperText('In naira. Orders keep the price they were placed at, so changing it doesn’t affect them.'),
+                            ->helperText('In naira. Orders being paid for keep their price. One that lapses and is picked up again pays the new price.'),
                         Select::make('currency')
                             ->options(['NGN' => 'Naira (NGN)'])
                             ->default('NGN')

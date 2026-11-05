@@ -233,6 +233,7 @@ class CouponResource extends Resource
                 TextEntry::make('max_orders')->label('How many orders can use it')->placeholder('No limit'),
                 TextEntry::make('ticketTypes.name')->label('Which tickets it works on')->placeholder('Every ticket'),
                 TextEntry::make('created_at')->label('Created')->dateTime('j M Y, g:i A', 'Africa/Lagos'),
+                TextEntry::make('creator.name')->label('Created by')->placeholder('–'),
                 TextEntry::make('disabled_at')->label('Disabled')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('–'),
             ])
             ->columns(2);
@@ -294,7 +295,7 @@ class CouponResource extends Resource
             ->visible(fn (Coupon $record): bool => $record->disabled_at === null)
             ->requiresConfirmation()
             ->modalHeading(fn (Coupon $record): string => "Disable {$record->code}?")
-            ->modalDescription('Nobody new can use it from now on. Anyone already paying with it keeps their discount until the hold on their tickets runs out.')
+            ->modalDescription('Nobody new can use it from now on. Anyone with a checkout already open can still pay that one at the discount, but if they start another it goes back to full price.')
             ->modalSubmitActionLabel('Yes, disable it')
             ->action(function (Coupon $record): void {
                 $record->forceFill(['disabled_at' => now()])->save();

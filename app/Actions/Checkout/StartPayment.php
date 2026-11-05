@@ -14,12 +14,15 @@ use App\Models\TicketType;
 use App\Payments\Data\CheckoutRequest;
 use App\Payments\Exceptions\PaymentProviderException;
 use App\Payments\PaymentManager;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * Open a checkout for an order with the provider behind the chosen channel, as a new payment attempt.
- * An order whose hold has lapsed gets its tickets held again first, if there are still enough left.
+ * Open a checkout for an order with the provider behind the chosen channel, as a new payment attempt. Every attempt
+ * checks the order again first, because each one keeps its tickets held for longer: tickets must still be on sale, the
+ * order can only be tried so many times, and a coupon that has ended comes off. An order whose hold has lapsed gets its
+ * tickets held again first, if there are still enough left, at today's price.
  */
 class StartPayment
 {
@@ -31,15 +34,13 @@ class StartPayment
      */
     public function handle(Order $order, PaymentChannel $channel): StartedPayment
     {
-        if (in_array($order->status, [OrderStatus::Paid, OrderStatus::Refunded], true)) {
-            throw CheckoutUnavailable::alreadyPaid();
-        }
+        $this->refuseIfSettled($order);
 
         if (! $channel->is_enabled || $channel->currency !== $order->currency) {
             throw CheckoutUnavailable::methodUnavailable();
         }
 
-        $this->holdTickets($order);
+        $this->prepareOrder($order);
 
         $provider = $this->payments->forChannel($channel);
         $expiresInMinutes = config('payments.checkout_expires_in_minutes');
@@ -94,46 +95,98 @@ class StartPayment
     }
 
     /**
-     * Hold the order's tickets again when its hold has lapsed or it was abandoned. Its coupon gave up its use when the
-     * hold lapsed, so it's checked again: one that no longer works comes off, and the buyer sees the new total before
-     * being asked to pay it.
+     * Check the order can still be paid for, and bring it up to date. The order's row is locked and read afresh first,
+     * so a payment landing at this very moment can't be undone by what this request read earlier. A change to what the
+     * buyer owes is saved, then explained to them before they're asked to pay it.
      *
-     * @throws TicketsUnavailable
      * @throws CheckoutUnavailable
+     * @throws TicketsUnavailable
      */
-    private function holdTickets(Order $order): void
+    private function prepareOrder(Order $order): void
     {
-        if ($order->status === OrderStatus::Pending && $order->expires_at?->isFuture()) {
-            return;
-        }
+        $changedTotal = DB::transaction(function () use ($order): ?CheckoutUnavailable {
+            $locked = Order::query()->lockForUpdate()->findOrFail($order->id);
 
-        $endedCoupon = DB::transaction(function () use ($order): ?Coupon {
-            $ticketType = TicketType::query()->onSale()->lockForUpdate()->find($order->ticket_type_id)
-                ?? throw TicketsUnavailable::notOnSale();
+            $this->refuseIfSettled($locked);
 
-            $ticketsLeft = $ticketType->ticketsLeft();
-
-            if ($ticketsLeft !== null && $ticketsLeft < $order->quantity) {
-                throw TicketsUnavailable::notEnough($ticketsLeft);
+            if ($locked->payments()->whereNotNull('provider_checkout_id')->count() >= config('payments.unpaid_limits.attempts_per_order')) {
+                throw CheckoutUnavailable::tooManyAttempts();
             }
 
-            $coupon = $order->coupon_id === null ? null : Coupon::query()->lockForUpdate()->find($order->coupon_id);
-            $couponEnded = $coupon?->whyUnusableOn($ticketType) !== null;
+            $ticketType = TicketType::query()->onSale()->lockForUpdate()->find($locked->ticket_type_id)
+                ?? throw TicketsUnavailable::notOnSale();
+            $coupon = $locked->coupon_id === null ? null : Coupon::query()->lockForUpdate()->find($locked->coupon_id);
 
-            $order->update([
-                'status' => OrderStatus::Pending,
-                'abandoned_at' => null,
-                'expires_at' => now()->addMinutes(config('payments.checkout_expires_in_minutes')),
-                ...($couponEnded ? ['coupon_id' => null, 'discount_amount' => 0, 'amount' => $order->subtotal()->amount] : []),
-            ]);
-
-            return $couponEnded ? $coupon : null;
+            return $locked->status === OrderStatus::Pending && $locked->expires_at?->isFuture()
+                ? $this->dropEndedCoupon($locked, $coupon)
+                : $this->holdTicketsAgain($locked, $ticketType, $coupon);
         });
 
-        if ($endedCoupon !== null) {
-            $order->unsetRelation('coupon');
+        $order->refresh();
 
-            throw CheckoutUnavailable::couponEnded($endedCoupon->code, $order->total()->format());
+        if ($changedTotal !== null) {
+            throw $changedTotal;
+        }
+    }
+
+    /**
+     * An order whose tickets are held keeps its price. But a coupon that has ended comes off the next time it asks to
+     * pay, or a discount could be kept alive for ever by asking again before each hold runs out.
+     */
+    private function dropEndedCoupon(Order $order, ?Coupon $coupon): ?CheckoutUnavailable
+    {
+        if ($coupon === null || ! $coupon->hasEnded()) {
+            return null;
+        }
+
+        $order->update(['coupon_id' => null, 'discount_amount' => 0, 'amount' => $order->subtotal()->amount]);
+
+        return CheckoutUnavailable::couponEnded($coupon->code, $order->total()->format());
+    }
+
+    /**
+     * Hold the order's tickets again when its hold has lapsed or it was abandoned, at today's price. Its coupon gave up
+     * its use when the hold lapsed, so it's checked again: one that no longer works comes off.
+     *
+     * @throws TicketsUnavailable
+     */
+    private function holdTicketsAgain(Order $order, TicketType $ticketType, ?Coupon $coupon): ?CheckoutUnavailable
+    {
+        $ticketsLeft = $ticketType->ticketsLeft();
+
+        if ($ticketsLeft !== null && $ticketsLeft < $order->quantity) {
+            throw TicketsUnavailable::notEnough($ticketsLeft);
+        }
+
+        $couponEnded = $coupon?->whyUnusableOn($ticketType) !== null;
+        $unitPrice = $ticketType->unitPrice();
+        $discount = $couponEnded || $coupon === null ? Money::of(0, $order->currency) : $coupon->discountFor($unitPrice, $order->quantity);
+        $priceChanged = $unitPrice->amount !== $order->unit_price;
+
+        $order->update([
+            'status' => OrderStatus::Pending,
+            'abandoned_at' => null,
+            'expires_at' => now()->addMinutes(config('payments.checkout_expires_in_minutes')),
+            'unit_price' => $unitPrice->amount,
+            'coupon_id' => $couponEnded ? null : $order->coupon_id,
+            'discount_amount' => $discount->amount,
+            'amount' => $unitPrice->times($order->quantity)->amount - $discount->amount,
+        ]);
+
+        return match (true) {
+            $couponEnded => CheckoutUnavailable::couponEnded($coupon->code, $order->total()->format()),
+            $priceChanged => CheckoutUnavailable::priceChanged($order->total()->format()),
+            default => null,
+        };
+    }
+
+    /**
+     * @throws CheckoutUnavailable
+     */
+    private function refuseIfSettled(Order $order): void
+    {
+        if (in_array($order->status, [OrderStatus::Paid, OrderStatus::Refunded, OrderStatus::Disputed], true)) {
+            throw CheckoutUnavailable::alreadyPaid();
         }
     }
 }

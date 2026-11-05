@@ -43,6 +43,11 @@
                             <p class="dr-sub">The money went back to where it came from. Message <a href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">@@letsrunibadan</a> if anything looks wrong.</p>
                             @break
 
+                        @case('disputed')
+                            <h1 class="dr-order-title">This payment is being <em>questioned</em>.</h1>
+                            <p class="dr-sub">Your bank has raised a dispute about it, so your {{ Str::plural('ticket', $order->quantity) }} {{ $order->quantity === 1 ? 'is' : 'are' }} on hold until that’s settled. Message <a href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">@@letsrunibadan</a> with your order number if you didn’t ask for this.</p>
+                            @break
+
                         @default
                             <h1 class="dr-order-title">You haven’t <em>paid</em> yet.</h1>
                             <p class="dr-sub">

@@ -1,7 +1,7 @@
 # Ticket payments plan
 
 Selling Silent Disco Run tickets on the site, with Bachs as the first payment provider.
-Branch: `ticket-payments`. Last updated: 4 November 2026.
+Built on the `ticket-payments` branch, now merged into `main`. Last updated: 4 November 2026.
 
 ## Goals
 
@@ -71,6 +71,7 @@ On hold until the email tool is chosen. The code stays, and nothing is sent whil
   - **Paid** (tag `ticket-paid`): so the tool stops the follow-up emails. It also clears the resume link, which by then leads to the receipt
 - [x] The resume link (audience field `RESUMEURL`) is the buyer's signed order page, which keeps their details and offers every way to pay
 - [x] Only people who ticked the consent box are sent, as Nigeria's Data Protection Act requires. Someone already in the audience keeps their subscription status, so anyone who unsubscribed isn't signed back up
+- [x] The consent has to come from the person themself, and anyone can type any email on an unpaid order. So a new contact from an unpaid order is added as pending, and Mailchimp asks them to confirm. Paying subscribes them, including anyone still pending. Abandoned-checkout reminders only reach people who confirmed
 - [x] Phone numbers aren't sent: follow-up emails don't need them, and Mailchimp's phone field can refuse Nigerian numbers
 - [x] Sent in the background: outages are retried, refusals fail straight away, and news that's no longer true (such as "abandoned" for someone who has since paid) is skipped
 - [x] The admin shows what was sent and anything that failed, under System > Email tool, with "Send again"
@@ -119,7 +120,7 @@ Already in place from phases 8 and 9: a holder name and email on each ticket, a 
 **QR code on every ticket**
 - [x] Each ticket gets its own QR code, with the printed code (like `7K3Q-9PXM`) underneath for staff to type if the scan fails. One per ticket, never one per order
 - [x] Shown on the ticket page (`/tickets/{link}`) once it has a name, on the receipt for the buyer's own ticket, in the friend's ticket email, and in the buyer's email for their own ticket. The buyer's email lists the other tickets' codes and names without QR codes
-- [x] Made with `chillerlan/php-qrcode`, which is already installed because Filament uses it; it would be listed in `composer.json` directly rather than relied on through Filament. In emails the QR is attached as an inline image, because Gmail and others block images written into the email itself
+- [x] Made with `chillerlan/php-qrcode`, which is already installed because Filament uses it; it's listed in `composer.json` directly rather than relied on through Filament. In emails the QR is attached as an inline image, because Gmail and others block images written into the email itself
 - [x] The QR holds a link to the headset desk with that ticket's code already searched (`/admin/headset-desk?search=7K3Q-9PXM`). Desk staff scan it with their phone's normal camera, which opens the desk on that ticket; no scanner app or extra library. Anyone else who scans it just reaches the admin sign-in
 
 **Receipt: every ticket with its status and buttons**
@@ -135,7 +136,7 @@ Already in place from phases 8 and 9: a holder name and email on each ticket, a 
 **Undo, buyer only (from the receipt)**
 - [x] **Cancel link**: the unclaimed link stops working (a new secret replaces it) and the ticket goes back to "No name yet"
 - [x] **Reissue**: a new gate code and a new link, so the old QR, the old link and any screenshots stop working. The name and email are cleared, and the buyer names the ticket again or sends a new link
-- [x] **Edit**: fixes a typo in the name or email and emails the ticket again with the same code (today it only emails again when the address changes)
+- [x] **Edit**: fixes a typo in the name and emails the ticket again with the same code. Changing the email gives it a new code and link (added in Phase 12)
 - [x] None of these work once the headset has been collected. Whoever received a ticket can't pass it on or reissue it: their page has no such buttons, and the friend's link can't name a ticket that already has a name
 
 **Headset desk after a scan or search**
@@ -172,29 +173,59 @@ Lets organisers share discounts, and lets us try a live sale for a real ₦100 i
 **Admin** ([CouponResource.php](app/Filament/Resources/Coupons/CouponResource.php))
 - [x] Tickets > Coupons, with its own "Coupons" permission: create, view, disable, turn back on, and a link to the orders that used it
 
+### ✅ Phase 12: Closing the holes from the security review
+An attack review on 5 November found no way to get a ticket without Bachs reporting a payment, but found ways around that. The attacks are kept as tests in `tests/Feature/PaymentSecurityTest.php`.
+
+- [x] Refunds and chargebacks reach the tickets: a full refund cancels them, a partial one flags the order, and a chargeback holds them until it's settled
+- [x] The live site refuses to open checkouts with a sandbox key or address
+- [x] Payments are judged on the money that arrived (`charge.amount_paid`, `received_amount`), not what the checkout asked for. A success that doesn't say how much arrived isn't believed
+- [x] Limits on unpaid tickets per email and connection, and on tries per order, so nobody can hold every ticket for free
+- [x] A bot check (Cloudflare Turnstile) on the ticket form, because emails and internet addresses are easy to change. It's off until its keys are set. If Cloudflare's server can't answer, orders go through. If the check can't load in buyers' browsers, nobody can order until its keys are emptied
+- [x] One unpaid use of a limited coupon per email or connection. A coupon that has ended comes off at the next try, and a lapsed order comes back at today's price
+- [x] Buying now counts per address and page where it can, and order placing per email as well, so separate buyers on one mobile network don't block each other. This builds on giving each action its own rate limit
+- [x] Names can't carry links into emails or formulas into the CSV download
+- [x] A declined card leaves the payment open, as Bachs does, so a later success is still noticed if its webhook is lost
+- [x] A blank ticket's headset needs the ticket's code, which staff can't see until it's searched for in full
+- [x] Orders that need a person are flagged in the admin (**Needs a look**), and coupons record who made them
+- [x] Security headers on every page, and secure session cookies by default on the live site
+
 ## Before going live
 
+The README's [first deploy](README.md#the-first-deploy) section has the setup steps in order, with the exact commands.
+
 - [ ] Production `.env`: `APP_URL` (the real address), `DB_*` for MySQL, `BACHS_SECRET_KEY` (`sk_live_…`), `BACHS_WEBHOOK_SECRET`
-- [ ] In the Bachs developer portal, add `https://<domain>/webhooks/payments/bachs` as a webhook destination
+- [ ] In the Bachs developer portal, add `https://<domain>/webhooks/payments/bachs` as a webhook destination, subscribed to the checkout, collection, refund and dispute events
+- [ ] Create a Cloudflare Turnstile widget for the domain, put its keys in `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`, then buy a ticket on the live site to check it works
+- [ ] Set **Tickets available** on the ticket type: with it empty, sales are unlimited however many headsets there are
+- [ ] Check the site sees each visitor's real address (`request()->ip()`), since rate limits and unpaid limits go by it. Behind a proxy it isn't told to trust, every visitor looks like the same address
+- [ ] Update the Symfony packages that `composer audit` flags (see Known gaps)
 - [ ] Make sure PHP's GD extension is on (`php -m | grep gd`); ticket emails need it to draw the QR code
 - [ ] Run a queue worker (`php artisan queue:work`) for ticket emails
 - [ ] Run the scheduler (`php artisan schedule:run` every minute) for the 5-minute checks
 - [ ] Choose and set up a mail service; mail currently only goes to the log file
+- [ ] Run `php artisan migrate` on the fresh production database; it creates the tables, the admin's permissions and the starting roles
 - [ ] Run `php artisan db:seed --class=TicketTypeSeeder` and `--class=PaymentChannelSeeder`, then `php artisan payments:sync-channels`
 - [ ] Create the first organiser with `php artisan make:filament-user`, then make them a super admin with `php artisan permission:assign-role "Super admin" <their id>`
 - [ ] Only once the email tool is chosen, and if it's Mailchimp: set `EMAIL_TOOL=mailchimp`, `MAILCHIMP_API_KEY` and `MAILCHIMP_AUDIENCE_ID`, then run `php artisan email-tools:prepare` once to add the audience fields
 - [ ] In Mailchimp, build the follow-up flow: start it on the tag `checkout-abandoned`, link to `*|RESUMEURL|*`, and stop it for anyone who gets the tag `ticket-paid`
-- [ ] Set the Disco Run ticket limit (number of headsets) in the admin
-- [ ] Run `php artisan migrate` on the fresh production database; it creates the tables, the admin's permissions and the starting roles
+- [ ] Set the Disco Run ticket limit (number of headsets) in the admin. Left blank, there's no limit, so tickets would keep selling past the number of headsets
 - [ ] Add an account for each person working the headset desk (Settings > People, role "Headset desk"); they sign in at `/admin` and only see the desk
-- [ ] Do a real test purchase on the Bachs sandbox (the sandbox keys in the local `.env` work)
+- [x] Do a real test purchase on the Bachs sandbox (8 had gone through by 4 November)
+- [x] Try a failed payment on the Bachs sandbox, and check the order page explains it in plain words (done on 5 November with declined cards; paying again by bank transfer after a decline also worked)
+- [ ] Once live, buy one ticket with a real payment, check it arrives by email with its QR code, and find it on the headset desk. A coupon for ₦10,000 off, limited to 1 order, makes this cost ₦100
+
+## Close to the event
+
+- [ ] **Try the headset desk on a real phone.** It hadn't been checked in a browser as of 4 November.
+- [ ] **Decide on a "Scan ticket" button on the desk page.** For now, staff scan with the phone's own camera app. That takes them off the desk page on every scan, opens the link in the phone's default browser (Safari on iPhone, so they must be signed in there), and tabs pile up. The button would read QR codes inside the page, but it needs a new library such as jsQR, because iPhones don't have the browser's built-in barcode reader.
 
 ## Open questions
 
 - **Ticket emails:** should Mailchimp also send them, or the mail service chosen above?
-- **QR codes:** do you want a QR code on tickets for check-in?
 
 ## Decided
+
+- **A QR code on every ticket** (phase 10). Desk staff scan it with their phone's camera app.
 
 - **One ticket type, one price.** No early bird or group pricing.
 - **A name and email on every ticket.** The buyer names extra tickets after paying, or sends each friend a link. On the day, the buyer can bring everyone to the desk and staff fill in any blank names. No headset without a paid ticket, and one headset per ticket.
@@ -202,12 +233,25 @@ Lets organisers share discounts, and lets us try a live sale for a real ₦100 i
 - **No OPay.** Card and bank transfer through Bachs are enough. We won't chase OPay with Bachs or add a second provider for it. The provider layer still allows one later if this changes.
 - **No cookie notice.** The visitor and source cookies go ahead without one.
 
+## Later
+
+### Two-step login for the admin (optional)
+The admin only asks for a password today, and one stolen password can be costly: anyone with the Coupons section can make a 99% coupon, and anyone with Ticket types can change prices. This adds an optional second step, a code from an authenticator app on your phone. Each person chooses whether to turn it on and nobody is made to, so anyone who leaves it off is still protected only by their password and the sign-in limit of 5 tries a minute.
+
+- [ ] Add two nullable `text` columns to `users`, `app_authentication_secret` and `app_authentication_recovery_codes`, and give `User` the `HasAppAuthentication` and `HasAppAuthenticationRecovery` interfaces with their traits
+- [ ] Turn it on in `AdminPanelProvider.php` with `multiFactorAuthentication([AppAuthentication::make()->recoverable()])`, leaving `isRequired` off. No new package is needed, because Filament already requires `pragmarx/google2fa` and `pragmarx/google2fa-qrcode` itself
+- [ ] Give people somewhere to turn it on. Filament puts this on the profile page, and the panel doesn't have one. `->profile()` adds it, but that page also has fields for name, email and password, so decide whether to allow those or build a smaller page
+- [ ] Recovery codes work, for signing in when the phone isn't to hand
+- [ ] A super admin can reset someone who has lost both their phone and their recovery codes, from Settings > People
+- [ ] Tests beside `tests/Feature/AdminPanelTest.php`: signing in asks for the code once it's on, a wrong code is refused, a recovery code works only once, someone who hasn't turned it on signs in as before, and a reset clears it
+- [ ] Explain it in the README's admin section
+
 ## Known gaps
 
 - **Coupons and late bank transfers:** if a buyer's coupon ended and their abandoned order went back to full price, then a transfer for the old checkout still lands, the order counts as paid at full price in the reports although less came in. Very unlikely, and the payment attempt keeps the true amount.
 - **Coupons haven't been paid with on a real checkout:** the discounted amount was accepted by the Bachs sandbox and the full flow is covered by tests with Bachs faked, but nobody has yet paid a discounted order through the pop-up.
-- **Untested against real Bachs:** the webhook payloads and failure-reason wording come from Bachs's docs and haven't been checked against a real sandbox.
-- **Untested against real Mailchimp:** there's no API key yet, so phase 7 has only run against a stand-in for Mailchimp's API, built from its docs.
-- **No webhooks locally:** Bachs can't reach `lri.test`, so a local test purchase is confirmed by the order page asking Bachs directly. To try webhooks locally, share the site at a public address (`herd share`) and add that address as a webhook destination in the Bachs portal.
+- **Only tested against the Bachs sandbox, not live:** on 5 November, signed sandbox webhooks confirmed a paid order, recorded two declined cards, and confirmed an order paid by bank transfer after a decline, all without errors. Only the "declined" failure has been seen for real, so the wording for other failure reasons still comes from Bachs's docs. A wording the site doesn't recognise gets a general "try again" message.
+- **Untested against real Mailchimp:** there's no API key yet, so phase 7 has only run against a stand-in for Mailchimp's API, built from its docs. Check three things on a real account: that a new contact on an unpaid order gets the confirmation email, that a pending contact who pays becomes subscribed, and whether someone who confirms after their order was abandoned still gets the reminder.
+- **No webhooks locally:** Bachs can't reach `lri.test`, so a local test purchase is confirmed by the order page asking Bachs directly. To try webhooks locally, share the site at a public address (`herd share`, or ngrok as used for the 5 November tests) and add that address as a webhook destination in the Bachs portal.
 - **No follow-up before submit:** someone who leaves before submitting the form can't be followed up by email, because we don't have their email yet. They only appear in the funnel.
-- **PHPUnit advisory:** `composer audit` reports a medium-severity issue in PHPUnit 13.4.3, which is only used for tests. It was already there before this work.
+- **Security advisories:** on 4 November, `composer audit` lists 11 advisories, and none are updated yet. 9 are in Symfony packages the live site runs on (`html-sanitizer`, `http-foundation`, `http-kernel`, `routing`), all published that day and fixed in 8.1.11. The other 2 are in tools only used for tests: PHPUnit (fixed in 13.4.4, but the installed Pest 5.3.3 refuses that version, so Pest has to be updated with it) and `symfony/yaml` (fixed in 8.1.11).

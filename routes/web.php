@@ -58,7 +58,9 @@ Route::post('/checkout-events', CheckoutEventController::class)
     ->middleware(['throttle:checkout-events', IdentifyVisitor::class])
     ->name('checkout-events.store');
 Route::middleware(['signed:checkout_id', IdentifyVisitor::class])->group(function () {
-    Route::get('/orders/{order:reference}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order:reference}', [OrderController::class, 'show'])
+        ->middleware('throttle:order-pages')
+        ->name('orders.show');
     Route::get('/orders/{order:reference}/status', [OrderController::class, 'status'])
         ->middleware('throttle:order-status-checks')
         ->name('orders.status');

@@ -45,13 +45,13 @@ class ListOrders extends ListRecords
                     $order->coupon?->code,
                     $order->discount()->toDecimal(),
                     $order->total()->toDecimal(),
-                    $order->buyer_name,
-                    $order->buyer_email,
+                    $this->safeForSpreadsheet($order->buyer_name),
+                    $this->safeForSpreadsheet($order->buyer_email),
                     $order->buyer_phone,
                     $order->marketing_consent ? 'Yes' : 'No',
                     $order->latestPayment?->method?->label(),
-                    SalesBySource::sourceOf($order),
-                    $order->attribution['campaign'] ?? null,
+                    $this->safeForSpreadsheet(SalesBySource::sourceOf($order)),
+                    $this->safeForSpreadsheet($order->attribution['campaign'] ?? null),
                     $order->created_at->timezone('Africa/Lagos')->format('Y-m-d H:i'),
                     $order->paid_at?->timezone('Africa/Lagos')->format('Y-m-d H:i'),
                 ]);
@@ -59,5 +59,14 @@ class ListOrders extends ListRecords
 
             fclose($csv);
         }, 'lri-orders-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv']);
+    }
+
+    /**
+     * Something a visitor typed or sent, made safe for an organiser's spreadsheet. A leading = + - or @ would run as a
+     * formula when the file is opened, so an apostrophe goes in front, which spreadsheets read as "this is just text".
+     */
+    private function safeForSpreadsheet(?string $value): ?string
+    {
+        return $value !== null && preg_match('/^[=+\-@\t\r]/', $value) ? "'".$value : $value;
     }
 }

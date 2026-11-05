@@ -8,7 +8,9 @@ use App\Enums\AdminPermission;
 use App\Enums\OrderStatus;
 use App\Exceptions\TicketNotUsable;
 use App\Models\Ticket;
+use App\Support\PersonName;
 use BackedEnum;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -29,7 +31,9 @@ use UnitEnum;
 /**
  * Where staff hand out headsets on the day. They find a ticket by its code, the holder's name or email, or the
  * buyer's name, email or order number; fill in the name and email of anyone the buyer didn't name; and hand over
- * one headset per paid ticket.
+ * one headset per paid ticket. A ticket with no name on it has nothing to check someone against, so the person has to
+ * show its code, which stays hidden here until it's searched for in full. Otherwise anyone could say a buyer got them
+ * a ticket and be given a spare one.
  */
 class HeadsetDesk extends Page implements HasTable
 {
@@ -92,6 +96,7 @@ class HeadsetDesk extends Page implements HasTable
                     ->label('Ticket')
                     ->fontFamily('mono')
                     ->weight('bold')
+                    ->formatStateUsing(fn (string $state, Ticket $record): string => $record->isNamed() || $this->isCodeOf($record, $this->tableSearch) ? $state : '••••-••••')
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->orWhereRaw(
                         "replace(code, '-', '') like ?",
                         ['%'.strtoupper(str_replace(['-', ' '], '', $search)).'%'],
@@ -110,13 +115,14 @@ class HeadsetDesk extends Page implements HasTable
                     ->label('Headset')
                     ->badge()
                     ->state(fn (Ticket $record): string => match (true) {
+                        $record->order->status === OrderStatus::Disputed => 'Payment disputed',
                         ! $record->isValid() => 'Not paid',
                         $record->isCollected() => 'Headset already given',
                         ! $record->isNamed() => 'Needs a name',
                         default => 'Paid, ready',
                     })
                     ->color(fn (string $state): string => match ($state) {
-                        'Not paid', 'Headset already given' => 'danger',
+                        'Not paid', 'Payment disputed', 'Headset already given' => 'danger',
                         'Needs a name' => 'warning',
                         default => 'success',
                     })
@@ -146,9 +152,21 @@ class HeadsetDesk extends Page implements HasTable
                     ->button()
                     ->visible(fn (Ticket $record): bool => $record->isValid() && ! $record->isNamed() && ! $record->isCollected())
                     ->authorize(fn (): bool => static::canAccess())
-                    ->modalHeading(fn (Ticket $record): string => 'Ticket '.$record->code)
-                    ->modalDescription('Type in the name and email of the person collecting this headset. We’ll email them their ticket.')
-                    ->schema(static::holderFields())
+                    ->modalHeading('Who’s collecting this ticket?')
+                    ->modalDescription('Ask for the ticket’s code, from their QR code or the buyer’s email or receipt. Then type in their name and email, and we’ll email them their ticket.')
+                    ->fillForm(fn (Ticket $record): array => ['code' => $this->isCodeOf($record, $this->tableSearch) ? $record->code : null])
+                    ->schema([
+                        TextInput::make('code')
+                            ->label('Ticket code')
+                            ->required()
+                            ->helperText('No code, no headset. The buyer can read it out from their email or receipt.')
+                            ->rule(fn (Ticket $record): Closure => function (string $attribute, mixed $value, Closure $fail) use ($record): void {
+                                if (! $this->isCodeOf($record, (string) $value)) {
+                                    $fail('That isn’t this ticket’s code.');
+                                }
+                            }),
+                        ...static::holderFields(),
+                    ])
                     ->modalSubmitActionLabel('Save and give headset')
                     ->action(function (Ticket $record, array $data, Action $action, NameTicket $nameTicket, HandOverHeadset $handOverHeadset): void {
                         try {
@@ -197,9 +215,22 @@ class HeadsetDesk extends Page implements HasTable
     protected static function holderFields(): array
     {
         return [
-            TextInput::make('name')->label('Their name')->required()->maxLength(120),
+            TextInput::make('name')
+                ->label('Their name')
+                ->required()
+                ->maxLength(120)
+                ->notRegex(PersonName::NotAllowed)
+                ->validationMessages(['not_regex' => PersonName::NotAllowedMessage]),
             TextInput::make('email')->label('Their email')->email()->required()->maxLength(190),
         ];
+    }
+
+    /**
+     * Whether this is the ticket's code, with or without its dash, in any case.
+     */
+    protected function isCodeOf(Ticket $ticket, ?string $typed): bool
+    {
+        return str_replace('-', '', $ticket->code) === strtoupper(str_replace(['-', ' '], '', (string) $typed));
     }
 
     /**

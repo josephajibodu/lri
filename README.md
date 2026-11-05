@@ -133,7 +133,7 @@ Silent Disco Run tickets are sold on the site, paid through [Bachs](https://docs
 2. Bachs's checkout opens as a pop-up over the page. If the pop-up can't load, the buyer goes to Bachs's own payment page instead.
 3. Bachs confirms the payment with a webhook, a notification it sends to our server. As a backup, the order page asks Bachs directly while the buyer waits, and `payments:reconcile` asks every 5 minutes.
 4. Once it's paid, the buyer moves on to their receipt at `/receipts/{code}`, an address they can always come back to, and their tickets are emailed from the queue. The first ticket already carries the buyer's name and email.
-5. An order that isn't paid is marked abandoned about 10 minutes after its hold runs out, and its tickets go back on sale. The buyer can still pay from their order page while tickets are left.
+5. An order that isn't paid is marked abandoned about 10 minutes after its hold runs out, and its tickets go back on sale. The buyer can still pay from their order page while tickets are left, at the ticket's price that day.
 
 ### Coupons
 
@@ -141,9 +141,9 @@ Organisers make coupons in the admin under Tickets > Coupons. Buyers tap "Have a
 
 - **What it takes off:** a percentage (up to 99%) or a naira amount, off the order's total.
 - **Limits you can set:** when it starts and ends, how many orders can use it, how many tickets it covers in one order (any more are full price; percentage coupons only), and which tickets it works on.
-- **A coupon can't be edited.** Once it's made, it can only be disabled, or turned back on. Anyone already paying with it keeps their discount until the hold on their tickets runs out.
+- **A coupon can't be edited.** Once it's made, it can only be disabled, or turned back on. Anyone with a checkout already open can still pay that one at the discount, but if they start another it goes back to full price, and they're told before they're asked to pay.
 - **The buyer always pays at least ₦100** (`payments.minimum_charge`), because Bachs refuses anything less. So a coupon can't make a ticket free.
-- **What counts as a use:** paid orders and orders still being paid for. An abandoned or refunded order gives its use back.
+- **What counts as a use:** paid orders and orders still being paid for. An abandoned or refunded order gives its use back. On a coupon with an order limit, one email or connection can only hold one unpaid use at a time, so unpaid orders can't use it all up.
 - **Coming back to an abandoned order:** the coupon is checked again. If it no longer works, the order goes back to full price and the buyer is told before they're asked to pay.
 
 The coupon's code and what it took off show on the order page, the receipt, the tickets email, the order in the admin and the CSV download. To see every order that used a coupon, press Orders on its row.
@@ -165,7 +165,7 @@ The receipt lists every ticket with where it stands and what the buyer can do:
 | Status | Means | Buttons |
 | --- | --- | --- |
 | Yours | The buyer's own ticket, with its QR code | |
-| Emailed | Named, and that person has their ticket | **Edit** fixes a typo and emails it again with the same code. **Reissue** gives it a new code and link, so the old QR code, link and any screenshots stop working; it then needs naming again |
+| Emailed | Named, and that person has their ticket | **Edit** fixes a typo in the name and emails it again with the same code. Changing the email gives it a new code and link, so whoever had it before can't use it or see who has it now. **Reissue** gives it a new code and link, so the old QR code, link and any screenshots stop working; it then needs naming again |
 | No name yet | Blank | **Type details**, **Send link** |
 | Link sent | The link went out, but nobody has filled it in | **Copy link**, **Cancel link** (the old link stops working) |
 | Headset collected | Used | None: a collected ticket can't be changed |
@@ -184,8 +184,9 @@ The headset desk is a page in the admin (**Tickets > Headset desk**, at `/admin/
 2. Each ticket shows one of:
    - green **Paid, ready**: press **Give headset**;
    - red **Headset already given**, with when and by whom: don't give another;
-   - amber **Needs a name**, with how many tickets on that order are unnamed: press **Save and give headset**, type in the person's name and email, and they're emailed their ticket;
-   - **Not paid**: the order was refunded.
+   - amber **Needs a name**, with how many tickets on that order are unnamed: press **Save and give headset**, type in the ticket's code and the person's name and email, and they're emailed their ticket. A ticket with no name has nothing to check someone against, so its code is the proof: it's on their QR code, or the buyer can read it out from their email or receipt. Staff can't see it until it's searched for in full. No code, no headset;
+   - **Payment disputed**: the buyer's bank is disputing the payment, so don't hand over a headset;
+   - **Not paid**: the order isn't paid, or was refunded.
 3. **Change name** fixes a typo on a named ticket before the headset goes out.
 
 Each paid ticket gets one headset, once. If two people at the desk press the button for the same ticket at the same moment, only one is recorded.
@@ -220,15 +221,49 @@ Bachs can't reach `lri.test`, so webhooks don't arrive locally, but purchases ar
 
 ### Bachs webhooks
 
-Add `https://<your-domain>/webhooks/payments/bachs` as a webhook destination in the Bachs developer portal, and put its signing secret in `BACHS_WEBHOOK_SECRET`. A webhook without a valid signature is refused. The site acts on these events and stores any others without acting on them:
+Add `https://<your-domain>/webhooks/payments/bachs` as a webhook destination in the Bachs developer portal, and put its signing secret in `BACHS_WEBHOOK_SECRET`. A webhook without a valid signature is refused. **Subscribe the webhook to the refund and dispute events too**, or refunded tickets keep working. The site acts on these events and stores any others without acting on them:
 
 | Event | What it does |
 | --- | --- |
 | `collection.succeeded` | Pays the order, issues its tickets and emails them |
 | `checkout.completed` | Pays the order, if Bachs says it's paid. It can arrive before or after `collection.succeeded`, and an order is only fulfilled once |
-| `collection.failed` | Records the failed attempt and why it failed |
+| `collection.failed` | Records why the try failed. The checkout stays open, so the buyer can try again on it |
 | `collection.underpaid` | Holds the order back without issuing tickets |
 | `checkout.expired` | Records that the checkout closed |
+| `refund.paid` | Cancels the order's tickets if all the money went back. A partial refund keeps them working and flags the order |
+| `dispute.created`, `dispute.updated` | Puts the order's tickets on hold straight away. Winning brings them back, losing cancels them |
+
+### When money goes back
+
+Tickets only work while the order is paid for.
+
+- **Full refund:** the tickets stop working, and their places and coupon use go back on offer. Getting back everything except Bachs's fee counts as full. An order paid for twice keeps its tickets when only the extra payment is refunded.
+- **Partial refund:** the tickets keep working, and the order is flagged for an organiser to decide.
+- **Chargeback:** when the buyer's bank disputes a payment, the tickets go on hold at once and keep their places. Winning makes them work again, and losing counts as a refund. If a dispute closes without a ruling, an organiser presses **Release tickets** on the order once Bachs confirms the money is staying.
+- **A payment that lands late** is honoured, since the buyer has paid, even if the event has since sold out or the coupon has run out. The order is flagged so an organiser can decide whether to refund it.
+
+Orders that need a person show **Needs a look** in **Tickets > Orders**, with a count in the menu, a filter, and the reason on the order. **Mark as looked at** clears the note without changing anything else.
+
+### Limits on unpaid orders
+
+Holding tickets costs nothing, so `payments.unpaid_limits` in `config/payments.php` stops one person holding them all without paying:
+
+- One email can hold 20 unpaid tickets and one connection (IP address) can hold 40. Someone holding none can always place one order, however big it's allowed to be.
+- An order gets 5 tries at paying, since each one keeps its tickets held for longer. After that the buyer starts a new order.
+- Switching sales off also stops unpaid orders opening new checkouts.
+
+### The bot check
+
+Those limits go by email and internet address, and both are easy to change, so a script could still reserve a lot of tickets without paying. To stop that, the ticket form uses [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile/), a free check that a real browser is placing the order. Buyers usually see nothing. Now and then, Cloudflare asks them to click a box.
+
+It's off until `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are set, which is how it stays out of the way locally. To turn it on, add a widget in the Cloudflare dashboard under Turnstile, in Managed mode, with your domain as its hostname, and put its two keys in `.env`.
+
+- **Failing the check:** the order is refused, and the buyer is asked to try again.
+- **If Cloudflare's server can't answer, or the secret key is wrong:** the order goes through and the problem is reported in the logs, so that kind of outage doesn't stop sales.
+- **If the check can't load in buyers' browsers, or the site key is wrong:** nobody can order, because the site can't tell that apart from a script skipping the check on purpose. So after setting the keys, buy a ticket on the live site to check it. If this happens during a sale, empty both keys in `.env` and run `php artisan optimize`, which switches the check off.
+- **Buyers need JavaScript on,** and a strict ad blocker can stop the check loading. They're told either way.
+
+To try it locally, use [Cloudflare's test keys](https://developers.cloudflare.com/turnstile/troubleshooting/testing/). Remove them afterwards.
 
 ### The admin
 
@@ -353,7 +388,7 @@ The site tells Mailchimp when a buyer starts, abandons or pays for a checkout, a
 
 4. Build a Mailchimp automation flow that starts when the tag `checkout-abandoned` is added, and link its button to `*|RESUMEURL|*`.
 5. Make the flow stop for anyone who gets the tag `ticket-paid`, so paid buyers aren't chased. Check how your Mailchimp plan handles this.
-6. Try it with your own email address before turning it on for buyers, then check **System > Email tool** in the admin.
+6. Try it before turning it on for buyers, using an email address that isn't in the audience yet, then check **System > Email tool** in the admin. You should get Mailchimp's confirmation email when you place the order. Also check whether confirming after the order has been abandoned still starts the flow, because this hasn't been tried on a real Mailchimp account.
 
 Each update sets the contact's name, email and order number, and one of these tags, taking off the other two:
 
@@ -363,7 +398,18 @@ Each update sets the contact's name, email and order number, and one of these ta
 | `checkout-abandoned` | The order is abandoned | Set |
 | `ticket-paid` | The order is paid | Cleared |
 
-The resume link opens the buyer's order page, where their details are saved and they can pick a way to pay. Phone numbers aren't sent. Someone already in the audience keeps their subscription status, so a buyer who unsubscribed isn't signed back up.
+The resume link opens the buyer's order page, where their details are saved and they can pick a way to pay. Phone numbers aren't sent.
+
+Anyone can type any email on the ticket form, so ticking the box on an unpaid order doesn't prove the address belongs to them. What happens to each contact depends on where they stand:
+
+| Contact | What happens |
+| --- | --- |
+| New, on an unpaid order | Added as pending, not subscribed. Mailchimp sends one email asking them to confirm, and marketing emails wait until they do |
+| New, on a paid order | Subscribed |
+| Still pending, and pays | Subscribed, without having to confirm |
+| Unsubscribed or bounced | Stays that way, even if they pay |
+
+This means abandoned-checkout reminders only reach people who confirmed. Expect new buyers who tick the box to get the confirmation email when they place the order, even if they go on to pay straight away.
 
 Sending runs on the queue, so Mailchimp being slow or down can't hold up checkout. Outages are retried for about 80 minutes. A refusal fails straight away and shows Mailchimp's reason in the admin, where you can send it again.
 
@@ -405,8 +451,9 @@ Do these once, in order, when the site goes live.
    | `APP_DEBUG` | `false`, so visitors never see error details |
    | `APP_URL` | The exact live address, `https` included. Ticket links, receipt links and the links in emails are built from it |
    | `DB_*` | The live MySQL database. Create the empty database first |
-   | `BACHS_SECRET_KEY` | The live key, starting `sk_live_` |
+   | `BACHS_SECRET_KEY` | The live key, starting `sk_live_`. With any other key, or a `BACHS_BASE_URL` other than the live one, the live site refuses to open checkouts, because anyone could get real tickets with test payments |
    | `BACHS_WEBHOOK_SECRET` | The signing secret of the webhook you add in step 9 |
+| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | The keys of your Cloudflare Turnstile widget. Without them there's no [bot check](#the-bot-check) |
    | `MAIL_MAILER` and its settings | A real mail service. Until this is set, ticket emails only go to the log file and nobody gets their tickets |
    | `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Who ticket emails come from. Change it from `hello@example.com` |
    | `LOG_LEVEL` | `error` or `warning`, so the log doesn't fill up with detail |
@@ -461,7 +508,7 @@ Do these once, in order, when the site goes live.
      * * * * * cd /path/to/lri && php artisan schedule:run >> /dev/null 2>&1
      ```
 
-9. **Add the webhook** at `https://<your-domain>/webhooks/payments/bachs` in the Bachs developer portal, and put its signing secret in `BACHS_WEBHOOK_SECRET` (run `php artisan optimize` again after changing `.env`). See [Bachs webhooks](#bachs-webhooks).
+9. **Add the webhook** at `https://<your-domain>/webhooks/payments/bachs` in the Bachs developer portal, subscribed to the checkout, collection, refund and dispute events, and put its signing secret in `BACHS_WEBHOOK_SECRET` (run `php artisan optimize` again after changing `.env`). See [Bachs webhooks](#bachs-webhooks).
 10. **Finish in the admin** at `/admin`, signed in as the super admin:
     - Set the price and the ticket limit (the number of headsets) under **Ticket types**.
     - Check **Ways to pay** shows the methods you expect.

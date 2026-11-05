@@ -2,6 +2,7 @@
 
 use App\Enums\EmailToolSendStatus;
 use App\Enums\PaymentMethod;
+use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Resources\EmailToolSends\Pages\ManageEmailToolSends;
 use App\Filament\Resources\Orders\Pages\ListOrders;
@@ -36,6 +37,42 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->admin = User::factory()->superAdmin()->create();
+});
+
+test('the sign-in page shows the club’s logo and a way back to the website', function () {
+    $this->get('/admin/login')
+        ->assertOk()
+        ->assertSeeText('Welcome back')
+        ->assertSee('images/lri-logo-email.png')
+        ->assertSeeText('Back to the website');
+});
+
+test('a wrong password doesn’t sign anyone in', function () {
+    Livewire::test(Login::class)
+        ->fillForm(['email' => $this->admin->email, 'password' => 'the-wrong-password'])
+        ->call('authenticate')
+        ->assertHasFormErrors(['email']);
+
+    $this->assertGuest();
+});
+
+test('someone signs in with their email and password', function () {
+    Livewire::test(Login::class)
+        ->fillForm(['email' => $this->admin->email, 'password' => 'password'])
+        ->call('authenticate')
+        ->assertHasNoFormErrors()
+        ->assertRedirect('/admin');
+
+    $this->assertAuthenticatedAs($this->admin);
+});
+
+test('signing in still needs both fields, even without the asterisks', function () {
+    Livewire::test(Login::class)
+        ->fillForm(['email' => '', 'password' => ''])
+        ->call('authenticate')
+        ->assertHasFormErrors(['email' => 'required', 'password' => 'required']);
+
+    $this->assertGuest();
 });
 
 test('the admin and the logs ask guests to sign in', function () {

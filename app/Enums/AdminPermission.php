@@ -46,7 +46,7 @@ enum AdminPermission: string implements HasDescription, HasLabel
     {
         return match ($this) {
             self::ViewDashboard => 'Money in, the checkout funnel, ways to pay and where buyers come from.',
-            self::ManageOrders => 'Every order with the buyer’s details, payments and journey. Can email tickets again.',
+            self::ManageOrders => 'Every order with the buyer’s details, payments and journey. Can email tickets again and release disputed ones.',
             self::UseHeadsetDesk => 'Find tickets, fill in names and hand over headsets on the day.',
             self::ManageTicketTypes => 'Prices, ticket limits and when sales open.',
             self::ManageCoupons => 'Create coupons, see how much they’ve been used, and disable them.',

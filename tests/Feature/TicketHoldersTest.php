@@ -165,6 +165,38 @@ test('editing a friend’s ticket fixes the typo and emails it again with the sa
     Mail::assertQueued(TicketMail::class, fn (TicketMail $mail): bool => $mail->hasTo('tunde@example.com'));
 });
 
+test('a ticket moved to a different email gets a new code and link, so whoever had it can’t use it or see who has it now', function () {
+    $this->friendsTicket->update(['holder_name' => 'First Friend', 'holder_email' => 'first@example.com']);
+    $before = $this->friendsTicket->fresh();
+
+    nameFromReceipt($this->order, $this->friendsTicket, ['name' => 'Second Friend', 'email' => 'second@example.com']);
+
+    expect($this->friendsTicket->fresh())
+        ->code->not->toBe($before->code)
+        ->claim_token->not->toBe($before->claim_token);
+    $this->get(route('tickets.show', $before->claim_token))->assertNotFound();
+    Mail::assertQueued(TicketMail::class, fn (TicketMail $mail): bool => $mail->hasTo('second@example.com'));
+});
+
+test('a ticket moved back to the buyer is emailed to them, because its code has changed', function () {
+    $this->friendsTicket->update(['holder_name' => 'First Friend', 'holder_email' => 'first@example.com']);
+
+    nameFromReceipt($this->order, $this->friendsTicket, ['name' => $this->order->buyer_name, 'email' => $this->order->buyer_email]);
+
+    Mail::assertQueued(TicketMail::class, fn (TicketMail $mail): bool => $mail->hasTo($this->order->buyer_email));
+});
+
+test('a name can’t carry a link, from the receipt or the ticket’s own link', function () {
+    nameFromReceipt($this->order, $this->friendsTicket, ['name' => 'Renew at https://evil.example', 'email' => 'first@example.com'])
+        ->assertSessionHasErrors('name', errorBag: 'ticket'.$this->friendsTicket->id);
+
+    $this->from($this->friendsTicket->claimUrl())
+        ->post(route('tickets.claim', $this->friendsTicket->claim_token), ['name' => '[Renew](https://evil.example)', 'email' => 'first@example.com'])
+        ->assertSessionHasErrors('name', errorBag: 'ticket'.$this->friendsTicket->id);
+
+    expect($this->friendsTicket->fresh()->holder_name)->toBeNull();
+});
+
 test('naming a ticket needs a name and a real email, and the errors stay with that ticket', function () {
     nameFromReceipt($this->order, $this->friendsTicket, ['name' => '', 'email' => 'not-an-email'])
         ->assertSessionHasErrors([

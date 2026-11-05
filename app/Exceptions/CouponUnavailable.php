@@ -29,6 +29,11 @@ class CouponUnavailable extends RuntimeException
         return new self('This coupon has been fully used.');
     }
 
+    public static function alreadyHeld(): self
+    {
+        return new self('There’s already an unpaid order using this coupon from this email or connection. Pay for that one, or try again once its hold runs out.');
+    }
+
     public static function wrongTicket(): self
     {
         return new self('This coupon doesn’t work on this ticket.');

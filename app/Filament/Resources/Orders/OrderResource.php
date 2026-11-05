@@ -31,6 +31,18 @@ class OrderResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'reference';
 
+    public static function getNavigationBadge(): ?string
+    {
+        $needingALook = Order::query()->whereNotNull('review_note')->count();
+
+        return $needingALook > 0 ? (string) $needingALook : null;
+    }
+
+    public static function getNavigationBadgeColor(): string
+    {
+        return 'danger';
+    }
+
     /**
      * @return list<string>
      */

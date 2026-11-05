@@ -47,7 +47,7 @@ class OrderController extends Controller
                 'email' => $request->validated('email'),
                 'phone' => $request->validated('phone'),
                 'marketing_consent' => $request->validated('marketing_consent'),
-            ], IdentifyVisitor::visitorId($request), IdentifyVisitor::attributionFor($request), $request->validated('coupon'));
+            ], IdentifyVisitor::visitorId($request), IdentifyVisitor::attributionFor($request), $request->validated('coupon'), $request->ip());
         } catch (TicketsUnavailable $exception) {
             $this->recordCheckoutStep->handle(CheckoutStep::FormInvalid, IdentifyVisitor::visitorId($request), properties: [
                 'fields' => ['quantity'],
@@ -211,7 +211,8 @@ class OrderController extends Controller
 
     /**
      * Ask the provider about the order's open payment, unless it was asked in the last few seconds. A provider
-     * that doesn't answer is reported and the order is left as it was.
+     * that doesn't answer is reported and the order is left as it was. Asking counts whether or not it answers, so
+     * refreshing the page can't hammer a provider that's struggling.
      */
     private function refreshIfDue(Order $order, RefreshPayment $refreshPayment): void
     {
@@ -223,6 +224,8 @@ class OrderController extends Controller
             return;
         }
 
+        $payment->update(['last_checked_at' => now()]);
+
         try {
             $refreshPayment->handle($payment);
             $order->refresh()->load('latestPayment');
@@ -232,18 +235,20 @@ class OrderController extends Controller
     }
 
     /**
-     * The order as the buyer's page shows it.
+     * The order as the buyer's page shows it. A try that failed on a checkout that's still open reads as failed, so the
+     * buyer is told what happened and offered another way to pay.
      *
-     * @return 'paid'|'refunded'|'abandoned'|'waiting'|'failed'|'underpaid'|'unpaid'
+     * @return 'paid'|'refunded'|'disputed'|'abandoned'|'waiting'|'failed'|'underpaid'|'unpaid'
      */
     private function state(Order $order): string
     {
         return match ($order->status) {
             OrderStatus::Paid => 'paid',
             OrderStatus::Refunded => 'refunded',
+            OrderStatus::Disputed => 'disputed',
             OrderStatus::Abandoned => 'abandoned',
             OrderStatus::Pending => match ($order->latestPayment?->status) {
-                PaymentStatus::Open => 'waiting',
+                PaymentStatus::Open => $order->latestPayment->failure_reason === null ? 'waiting' : 'failed',
                 PaymentStatus::Failed => 'failed',
                 PaymentStatus::Underpaid => 'underpaid',
                 default => 'unpaid',

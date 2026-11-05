@@ -12,7 +12,7 @@ class TicketNotUsable extends RuntimeException
 {
     public static function notPaid(): self
     {
-        return new self('This ticket’s order isn’t paid, or was refunded, so it can’t be used for a headset.');
+        return new self('This ticket’s order isn’t paid, or was refunded, or its payment is being disputed, so it can’t be used for a headset.');
     }
 
     public static function alreadyCollected(Ticket $ticket): self

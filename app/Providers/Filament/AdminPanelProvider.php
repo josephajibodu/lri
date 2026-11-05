@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Enums\AdminPermission;
+use App\Filament\Pages\Auth\Login;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -13,6 +14,8 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -28,7 +31,10 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(Login::class)
+            ->renderHook(PanelsRenderHook::HEAD_END, fn (): View => view('filament.auth.login-styles'), scopes: Login::class)
+            ->renderHook(PanelsRenderHook::SIMPLE_PAGE_START, fn (): View => view('filament.auth.login-logo'), scopes: Login::class)
+            ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn (): View => view('filament.auth.login-back-link'), scopes: Login::class)
             ->brandName('LRI Admin')
             ->favicon(asset('favicon.svg'))
             ->colors([

@@ -10,6 +10,7 @@ use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 
 class OrderInfolist
 {
@@ -17,6 +18,18 @@ class OrderInfolist
     {
         return $schema
             ->components([
+                Section::make('Needs a look')
+                    ->icon(Heroicon::OutlinedExclamationTriangle)
+                    ->iconColor('danger')
+                    ->visible(fn (Order $order): bool => $order->review_note !== null)
+                    ->schema([
+                        TextEntry::make('review_note')
+                            ->hiddenLabel()
+                            ->state(fn (Order $order): array => explode("\n", (string) $order->review_note))
+                            ->listWithLineBreaks()
+                            ->bulleted(),
+                    ])
+                    ->columnSpanFull(),
                 Section::make('Order')
                     ->schema([
                         TextEntry::make('reference')->copyable()->weight('bold'),
@@ -35,6 +48,7 @@ class OrderInfolist
                         TextEntry::make('paid_at')->label('Paid')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('Not paid'),
                         TextEntry::make('expires_at')->label('Tickets held until')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('–'),
                         TextEntry::make('abandoned_at')->label('Abandoned')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('–'),
+                        TextEntry::make('refunded_at')->label('Refunded')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('–'),
                         TextEntry::make('tickets_emailed_at')->label('Tickets emailed')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('Not yet'),
                     ])
                     ->columns(3)

@@ -28,6 +28,8 @@ interface EmailTool
 
     /**
      * Tell the tool the news about an order's buyer. Sending the same news twice must be harmless, because a retry can do that.
+     * Only "paid" news may subscribe someone straight away: on an unpaid order, nothing shows the email belongs to whoever
+     * typed it, so a new contact must confirm first. Someone who unsubscribed must never be signed back up.
      *
      * @throws EmailToolException
      */

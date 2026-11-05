@@ -81,7 +81,8 @@ class HandleWebhookCall
     }
 
     /**
-     * The payment attempt an update is about, by the provider's checkout id or, failing that, by our reference.
+     * The payment attempt an update is about: by the provider's checkout id, by our reference or, for refunds and
+     * disputes, which only name the charge, by the provider's id for it.
      */
     private function paymentFor(string $provider, PaymentUpdate $update): ?Payment
     {
@@ -93,8 +94,16 @@ class HandleWebhookCall
             }
         }
 
-        return $update->reference !== null
-            ? Payment::query()->where('provider', $provider)->where('reference', $update->reference)->first()
+        if ($update->reference !== null) {
+            $payment = Payment::query()->where('provider', $provider)->where('reference', $update->reference)->first();
+
+            if ($payment) {
+                return $payment;
+            }
+        }
+
+        return $update->paymentId !== null
+            ? Payment::query()->where('provider', $provider)->where('provider_payment_id', $update->paymentId)->first()
             : null;
     }
 }

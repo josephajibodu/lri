@@ -44,7 +44,8 @@ class OrdersTable
                     ->placeholder('–')
                     ->toggleable(),
                 TextColumn::make('status')
-                    ->badge(),
+                    ->badge()
+                    ->description(fn (Order $order): ?string => $order->review_note === null ? null : 'Needs a look'),
                 TextColumn::make('latestPayment.method')
                     ->label('Method')
                     ->badge()
@@ -69,6 +70,10 @@ class OrdersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Filter::make('needs_look')
+                    ->label('Needs a look')
+                    ->toggle()
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('review_note')),
                 SelectFilter::make('status')
                     ->options(OrderStatus::class)
                     ->multiple(),

@@ -21,16 +21,24 @@ use Illuminate\Support\Facades\Queue;
 uses(RefreshDatabase::class);
 
 /**
- * Have Mailchimp accept contacts and tags.
+ * Have Mailchimp accept contacts and tags, answering that the contact has the given status.
  */
-function fakeMailchimp(): void
+function fakeMailchimp(string $memberStatus = 'subscribed'): void
 {
     connectMailchimp();
 
     Http::fake([
         'us21.api.mailchimp.com/3.0/lists/aud_1/members/*/tags' => Http::response(null, 204),
-        'us21.api.mailchimp.com/3.0/lists/aud_1/members/*' => Http::response(['id' => 'member_1']),
+        'us21.api.mailchimp.com/3.0/lists/aud_1/members/*' => Http::response(['id' => 'member_1', 'status' => $memberStatus]),
     ]);
+}
+
+/**
+ * Whether Mailchimp was asked to change an existing contact's status.
+ */
+function mailchimpStatusWasChanged(): bool
+{
+    return Http::recorded(fn (ClientRequest $request): bool => $request->method() === 'PATCH')->isNotEmpty();
 }
 
 /**
@@ -180,16 +188,64 @@ test('a started checkout adds the buyer as a contact, with only their name and o
         ->sent_at->not->toBeNull();
 });
 
-test('only a new contact is subscribed, so someone who unsubscribed is never signed back up', function () {
-    fakeMailchimp();
-    $send = EmailToolSend::factory()->create();
+test('an email typed on the ticket form with the box ticked isn’t subscribed before payment', function () {
+    fakeMailchimp('pending');
 
-    SendToEmailTool::dispatch($send);
+    placeOrderForEmailTool(consent: true);
+
+    expect(EmailToolSend::query()->sole()->status)->toBe(EmailToolSendStatus::Sent)
+        ->and(mailchimpRequest('PUT')->data())
+        ->toHaveKey('status_if_new', 'pending')
+        ->not->toHaveKey('status')
+        ->and(mailchimpStatusWasChanged())->toBeFalse();
+});
+
+test('a new contact from an abandoned order is asked to confirm too', function () {
+    fakeMailchimp('pending');
+    $order = Order::factory()->abandoned()->create();
+
+    SendToEmailTool::dispatch(EmailToolSend::factory()->for($order)->create(['event' => EmailToolEvent::CheckoutAbandoned]));
+
+    expect(mailchimpRequest('PUT')->data())
+        ->toHaveKey('status_if_new', 'pending')
+        ->not->toHaveKey('status')
+        ->and(mailchimpStatusWasChanged())->toBeFalse();
+});
+
+test('a new contact who pays is subscribed straight away', function () {
+    fakeMailchimp();
+    $order = Order::factory()->paid()->create();
+
+    SendToEmailTool::dispatch(EmailToolSend::factory()->for($order)->create(['event' => EmailToolEvent::OrderPaid]));
 
     expect(mailchimpRequest('PUT')->data())
         ->toHaveKey('status_if_new', 'subscribed')
-        ->not->toHaveKey('status');
+        ->not->toHaveKey('status')
+        ->and(mailchimpStatusWasChanged())->toBeFalse();
 });
+
+test('a contact still waiting to confirm is subscribed once they pay, before their tags change', function () {
+    fakeMailchimp('pending');
+    $order = Order::factory()->paid()->create(['buyer_email' => 'Ada@Example.com']);
+
+    SendToEmailTool::dispatch(EmailToolSend::factory()->for($order)->create(['event' => EmailToolEvent::OrderPaid]));
+
+    $statusChange = mailchimpRequest('PATCH');
+
+    expect($statusChange->url())->toBe('https://us21.api.mailchimp.com/3.0/lists/aud_1/members/3e3417d7ef77d5932a6734b916515ed5')
+        ->and($statusChange->data())->toBe(['status' => 'subscribed'])
+        ->and(Http::recorded()->map(fn (array $call): string => $call[0]->method())->all())->toBe(['PUT', 'PATCH', 'POST']);
+});
+
+test('someone who unsubscribed or bounced is never signed back up, even if they pay', function (string $memberStatus) {
+    fakeMailchimp($memberStatus);
+    $order = Order::factory()->paid()->create();
+
+    SendToEmailTool::dispatch(EmailToolSend::factory()->for($order)->create(['event' => EmailToolEvent::OrderPaid]));
+
+    expect(mailchimpRequest('PUT')->data())->not->toHaveKey('status')
+        ->and(mailchimpStatusWasChanged())->toBeFalse();
+})->with(['unsubscribed', 'cleaned']);
 
 test('an abandoned checkout sends a working link back to the order, short enough for Mailchimp to keep', function () {
     fakeMailchimp();

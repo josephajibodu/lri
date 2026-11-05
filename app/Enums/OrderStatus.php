@@ -14,6 +14,7 @@ enum OrderStatus: string implements HasColor, HasLabel
     case Paid = 'paid';
     case Abandoned = 'abandoned';
     case Refunded = 'refunded';
+    case Disputed = 'disputed';
 
     /**
      * The status as organisers read it.
@@ -25,6 +26,7 @@ enum OrderStatus: string implements HasColor, HasLabel
             self::Paid => 'Paid',
             self::Abandoned => 'Abandoned',
             self::Refunded => 'Refunded',
+            self::Disputed => 'Payment disputed',
         };
     }
 
@@ -39,7 +41,7 @@ enum OrderStatus: string implements HasColor, HasLabel
             self::Pending => 'warning',
             self::Paid => 'success',
             self::Abandoned => 'gray',
-            self::Refunded => 'danger',
+            self::Refunded, self::Disputed => 'danger',
         };
     }
 }

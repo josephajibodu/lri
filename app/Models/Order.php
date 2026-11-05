@@ -30,11 +30,13 @@ use Illuminate\Support\Str;
     'discount_amount',
     'currency',
     'status',
+    'review_note',
     'buyer_name',
     'buyer_email',
     'buyer_phone',
     'marketing_consent',
     'visitor_id',
+    'ip_address',
     'attribution',
     'expires_at',
     'paid_at',
@@ -155,15 +157,36 @@ class Order extends Model
     }
 
     /**
-     * Limit the query to orders that count against a limit: paid, or held while their checkout is still open.
+     * Limit the query to orders that count against a limit: paid, disputed (the tickets may yet stand), or held while
+     * their checkout is still open.
      *
      * @param  Builder<Order>  $query
      */
     public function scopeHoldingTickets(Builder $query): void
     {
         $query->where(fn (Builder $query) => $query
-            ->where('status', OrderStatus::Paid)
-            ->orWhere(fn (Builder $query) => $query->where('status', OrderStatus::Pending)->where('expires_at', '>', now())));
+            ->whereIn('status', [OrderStatus::Paid, OrderStatus::Disputed])
+            ->orWhere(fn (Builder $query) => $query->unpaidHold()));
+    }
+
+    /**
+     * Limit the query to orders holding tickets without having paid for them yet.
+     *
+     * @param  Builder<Order>  $query
+     */
+    public function scopeUnpaidHold(Builder $query): void
+    {
+        $query->where('status', OrderStatus::Pending)->where('expires_at', '>', now());
+    }
+
+    /**
+     * Leave a note for organisers about something on this order a person should look at. The same note isn't added twice.
+     */
+    public function flagForReview(string $reason): void
+    {
+        if (! str_contains((string) $this->review_note, $reason)) {
+            $this->update(['review_note' => trim($this->review_note."\n".$reason)]);
+        }
     }
 
     /**

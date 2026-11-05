@@ -21,7 +21,8 @@ class ManageCoupons extends ManageRecords
                 ->modalSubmitActionLabel('Create coupon')
                 ->modalWidth(Width::ExtraLarge)
                 ->slideOver()
-                ->createAnother(false),
+                ->createAnother(false)
+                ->mutateDataUsing(fn (array $data): array => [...$data, 'created_by' => auth()->id()]),
         ];
     }
 }

@@ -18,6 +18,7 @@ enum PaymentStatus: string implements HasColor, HasLabel
     case Underpaid = 'underpaid';
     case Refunded = 'refunded';
     case PartiallyRefunded = 'partially_refunded';
+    case Disputed = 'disputed';
 
     /**
      * The status as organisers read it.
@@ -33,6 +34,7 @@ enum PaymentStatus: string implements HasColor, HasLabel
             self::Underpaid => 'Underpaid',
             self::Refunded => 'Refunded',
             self::PartiallyRefunded => 'Partly refunded',
+            self::Disputed => 'Disputed',
         };
     }
 
@@ -54,7 +56,7 @@ enum PaymentStatus: string implements HasColor, HasLabel
         return match ($this) {
             self::Open => 'warning',
             self::Succeeded => 'success',
-            self::Failed, self::Underpaid => 'danger',
+            self::Failed, self::Underpaid, self::Disputed => 'danger',
             self::Abandoned, self::Expired => 'gray',
             self::Refunded, self::PartiallyRefunded => 'info',
         };

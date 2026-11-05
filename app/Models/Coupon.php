@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -24,6 +25,7 @@ use LogicException;
 #[Fillable([
     'code',
     'note',
+    'created_by',
     'discount_type',
     'discount_value',
     'currency',
@@ -108,6 +110,16 @@ class Coupon extends Model
     }
 
     /**
+     * The organiser who made this coupon.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
      * The tickets this coupon works on. None means every ticket.
      *
      * @return BelongsToMany<TicketType, $this>
@@ -124,6 +136,15 @@ class Coupon extends Model
     public function timesTaken(): int
     {
         return $this->orders_taken_count ?? $this->orders()->holdingTickets()->count();
+    }
+
+    /**
+     * Whether an organiser switched this coupon off or its end date has passed. Unlike being used up, this can't
+     * depend on who's asking: an order already holding the last use is still holding a coupon that has ended.
+     */
+    public function hasEnded(): bool
+    {
+        return $this->disabled_at !== null || $this->ends_at?->isPast() === true;
     }
 
     public function status(): CouponStatus

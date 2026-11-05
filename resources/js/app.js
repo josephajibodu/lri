@@ -895,22 +895,47 @@ import.meta.glob("../fonts/*.woff2");
             if (first) first.focus();
         }
 
+        var botCheck = form.querySelector(".cf-turnstile");
+
+        /* The bot check's token takes a moment to arrive, so wait for it instead of sending the form without one. */
+        function whenBotCheckIsReady() {
+            return new Promise(function (resolve) {
+                var waited = 0;
+                (function check() {
+                    var token = form.querySelector("[name=cf-turnstile-response]");
+                    if (!botCheck || (token && token.value) || waited >= 15000) return resolve();
+                    waited += 200;
+                    setTimeout(check, 200);
+                })();
+            });
+        }
+
+        /* A token only works once, so anything that keeps the buyer on this page needs a new one for their next try. */
+        function renewBotCheck() {
+            if (botCheck && window.turnstile) window.turnstile.reset();
+        }
+
         form.addEventListener("submit", function (event) {
             var button = event.submitter;
             if (!button || button.name !== "channel" || !window.fetch) return;
             event.preventDefault();
 
-            var data = new FormData(form);
-            data.set("channel", button.value);
             busy(true, "Opening the payment page…");
 
-            fetch(form.action, { method: "POST", body: data, headers: { Accept: "application/json" }, credentials: "same-origin" })
+            whenBotCheckIsReady()
+                .then(function () {
+                    var data = new FormData(form);
+                    data.set("channel", button.value);
+
+                    return fetch(form.action, { method: "POST", body: data, headers: { Accept: "application/json" }, credentials: "same-origin" });
+                })
                 .then(function (response) {
                     return response.json().then(function (json) { return { status: response.status, json: json }; });
                 })
                 .then(function (result) {
                     if (result.status === 422) {
                         busy(false);
+                        renewBotCheck();
                         /* A coupon that stopped working since it was applied no longer counts in the total shown. */
                         if (useCoupon && result.json.errors && result.json.errors.coupon) useCoupon(null);
                         showErrors(result.json.errors || {});
@@ -923,7 +948,7 @@ import.meta.glob("../fonts/*.woff2");
                     if (!result.json.checkout_url) throw new Error("No checkout");
 
                     openOverlay(form, result.json)
-                        .then(function () { busy(false); })
+                        .then(function () { busy(false); renewBotCheck(); })
                         .catch(function () { window.location.assign(result.json.checkout_url); });
                 })
                 .catch(function () {

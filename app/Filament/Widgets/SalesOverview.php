@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Enums\PaymentStatus;
 use App\Filament\Widgets\Concerns\ReadsReportPeriod;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\TicketType;
 use App\Models\WebhookCall;
@@ -24,7 +25,8 @@ class SalesOverview extends StatsOverviewWidget
         $summary = SalesSummary::for($this->reportPeriod());
         $ticketsLeft = TicketType::query()->onSale()->get()->map(fn (TicketType $ticketType): ?int => $ticketType->ticketsLeft());
         $needsAttention = WebhookCall::query()->whereNotNull('failed_at')->whereNull('processed_at')->count()
-            + Payment::query()->where('status', PaymentStatus::Underpaid)->count();
+            + Payment::query()->where('status', PaymentStatus::Underpaid)->count()
+            + Order::query()->whereNotNull('review_note')->count();
 
         return [
             Stat::make('Revenue', $summary['revenue']->format())
@@ -38,7 +40,7 @@ class SalesOverview extends StatsOverviewWidget
                 ->description('Left unpaid when their hold ran out')
                 ->color($summary['abandoned_orders'] > 0 ? 'warning' : 'gray'),
             Stat::make('Needs attention', number_format($needsAttention))
-                ->description('Failed webhooks and short payments')
+                ->description('Failed webhooks, short payments and orders flagged for a look')
                 ->color($needsAttention > 0 ? 'danger' : 'gray'),
         ];
     }

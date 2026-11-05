@@ -40,6 +40,25 @@ return [
 
     'minimum_charge' => 10_000,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Limits On Unpaid Orders
+    |--------------------------------------------------------------------------
+    |
+    | Holding tickets costs nothing, so these stop one person holding them all
+    | without paying. A buyer (by email) and a connection (by IP address, which
+    | people on one mobile network can share) can only hold so many unpaid
+    | tickets, and each order only gets so many tries at paying, since every
+    | try keeps its tickets held for longer.
+    |
+    */
+
+    'unpaid_limits' => [
+        'tickets_per_buyer' => 20,
+        'tickets_per_connection' => 40,
+        'attempts_per_order' => 5,
+    ],
+
     'providers' => [
 
         /*

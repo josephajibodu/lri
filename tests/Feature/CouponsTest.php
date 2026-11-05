@@ -256,6 +256,17 @@ test('organisers can create a coupon with its limits, and amounts are stored in 
         ->and($coupon->ticketTypes->pluck('id')->all())->toBe([$this->ticketType->id]);
 });
 
+test('a new coupon records who made it', function () {
+    $organiser = User::factory()->superAdmin()->create();
+    $this->actingAs($organiser);
+
+    Livewire::test(ManageCoupons::class)
+        ->callAction('create', ['code' => 'WHO-MADE-IT', 'discount_type' => CouponDiscountType::Percentage->value, 'discount_value' => 10])
+        ->assertHasNoFormErrors();
+
+    expect(Coupon::query()->withCode('WHO-MADE-IT')->sole()->creator->is($organiser))->toBeTrue();
+});
+
 test('a percentage coupon stores its percentage and how many tickets it covers', function () {
     $this->actingAs(User::factory()->superAdmin()->create());
 

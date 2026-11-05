@@ -4,11 +4,13 @@ namespace App\Mail;
 
 use App\Models\Order;
 use App\Models\Ticket;
+use App\Support\PersonName;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Str;
 
 /**
  * The buyer's tickets, with a code per ticket and a link to their receipt.
@@ -42,6 +44,7 @@ class TicketsMail extends Mailable
             markdown: 'mail.tickets',
             with: [
                 'eventName' => $event['title'] ?? $this->order->ticketType->name,
+                'firstName' => Str::before(PersonName::forEmail($this->order->buyer_name), ' '),
                 'bannerUrl' => filled($event['email_banner'] ?? null) ? asset($event['email_banner']) : null,
                 'accent' => $event['email_accent'] ?? null,
                 'gradient' => $event['email_gradient'] ?? null,

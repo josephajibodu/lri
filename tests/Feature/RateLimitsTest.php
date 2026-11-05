@@ -27,8 +27,10 @@ function rateLimitedActions(): array
         'sharing a birthday' => [10, [['POST', route('birthdays.store')]]],
         'registering for the barracks' => [10, [['POST', route('barracks.store')]]],
         'uploading a barracks passport' => [20, [['POST', route('barracks.passport')]]],
-        'placing an order' => [10, [['POST', route('orders.store')]]],
+        'placing an order' => [30, [['POST', route('orders.store')]]],
+        'checking a coupon' => [10, [['POST', route('coupons.check')]]],
         'recording a checkout event' => [60, [['POST', route('checkout-events.store')]]],
+        'opening an order' => [60, [['GET', $order->signedUrl('orders.show')]]],
         'checking on an order' => [30, [['GET', $order->signedUrl('orders.status')]]],
         'paying for an order' => [10, [['POST', $order->signedUrl('orders.pay')]]],
         'changing a ticket from the receipt' => [20, [
