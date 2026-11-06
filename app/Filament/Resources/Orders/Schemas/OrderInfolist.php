@@ -49,6 +49,11 @@ class OrderInfolist
                         TextEntry::make('expires_at')->label('Tickets held until')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('–'),
                         TextEntry::make('abandoned_at')->label('Abandoned')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('–'),
                         TextEntry::make('refunded_at')->label('Refunded')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('–'),
+                        TextEntry::make('marked_test_at')
+                            ->label('Marked as a test payment')
+                            ->dateTime('j M Y, g:i A', 'Africa/Lagos')
+                            ->helperText(fn (Order $order): ?string => $order->markedTestBy ? 'By '.$order->markedTestBy->name : null)
+                            ->visible(fn (Order $order): bool => $order->marked_test_at !== null),
                         TextEntry::make('tickets_emailed_at')->label('Tickets emailed')->dateTime('j M Y, g:i A', 'Africa/Lagos')->placeholder('Not yet'),
                     ])
                     ->columns(3)

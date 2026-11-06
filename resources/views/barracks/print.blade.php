@@ -10,7 +10,7 @@
             * { box-sizing: border-box; }
             body { margin: 0; background: #e9e9e9; color: #111; font: 12pt/1.5 "Times New Roman", Times, serif; }
             .toolbar { display: flex; gap: 12px; align-items: center; justify-content: center; padding: 16px; font: 14px/1.4 system-ui, sans-serif; }
-            .toolbar button { padding: 8px 18px; border: 2px solid #111; border-radius: 999px; background: #FEB203; font: 600 14px/1 system-ui, sans-serif; cursor: pointer; }
+            .toolbar button { padding: 8px 18px; border: 2px solid #111; border-radius: 999px; background: #FFB000; font: 600 14px/1 system-ui, sans-serif; cursor: pointer; }
             .permit { position: relative; width: 210mm; max-width: 100%; min-height: 297mm; margin: 0 auto 24px; padding: 18mm; background: #fff; }
             .permit-restricted { margin: 0; text-align: center; font-size: 10pt; letter-spacing: .04em; }
             .permit-passport { position: absolute; top: 18mm; right: 18mm; width: 35mm; height: 45mm; border: 1px solid #111; object-fit: cover; }

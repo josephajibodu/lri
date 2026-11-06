@@ -5,7 +5,7 @@
     'robots' => 'index, follow',
     'image' => 'images/og-image.png',
     'imageAlt' => 'Let’s run, Ibadan. A run club for everyone, every pace, every Saturday at 6:30 AM.',
-    'themeColor' => '#FEB203',
+    'themeColor' => '#FFB000',
 ])
 
 <!DOCTYPE html>

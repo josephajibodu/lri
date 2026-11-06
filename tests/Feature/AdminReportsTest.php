@@ -118,3 +118,25 @@ test('the summary adds up revenue, tickets and how many visitors bought', functi
         ->and($summary['conversion_rate'])->toBe(33.3)
         ->and($summary['average_order']->format())->toBe('₦15,000');
 });
+
+test('test payments are left out of the sales figures', function () {
+    $realOrder = Order::factory()->paid()->create(['quantity' => 1, 'amount' => 1_000_000]);
+    Payment::factory()->for($realOrder)->method(PaymentMethod::Card)->succeeded()->create(['amount' => 1_000_000, 'fee' => 10_000]);
+    $testOrder = Order::factory()->testPayment()->create(['quantity' => 1, 'amount' => 10_000]);
+    Payment::factory()->for($testOrder)->method(PaymentMethod::Card)->succeeded()->create(['amount' => 10_000, 'fee' => 500]);
+
+    $summary = SalesSummary::for(new ReportPeriod);
+    $methods = PaymentMethodPerformance::for(new ReportPeriod);
+    $sources = SalesBySource::for(new ReportPeriod);
+
+    expect($summary['revenue']->format())->toBe('₦10,000')
+        ->and($summary['fees']->format())->toBe('₦100')
+        ->and($summary['paid_orders'])->toBe(1)
+        ->and($summary['tickets_sold'])->toBe(1);
+    expect($methods)->toHaveCount(1);
+    expect($methods[0]['attempts'])->toBe(1);
+    expect($methods[0]['revenue']->format())->toBe('₦10,000');
+    expect($sources)->toHaveCount(1);
+    expect($sources[0]['orders'])->toBe(1);
+    expect($sources[0]['revenue']->format())->toBe('₦10,000');
+});

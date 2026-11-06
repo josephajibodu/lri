@@ -1,4 +1,4 @@
-@props(['tickets', 'accent' => '#FEB203', 'numbered' => true, 'holders' => false])
+@props(['tickets', 'accent' => '#FFB000', 'numbered' => true, 'holders' => false])
 <table class="tickets" width="100%" cellpadding="0" cellspacing="0" role="presentation">
 @foreach ($tickets as $ticket)
 <tr>

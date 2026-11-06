@@ -238,7 +238,7 @@ class OrderController extends Controller
      * The order as the buyer's page shows it. A try that failed on a checkout that's still open reads as failed, so the
      * buyer is told what happened and offered another way to pay.
      *
-     * @return 'paid'|'refunded'|'disputed'|'abandoned'|'waiting'|'failed'|'underpaid'|'unpaid'
+     * @return 'paid'|'refunded'|'disputed'|'test'|'abandoned'|'waiting'|'failed'|'underpaid'|'unpaid'
      */
     private function state(Order $order): string
     {
@@ -246,6 +246,7 @@ class OrderController extends Controller
             OrderStatus::Paid => 'paid',
             OrderStatus::Refunded => 'refunded',
             OrderStatus::Disputed => 'disputed',
+            OrderStatus::TestPayment => 'test',
             OrderStatus::Abandoned => 'abandoned',
             OrderStatus::Pending => match ($order->latestPayment?->status) {
                 PaymentStatus::Open => $order->latestPayment->failure_reason === null ? 'waiting' : 'failed',

@@ -39,8 +39,8 @@ class SalesChart extends ChartWidget
             'datasets' => [[
                 'label' => 'Tickets sold',
                 'data' => $days->map(fn (string $day): int => $byDay[$day] ?? 0)->all(),
-                'backgroundColor' => 'rgba(254, 178, 3, .35)',
-                'borderColor' => '#FEB203',
+                'backgroundColor' => 'rgba(255, 176, 0, .35)',
+                'borderColor' => '#FFB000',
                 'fill' => true,
             ]],
             'labels' => $days->map(fn (string $day): string => CarbonImmutable::parse($day)->format('j M'))->all(),

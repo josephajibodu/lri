@@ -28,7 +28,7 @@ final class SalesSummary
             ->distinct()
             ->count('visitor_id');
 
-        $fees = (int) $period->apply(Payment::query()->where('status', PaymentStatus::Succeeded)->where('currency', $currency), 'paid_at')->sum('fee');
+        $fees = (int) $period->apply(Payment::query()->where('status', PaymentStatus::Succeeded)->where('currency', $currency)->whereRelation('order', 'status', '!=', OrderStatus::TestPayment), 'paid_at')->sum('fee');
 
         return [
             'revenue' => Money::of($revenue, $currency),
