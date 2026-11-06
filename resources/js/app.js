@@ -57,32 +57,6 @@ import.meta.glob("../fonts/*.woff2");
         import("./hero-runners.js").then(function (scene) { scene.startHeroRunners(heroScene, reduce); });
     }
 
-    /* Draggable stickers */
-    var z = 10;
-    var hint = document.querySelector(".drag-hint");
-    document.querySelectorAll(".sticker").forEach(function (st) {
-        var sx = 0, sy = 0, ox = 0, oy = 0, dragging = false;
-        st.addEventListener("pointerdown", function (e) {
-            dragging = true;
-            st.setPointerCapture(e.pointerId);
-            sx = e.clientX; sy = e.clientY;
-            ox = parseFloat(st.dataset.dx || 0); oy = parseFloat(st.dataset.dy || 0);
-            st.classList.add("grabbing");
-            st.style.zIndex = ++z;
-            if (hint) hint.classList.add("used");
-        });
-        st.addEventListener("pointermove", function (e) {
-            if (!dragging) return;
-            var dx = ox + e.clientX - sx, dy = oy + e.clientY - sy;
-            st.dataset.dx = dx; st.dataset.dy = dy;
-            st.style.setProperty("--dx", dx + "px");
-            st.style.setProperty("--dy", dy + "px");
-        });
-        function end() { dragging = false; st.classList.remove("grabbing"); }
-        st.addEventListener("pointerup", end);
-        st.addEventListener("pointercancel", end);
-    });
-
     /* Pace playground */
     function initPace() {
         var pace = $("pace-input");

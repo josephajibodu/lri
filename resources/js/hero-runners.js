@@ -1,8 +1,8 @@
 /*
  * The home hero: the Saturday crowd running through Ibadan at sunrise.
  *
- * Everything is drawn from code onto two canvases, one behind the wordmark and one in front of it, so people can
- * pass behind "Ibadan." and in front of it. There are no image files and no animation library.
+ * Everything is drawn from code onto one canvas, in its own space below the hero's words, so the animation never runs
+ * across them. There are no image files and no animation library.
  *
  * A person is a small skeleton, about 100 units tall, standing on the ground at y = 0 with y pointing up and facing
  * +x. Feet are placed first and the knees are worked out from them, so a foot on the ground stays exactly where it
@@ -25,7 +25,6 @@ var SKIN = ["#3B2318", "#4C2D1D", "#5C3924", "#6D452C", "#7F5436"];
 
 var AIR = "#EEECE7";
 var ROAD = "#DAD6CB";
-var ROAD_PAINT = "#E7E4DC";
 var ROAD_DASH = "#F4F2EC";
 var KERB = "#C7C2B4";
 var SHADOW = "#BDB8AA";
@@ -33,19 +32,17 @@ var SHADOW = "#BDB8AA";
 var THIGH = 27;
 var SHIN = 27;
 var LEG = THIGH + SHIN;
+/* A leg never quite straightens. Near full stretch a tiny change in reach swings the knee a long way, which looks like a jerk */
+var EASY_REACH = LEG * .97;
+var FULL_REACH = LEG - .2;
 var ANKLE = 5.6;
 var HEEL = 3.8;
-var BALL = 8.5;
+var BALL = 11;
 var TORSO = 27.5;
 var NECK = 4.2;
 var HEAD = 6.9;
 var UPPER_ARM = 17;
 var FOREARM = 15.5;
-
-/* The paces on the slider further down the page, so the readout here agrees with it */
-var PACE_BANDS = [[270, "Flying"], [360, "Tempo"], [450, "Easy run"], [540, "Chatty jog"], [Infinity, "Brisk walk"]];
-var SLOWEST_PACE = 780;
-var FASTEST_PACE = 210;
 
 /*
  * The people. pace nudges them above or below the crowd's tempo; walkers keep walking however fast everyone else goes.
@@ -99,37 +96,6 @@ function farSide(hex) {
 
 /* ---------- Movement ---------- */
 
-/*
- * How the body moves at a given effort: 0 is a stroll, about .5 a comfortable jog, 1 a flat-out sprint.
- * stride is how far the body travels in one full cycle (two steps), and stance is the share of that cycle a foot is
- * on the ground. A foot on the ground moves back at exactly the body's speed, which is what stops it sliding.
- */
-function readGait(gait, effort) {
-    var running = smooth(.12, .42, effort);
-    gait.effort = effort;
-    gait.stride = lerp(88, 280, effort);
-    gait.cycle = lerp(1.14, .66, effort);
-    gait.stance = effort < .42 ? lerp(.62, .4, effort / .42) : lerp(.4, .26, (effort - .42) / .58);
-    gait.travel = gait.stride * gait.stance;
-    gait.landX = gait.travel * .38;
-    gait.landPitch = lerp(18, 3, effort) * DEG;
-    gait.offPitch = lerp(38, 64, effort) * DEG;
-    gait.hipHeight = ANKLE + LEG * lerp(.97, .91, effort);
-    gait.bob = lerp(1.5, -3.8, running) * (running > 0 ? lerp(.7, 1, effort) : 1);
-    gait.lean = lerp(2.5, 15, effort) * DEG;
-    gait.armBase = lerp(-2, 7, effort) * DEG;
-    gait.armSwing = lerp(16, 50, effort) * DEG;
-    gait.elbow = lerp(14, 84, running) * DEG;
-    gait.elbowSwing = lerp(6, 24, effort) * DEG;
-    gait.rotation = lerp(1, 3.2, effort);
-}
-function makeLeg() {
-    return { hipX: 0, hipY: 0, kneeX: 0, kneeY: 0, ankleX: 0, ankleY: 0, pitch: 0, planted: false, swing: 0 };
-}
-function makeArm() {
-    return { shoulderX: 0, shoulderY: 0, elbowX: 0, elbowY: 0, handX: 0, handY: 0 };
-}
-
 /* Where the ankle sits for a foot on the ground, rolling over the heel as it lands and the ball of the foot as it leaves */
 function ankleOnGround(out, flatX, pitch) {
     var cos = Math.cos(pitch), sin = Math.sin(pitch), fromX, pivotX;
@@ -144,13 +110,73 @@ function ankleOnGround(out, flatX, pitch) {
     out.ankleY = fromX * sin + ANKLE * cos;
     out.pitch = pitch;
 }
+/* How high the hips can be while this ankle stays within easy reach of them */
+function hipLimit(ankleX, ankleY) {
+    return ankleY + Math.sqrt(Math.max(0, EASY_REACH * EASY_REACH - ankleX * ankleX));
+}
 
-var offFoot = makeLeg();
-var landFoot = makeLeg();
+var offFoot = {};
+var landFoot = {};
+
+/*
+ * How the body moves at a given effort: 0 is a stroll, about .5 a comfortable jog, 1 a flat-out sprint.
+ * stride is how far the body travels in one full cycle (two steps), and stance is the share of that cycle a foot is
+ * on the ground. A foot on the ground moves back at exactly the body's speed, which is what stops it sliding.
+ * The hips follow one smooth wave per step, set low enough that the feet are in reach at both ends of each step,
+ * so the body never has to be yanked down to reach a foot or pop back up when it lifts.
+ */
+function readGait(gait, effort) {
+    var running = smooth(.12, .42, effort);
+    gait.effort = effort;
+    gait.stride = lerp(84, 290, effort);
+    gait.cycle = lerp(1.14, .68, effort);
+    gait.stance = .2 + .42 * (1 - effort) * (1 - effort);
+    gait.travel = gait.stride * gait.stance;
+    gait.landX = gait.travel * .42;
+    gait.landPitch = lerp(18, 3, effort) * DEG;
+    gait.offPitch = lerp(38, 64, effort) * DEG;
+    gait.lean = lerp(2.5, 15, effort) * DEG;
+    gait.armBase = lerp(-2, 7, effort) * DEG;
+    gait.armSwing = lerp(16, 50, effort) * DEG;
+    gait.elbow = lerp(14, 84, running) * DEG;
+    gait.elbowSwing = lerp(6, 24, effort) * DEG;
+    gait.rotation = lerp(1, 3.2, effort);
+
+    /* The ground moves back this far during each of the swing's five parts: a foot leaves and lands at this speed */
+    gait.groundPerPart = gait.stride * (1 - gait.stance) / 5;
+    ankleOnGround(offFoot, gait.landX - gait.travel, -gait.offPitch);
+    ankleOnGround(landFoot, gait.landX, gait.landPitch);
+    gait.offX = offFoot.ankleX;
+    gait.offY = offFoot.ankleY;
+    gait.touchX = landFoot.ankleX;
+    gait.touchY = landFoot.ankleY;
+
+    gait.bob = lerp(1.8, -2.6, running);
+    gait.dipAt = gait.stance * .45;
+    gait.hipHeight = Math.min(
+        ANKLE + LEG * (lerp(.95, .91, running) - effort * .02),
+        hipLimit(gait.offX, gait.offY) - gait.bob * Math.cos(TAU * 2 * (gait.stance - gait.dipAt)),
+        hipLimit(gait.touchX, gait.touchY) - gait.bob * Math.cos(TAU * 2 * gait.dipAt)
+    );
+}
+function makeLeg() {
+    return { hipX: 0, hipY: 0, kneeX: 0, kneeY: 0, ankleX: 0, ankleY: 0, pitch: 0, planted: false, swing: 0 };
+}
+function makeArm() {
+    return { shoulderX: 0, shoulderY: 0, elbowX: 0, elbowY: 0, handX: 0, handY: 0 };
+}
+
 var swingX = new Float32Array(8);
 var swingY = new Float32Array(8);
+/* How the foot's roll eases in. It leaves the ground still turning at this share of the roll's average speed */
+var ROLL_EXIT_SPEED = .5;
+var ROLL_EASE_IN = 3 - ROLL_EXIT_SPEED;
 
-/* Catmull-Rom through the swing's waypoints: off the ground, up behind, through under the hips, reach and land */
+/*
+ * The foot's path in the air: a smooth curve through off the ground, up behind, through under the hips, reach and land.
+ * The two points past the ends of the path set its speed there. They match the speed of the ground, so a foot
+ * carries on smoothly as it lifts, and is already moving with the road when it touches down.
+ */
 function swingPoint(t, values) {
     var at = t * 5, index = Math.min(Math.floor(at), 4), f = at - index;
     var a = values[index], b = values[index + 1], c = values[index + 2], d = values[index + 3];
@@ -159,34 +185,33 @@ function swingPoint(t, values) {
 function placeFoot(leg, phase, gait) {
     if (phase < gait.stance) {
         var s = phase / gait.stance;
+        var roll = clamp((s - .5) / .5, 0, 1);
         var pitch = s < .2
             ? gait.landPitch * (1 - smooth(0, .2, s))
-            : s > .5 ? -gait.offPitch * smooth(.5, 1, s) * smooth(.5, 1, s) : 0;
+            : -gait.offPitch * roll * roll * (ROLL_EASE_IN + (1 - ROLL_EASE_IN) * roll);
         ankleOnGround(leg, gait.landX - gait.travel * s, pitch);
         leg.planted = true;
         leg.swing = 0;
         return;
     }
     var t = (phase - gait.stance) / (1 - gait.stance);
-    var effort = gait.effort;
-    ankleOnGround(offFoot, gait.landX - gait.travel, -gait.offPitch);
-    ankleOnGround(landFoot, gait.landX, gait.landPitch);
-    swingX[0] = offFoot.ankleX + 7;
-    swingY[0] = offFoot.ankleY - 5;
-    swingX[1] = offFoot.ankleX;
-    swingY[1] = offFoot.ankleY;
-    swingX[2] = offFoot.ankleX - lerp(1, 5, effort);
-    swingY[2] = lerp(12, 24, effort);
-    swingX[3] = lerp(-10, -30, effort);
-    swingY[3] = lerp(14, 40, effort);
-    swingX[4] = lerp(7, 8, effort);
-    swingY[4] = lerp(11, 34, effort);
-    swingX[5] = lerp(19, 34, effort);
-    swingY[5] = lerp(9, 24, effort);
-    swingX[6] = landFoot.ankleX;
-    swingY[6] = landFoot.ankleY;
-    swingX[7] = landFoot.ankleX - 6;
-    swingY[7] = landFoot.ankleY - 1;
+    var effort = gait.effort, ground = gait.groundPerPart;
+    swingX[1] = gait.offX;
+    swingY[1] = gait.offY;
+    swingX[2] = gait.offX - lerp(1, 6, effort);
+    swingY[2] = lerp(13, 27, effort);
+    swingX[3] = lerp(-10, -27, effort);
+    swingY[3] = lerp(13, 34, effort);
+    swingX[4] = lerp(6, 10, effort);
+    swingY[4] = lerp(11, 30, effort);
+    swingX[5] = gait.touchX + lerp(1, 10, effort);
+    swingY[5] = lerp(9.5, 20, effort);
+    swingX[6] = gait.touchX;
+    swingY[6] = gait.touchY;
+    swingX[0] = swingX[2] + ground * 1.7;
+    swingY[0] = swingY[2] - lerp(3, 12, effort);
+    swingX[7] = swingX[5] - ground * 2;
+    swingY[7] = swingY[5] - lerp(1, 5, effort);
     leg.ankleX = swingPoint(t, swingX);
     leg.ankleY = swingPoint(t, swingY);
     leg.planted = false;
@@ -196,7 +221,8 @@ function placeFoot(leg, phase, gait) {
 function placeKnee(leg, gait) {
     var dx = leg.ankleX - leg.hipX, dy = leg.ankleY - leg.hipY;
     var distance = Math.sqrt(dx * dx + dy * dy) || .001;
-    var reach = Math.min(distance, LEG - .05);
+    var spare = FULL_REACH - EASY_REACH;
+    var reach = distance <= EASY_REACH ? distance : EASY_REACH + spare * (1 - Math.exp((EASY_REACH - distance) / spare));
     var along = (THIGH * THIGH - SHIN * SHIN + reach * reach) / (2 * reach);
     var out = Math.sqrt(Math.max(0, THIGH * THIGH - along * along));
     var ux = dx / distance, uy = dy / distance;
@@ -206,9 +232,12 @@ function placeKnee(leg, gait) {
     leg.ankleY = leg.hipY + uy * reach;
     if (!leg.planted) {
         var t = leg.swing;
-        var shin = Math.atan2(leg.ankleY - leg.kneeY, leg.ankleX - leg.kneeX);
-        var natural = shin + Math.PI / 2 - lerp(38, 4, t) * DEG;
-        leg.pitch = lerp(lerp(-gait.offPitch, natural, smooth(0, .22, t)), gait.landPitch, smooth(.8, 1, t));
+        /* Measured from straight down, so the angle can't flip by a full turn as the shin swings up behind */
+        var shin = Math.atan2(leg.ankleX - leg.kneeX, leg.kneeY - leg.ankleY);
+        var natural = shin - lerp(38, 4, t) * DEG;
+        /* From the moment it lifts the foot keeps turning at the speed it left the ground, then settles into the shin's angle */
+        var stillRolling = -gait.offPitch * (1 + t * ROLL_EXIT_SPEED * 2 * (1 - gait.stance) / gait.stance);
+        leg.pitch = lerp(lerp(stillRolling, natural, smooth(0, .24, t)), gait.landPitch, smooth(.8, 1, t));
     }
 }
 function placeArm(arm, phase, gait, shoulderX, shoulderY, lean, raised) {
@@ -221,14 +250,6 @@ function placeArm(arm, phase, gait, shoulderX, shoulderY, lean, raised) {
     arm.elbowY = shoulderY - UPPER_ARM * Math.cos(angle);
     arm.handX = arm.elbowX + FOREARM * Math.sin(angle + bend);
     arm.handY = arm.elbowY - FOREARM * Math.cos(angle + bend);
-}
-/* A foot on the ground limits how high the hips can be, because the leg can only stretch so far */
-function highestHip(leg) {
-    if (!leg.planted) {
-        return Infinity;
-    }
-    var dx = leg.ankleX - leg.hipX;
-    return leg.ankleY + Math.sqrt(Math.max(0, (LEG - .1) * (LEG - .1) - dx * dx));
 }
 function makePerson(spec) {
     return {
@@ -247,8 +268,8 @@ function posePerson(person, phase, effort) {
     var turn = gait.rotation * Math.cos(TAU * (phase + .06));
     pose.near.hipX = turn * .55;
     pose.far.hipX = -turn * .55;
-    var hipY = gait.hipHeight + gait.bob * Math.cos(TAU * 2 * (phase - gait.stance * .45));
-    hipY = Math.min(hipY, highestHip(pose.near), highestHip(pose.far));
+    var bounce = gait.bob * Math.cos(TAU * 2 * (phase - gait.dipAt));
+    var hipY = gait.hipHeight + bounce;
     pose.hipX = 0;
     pose.hipY = hipY;
     pose.near.hipY = hipY;
@@ -262,7 +283,7 @@ function posePerson(person, phase, effort) {
     pose.lean = lean;
     pose.spine = spine;
     pose.chestX = sin * spine;
-    pose.chestY = hipY + cos * spine;
+    pose.chestY = hipY + cos * spine - bounce * .3;
     var twist = -turn * .85;
     placeArm(pose.armNear, wrap(phase, 1), gait, pose.chestX - sin * 3 + cos * twist, pose.chestY - cos * 3 - sin * twist, lean, raisedArm);
     placeArm(pose.armFar, wrap(phase + .5, 1), gait, pose.chestX - sin * 3 - cos * twist, pose.chestY - cos * 3 + sin * twist, lean, false);
@@ -272,6 +293,7 @@ function posePerson(person, phase, effort) {
     pose.headY = pose.chestY + Math.cos(neckLean) * (NECK + HEAD);
     pose.tilt = lean * .3 + Math.sin(TAU * 2 * phase) * .02;
     pose.step = phase * 2;
+    pose.phase = phase;
 }
 
 /* ---------- Drawing shapes ---------- */
@@ -732,7 +754,7 @@ function drawHead(ctx, pose, person, kit, detail) {
 }
 function drawFlag(ctx, pose, kit) {
     var hand = pose.armNear;
-    var wave = pose.step * TAU * .8;
+    var wave = pose.phase * TAU;
     var topX = hand.handX + 1.5, topY = hand.handY + 37;
     ctx.beginPath();
     ctx.moveTo(hand.handX - .8, hand.handY - 7);
@@ -1046,89 +1068,63 @@ function paintRoofs(ctx, width, height, u) {
         ctx.fillRect(x, ground - 11 * u, 1.4 * u, 11 * u);
     }
     ctx.fillRect(0, ground - 11 * u, width, 1.4 * u);
-}
-/* The club's three lines, painted on the road and running past under everyone's feet */
-var ROAD_WORDS = ["EVERYONE", "EVERY PACE", "ONE COMMUNITY"];
-function makeRoadWords(height, pixelRatio) {
-    var size = height * 1.5;
-    var font = 'italic 900 ' + size + 'px "Anybody", "Arial Black", sans-serif';
-    var measure = document.createElement("canvas").getContext("2d");
-    var gap = size * 1.1;
-    var total = 0;
-    measure.font = font;
-    var starts = ROAD_WORDS.map(function (word) {
-        var start = total;
-        total += measure.measureText(word).width + gap;
-        return start;
-    });
-    return makeLayer(total, height, pixelRatio, function (ctx) {
-        ctx.fillStyle = ROAD_PAINT;
-        ctx.font = font;
-        ROAD_WORDS.forEach(function (word, index) {
-            ctx.save();
-            ctx.translate(starts[index] + gap * .5, height * .94);
-            ctx.transform(1, 0, -.42, .58, 0, 0);
-            ctx.fillText(word, 0, 0);
-            ctx.restore();
-        });
-    });
-}
 
+    /* Softened towards the morning air, so the runners stay the brightest thing in the picture */
+    ctx.globalCompositeOperation = "source-atop";
+    ctx.globalAlpha = .3;
+    ctx.fillStyle = AIR;
+    ctx.fillRect(0, 0, width, height);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+}
 /* ---------- The scene ---------- */
 
 var LANES = [
-    { scale: .4, at: .025, haze: 0, front: false, detail: 0, spread: 1, shadow: false, roster: [1, 6, 11, 9, 2, 5, 12, 0, 8, 10, 7, 3], counts: [3, 7, 11] },
-    { scale: .62, at: .15, haze: .28, front: false, detail: 1, spread: 1, shadow: true, roster: [11, 5, 8, 12, 13, 10, 1, 7], counts: [3, 5, 8] },
-    { scale: .82, at: .42, haze: .05, front: true, detail: 2, spread: .75, shadow: true, roster: [4, 6, 2, 10, 5, 13], counts: [2, 4, 6] },
-    { scale: 1, at: .72, haze: 0, front: true, detail: 2, spread: .6, shadow: true, roster: [0, 3, 9, 7], counts: [2, 3, 4] },
+    { scale: .4, at: .025, haze: 0, front: false, detail: 0, spread: 1, shadow: false, roster: [1, 6, 11, 9, 2, 5], counts: [3, 4, 6] },
+    { scale: .62, at: .15, haze: .28, front: false, detail: 1, spread: 1, shadow: true, roster: [11, 5, 8, 12, 13], counts: [2, 4, 5] },
+    { scale: .82, at: .42, haze: .05, front: true, detail: 2, spread: .75, shadow: true, roster: [4, 6, 2, 10], counts: [2, 3, 4] },
+    { scale: 1, at: .72, haze: 0, front: true, detail: 2, spread: .6, shadow: true, roster: [0, 3, 9], counts: [2, 2, 3] },
 ];
 var FAR_CROWD = "#B7B1A4";
 
-function paceText(tempo) {
-    var seconds = Math.round(lerp(SLOWEST_PACE, FASTEST_PACE, tempo) / 15) * 15;
-    var minutes = Math.floor(seconds / 60), rest = seconds % 60;
-    return { time: minutes + ":" + (rest < 10 ? "0" : "") + rest, seconds: seconds };
-}
-function paceBand(seconds) {
-    for (var i = 0; i < PACE_BANDS.length; i++) {
-        if (seconds <= PACE_BANDS[i][0]) {
-            return PACE_BANDS[i][1];
-        }
-    }
-    return "";
-}
-
 export function startHeroRunners(hero, reduceMotion) {
-    var backCanvas = hero.querySelector("[data-hero-back]");
-    var frontCanvas = hero.querySelector("[data-hero-front]");
+    var canvas = hero.querySelector("[data-hero-canvas]");
+    var stage = hero.querySelector("[data-hero-stage]");
     var road = hero.querySelector("[data-hero-road]");
-    var sun = hero.querySelector("[data-hero-sun]");
-    var block = hero.querySelector(".wm-hl");
-    var hud = hero.querySelector("[data-hero-hud]");
-    var paceOut = hero.querySelector("[data-hero-pace]");
-    var bandOut = hero.querySelector("[data-hero-band]");
     var pauseButton = hero.querySelector("[data-hero-pause]");
-    if (!backCanvas || !frontCanvas || !road) {
+    if (!canvas || !stage || !road) {
         return;
     }
-    var back = backCanvas.getContext("2d");
-    var front = frontCanvas.getContext("2d");
+    var ctx = canvas.getContext("2d");
 
     var quality = 0;
     var width = 0, height = 0, pixelRatio = 1;
-    var horizon = 0, roadHeight = 0, unit = 0, sunX = 0, blockLeft = 0, blockRight = 0, blockHeight = 0;
-    var hills, city, roofs, roadWords;
+    var horizon = 0, roadHeight = 0, unit = 0, sunX = 0;
+    var hills, city, roofs;
     var people = [], dust = [];
     var cameraGait = {};
-    var camera = 0, clock = 0, tempo = reduceMotion ? .56 : .92, surge = 0;
+    var camera = 0, clock = 0, tempo = reduceMotion ? .54 : .85, surge = 0;
     var pointerTempo = null, pointerAt = -99;
     var running = false, paused = false, onScreen = true, frameRequest = 0, lastFrame = 0;
-    var slowFrames = 0, sampledFrames = 0, shownPace = "", shownCrowd = "";
+    var slowFrames = 0, sampledFrames = 0, shownCrowd = "";
     var laidOutWidth = 0, laidOutHeight = 0;
     var lastScrollY = window.scrollY;
 
     function crowdShape() {
-        return (width < 620 ? 0 : width < 1100 ? 1 : 2) + ":" + quality + ":" + Math.round(Math.max(1, width / 1500) * 2);
+        return (width < 620 ? 0 : width < 1100 ? 1 : 2) + ":" + Math.round(Math.max(1, width / 1500) * 2);
+    }
+    /* On the slowest devices, thin out the distant rows. Everyone who stays carries on from exactly where they are */
+    function thinCrowd() {
+        if (quality < 2) {
+            return;
+        }
+        var kept = 0;
+        people = people.filter(function (person) {
+            if (person.lane.front) {
+                return true;
+            }
+            return person.lane.scale >= .5 && ++kept % 2 === 0;
+        });
     }
     function buildCrowd(isOpening) {
         var size = width < 620 ? 0 : width < 1100 ? 1 : 2;
@@ -1136,9 +1132,6 @@ export function startHeroRunners(hero, reduceMotion) {
         people = [];
         LANES.forEach(function (lane) {
             var count = Math.round(lane.counts[size] * widen);
-            if (quality > 1 && !lane.front) {
-                count = lane.scale < .5 ? 0 : Math.ceil(count / 2);
-            }
             for (var i = 0; i < count; i++) {
                 var spec = CAST[lane.roster[i % lane.roster.length]];
                 var person = makePerson(spec);
@@ -1146,49 +1139,48 @@ export function startHeroRunners(hero, reduceMotion) {
                 person.kit = dress(spec, lane.haze);
                 person.x = (i + .5 + (Math.random() - .5) * .55) / count * lane.loop;
                 person.phase = Math.random();
-                person.effort = reduceMotion ? clamp(tempo + spec.pace, .02, spec.maxPace || 1) : .9;
+                person.effort = reduceMotion ? clamp(tempo + spec.pace, .02, spec.maxPace || 1) : .85;
                 person.enter = isOpening && !reduceMotion ? 1 + Math.random() * .9 : 0;
                 people.push(person);
             }
         });
+        thinCrowd();
     }
     function buildScenery() {
-        var skyline = Math.min(horizon, unit * 2);
+        /* The city stays a backdrop: on a tall screen it doesn't grow to fill the sky */
+        var skyline = Math.min(horizon, width * .28, 300);
         var u = skyline / 372;
+        var roofScale = Math.max(u, .62) * .92;
         var tile = Math.max(width * 1.15, 900);
         var ratio = Math.min(pixelRatio, 2);
         hills = makeLayer(tile, skyline * .58, ratio, paintHills);
-        city = makeLayer(tile * 1.2, skyline, ratio, function (ctx, w, h) { paintCity(ctx, w, h, u); });
-        roofs = makeLayer(tile * 1.05, skyline * .34, ratio, function (ctx, w, h) { paintRoofs(ctx, w, h, Math.max(u, .62) * .92); });
-        buildRoadWords();
+        city = makeLayer(tile * 1.2, skyline, ratio, function (layer, w, h) { paintCity(layer, w, h, u); });
+        roofs = makeLayer(tile * 1.05, roofScale * 180, ratio, function (layer, w, h) { paintRoofs(layer, w, h, roofScale); });
     }
-    function buildRoadWords() {
-        roadWords = makeRoadWords(roadHeight * .27, Math.min(pixelRatio, 2));
+    function sizeCanvas() {
+        pixelRatio = Math.min(window.devicePixelRatio || 1, quality === 0 ? 2 : quality === 1 ? 1.5 : 1);
+        canvas.width = Math.round(width * pixelRatio);
+        canvas.height = Math.round(height * pixelRatio);
     }
     function layout() {
         var box = hero.getBoundingClientRect();
+        var stageBox = stage.getBoundingClientRect();
         var roadBox = road.getBoundingClientRect();
-        var horizonFromTop = roadBox.top - box.top;
         width = box.width;
-        unit = clamp(width * .145, 142, 226);
+        sunX = width / 2;
         roadHeight = roadBox.height;
-        var sceneTop = Math.max(0, horizonFromTop - unit * 2.06);
-        height = (roadBox.bottom - box.top) - sceneTop;
-        hero.style.setProperty("--road-end", (roadBox.bottom - box.top) + "px");
-        horizon = horizonFromTop - sceneTop;
-        var cap = quality === 0 ? 2 : quality === 1 ? 1.5 : 1;
-        pixelRatio = Math.min(window.devicePixelRatio || 1, cap);
-        [backCanvas, frontCanvas].forEach(function (canvas) {
-            canvas.style.top = sceneTop + "px";
-            canvas.style.height = height + "px";
-            canvas.width = Math.round(width * pixelRatio);
-            canvas.height = Math.round(height * pixelRatio);
-        });
-        sunX = sun.offsetLeft + sun.offsetWidth / 2;
-        var blockBox = block.getBoundingClientRect();
-        blockLeft = blockBox.left - box.left;
-        blockRight = blockBox.right - box.left;
-        blockHeight = blockBox.height;
+        horizon = roadBox.top - stageBox.top;
+        height = roadBox.bottom - stageBox.top;
+        canvas.style.top = (stageBox.top - box.top) + "px";
+        canvas.style.height = height + "px";
+        sizeCanvas();
+
+        /* As large as the space allows, with the nearest heads and the tip of the pace flag staying under the buttons */
+        unit = Math.min(
+            clamp(width * .12, 122, 196),
+            (horizon + roadHeight * LANES[3].at - 8) / 1.08,
+            (horizon + roadHeight * LANES[2].at - 4) / (LANES[2].scale * 1.3)
+        );
         people.forEach(function (person) {
             person.share = person.x / person.lane.loop;
         });
@@ -1216,9 +1208,9 @@ export function startHeroRunners(hero, reduceMotion) {
 
     function advance(seconds) {
         clock += seconds;
-        var wish = pointerTempo !== null && clock - pointerAt < 5 ? pointerTempo : .56 + .13 * Math.sin(clock * .42);
+        var wish = pointerTempo !== null && clock - pointerAt < 5 ? pointerTempo : .54 + .06 * Math.sin(clock * .42);
         wish = clamp(wish + surge, 0, 1);
-        tempo += (wish - tempo) * (1 - Math.exp(-seconds * 2.1));
+        tempo += (wish - tempo) * (1 - Math.exp(-seconds * 1.6));
         surge *= Math.exp(-seconds * 2.4);
 
         readGait(cameraGait, tempo);
@@ -1270,23 +1262,17 @@ export function startHeroRunners(hero, reduceMotion) {
 
     /* ---------- Painting ---------- */
 
-    function paintLayer(ctx, layer, offset, bottom) {
-        var x = -wrap(offset, layer.width);
-        x = Math.round(x * pixelRatio) / pixelRatio;
-        ctx.drawImage(layer.canvas, x, bottom - layer.height, layer.width, layer.height);
-        if (x + layer.width < width) {
-            ctx.drawImage(layer.canvas, x + layer.width, bottom - layer.height, layer.width, layer.height);
+    function paintLayer(layer, offset, bottom) {
+        var x = Math.round(-wrap(offset, layer.width) * pixelRatio) / pixelRatio;
+        for (; x < width; x += layer.width) {
+            ctx.drawImage(layer.canvas, x, bottom - layer.height, layer.width, layer.height);
         }
     }
-    function paintGround(ctx) {
+    function paintGround() {
         ctx.fillStyle = ROAD;
         ctx.fillRect(0, horizon, width, height - horizon);
         ctx.fillStyle = KERB;
         ctx.fillRect(0, horizon, width, Math.max(3, roadHeight * .022));
-
-        /* The words on the road slide at the speed of the road beneath them */
-        var wordsLane = lerp(LANES[2].pixels, LANES[3].pixels, .5);
-        paintLayer(ctx, roadWords, camera * wordsLane, horizon + roadHeight * .76);
 
         ctx.fillStyle = ROAD_DASH;
         var dashY = horizon + roadHeight * .31;
@@ -1300,27 +1286,14 @@ export function startHeroRunners(hero, reduceMotion) {
     function shadowLean(x) {
         return clamp((x - sunX) / (width * .55), -1.2, 1.2) * 1.15;
     }
-    function paintBlockShadow(ctx) {
-        var middle = (blockLeft + blockRight) / 2;
-        var lean = shadowLean(middle) * blockHeight;
-        var length = blockHeight * .42;
-        ctx.fillStyle = SHADOW;
-        ctx.beginPath();
-        ctx.moveTo(blockLeft, horizon);
-        ctx.lineTo(blockRight, horizon);
-        ctx.lineTo(blockRight + lean, horizon + length);
-        ctx.lineTo(blockLeft + lean, horizon + length);
-        ctx.closePath();
-        ctx.fill();
-    }
-    function paintShadow(ctx, person, screenX) {
+    function paintShadow(person, screenX) {
         var size = person.lane.pixels * person.spec.height * pixelRatio;
         var lean = shadowLean(screenX);
         ctx.setTransform(size, 0, size * lean, size * .42, screenX * pixelRatio, person.lane.y * pixelRatio);
         traceSilhouette(ctx, person);
         ctx.fill();
     }
-    function paintPerson(ctx, person, screenX) {
+    function paintPerson(person, screenX) {
         var size = person.lane.pixels * person.spec.height * pixelRatio;
         ctx.setTransform(size, 0, 0, -size, screenX * pixelRatio, person.lane.y * pixelRatio);
         if (person.lane.detail === 0) {
@@ -1341,59 +1314,44 @@ export function startHeroRunners(hero, reduceMotion) {
             posePerson(person, person.phase, person.effort);
         }
 
-        back.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-        back.clearRect(0, 0, width, height);
-        paintLayer(back, hills, camera * unit / 100 * .018, horizon);
-        paintLayer(back, city, camera * unit / 100 * .06 + city.width * .02, horizon);
-        paintLayer(back, roofs, camera * unit / 100 * .17, horizon);
-        paintGround(back);
-        paintBlockShadow(back);
+        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        paintLayer(hills, camera * unit / 100 * .018, horizon);
+        paintLayer(city, camera * unit / 100 * .06 + city.width * .02, horizon);
+        paintLayer(roofs, camera * unit / 100 * .17, horizon);
+        paintGround();
 
-        back.fillStyle = SHADOW;
+        ctx.fillStyle = SHADOW;
         for (i = 0; i < people.length; i++) {
             person = people[i];
             screenX = screenXOf(person);
             if (person.lane.shadow && (quality < 2 || person.lane.front) && screenX > -width * .4 && screenX < width * 1.4) {
-                paintShadow(back, person, screenX);
+                paintShadow(person, screenX);
             }
         }
 
-        front.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-        front.clearRect(0, 0, width, height);
         for (i = 0; i < people.length; i++) {
             person = people[i];
             screenX = screenXOf(person);
             if (screenX < -person.lane.margin || screenX > width + person.lane.margin) {
                 continue;
             }
-            paintPerson(person.lane.front ? front : back, person, screenX);
+            paintPerson(person, screenX);
             if (person.step && person.lane.front) {
                 kickDust(person, screenX);
             }
         }
-        back.setTransform(1, 0, 0, 1, 0, 0);
 
-        front.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-        front.fillStyle = "#C9C4B6";
+        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        ctx.fillStyle = "#C9C4B6";
         for (i = 0; i < dust.length; i++) {
             var mote = dust[i];
-            front.globalAlpha = Math.min(1, mote.life * 1.4);
-            front.beginPath();
-            front.arc(mote.x, mote.y, mote.r * (1.5 - mote.life * .5), 0, TAU);
-            front.fill();
+            ctx.globalAlpha = Math.min(1, mote.life * 1.4);
+            ctx.beginPath();
+            ctx.arc(mote.x, mote.y, mote.r * (1.5 - mote.life * .5), 0, TAU);
+            ctx.fill();
         }
-        front.globalAlpha = 1;
-    }
-    function showPace() {
-        if (!paceOut) {
-            return;
-        }
-        var pace = paceText(tempo);
-        if (pace.time !== shownPace) {
-            shownPace = pace.time;
-            paceOut.textContent = pace.time;
-            bandOut.textContent = paceBand(pace.seconds);
-        }
+        ctx.globalAlpha = 1;
     }
 
     /* ---------- Running, pausing and looking after slower phones ---------- */
@@ -1413,7 +1371,9 @@ export function startHeroRunners(hero, reduceMotion) {
         if (sampledFrames >= 90) {
             if (slowFrames > 45) {
                 quality++;
-                layout();
+                thinCrowd();
+                sizeCanvas();
+                paint();
             }
             sampledFrames = 0;
             slowFrames = 0;
@@ -1426,9 +1386,7 @@ export function startHeroRunners(hero, reduceMotion) {
         var startedAt = performance.now();
         advance(Math.min(interval / 1000, .05));
         paint();
-        var drawing = performance.now() - startedAt;
-        showPace();
-        checkSpeed(interval, drawing);
+        checkSpeed(interval, performance.now() - startedAt);
     }
     function start() {
         if (running || paused || !onScreen || document.hidden || reduceMotion) {
@@ -1447,15 +1405,6 @@ export function startHeroRunners(hero, reduceMotion) {
     paint();
     hero.classList.add("is-live");
 
-    if (document.fonts && document.fonts.load) {
-        document.fonts.load('italic 900 40px "Anybody"').then(function () {
-            buildRoadWords();
-            if (!running) {
-                paint();
-            }
-        });
-    }
-
     var resizeTimer;
     new ResizeObserver(function () {
         clearTimeout(resizeTimer);
@@ -1472,7 +1421,7 @@ export function startHeroRunners(hero, reduceMotion) {
         return;
     }
 
-    hud.hidden = false;
+    pauseButton.hidden = false;
     start();
 
     new IntersectionObserver(function (entries) {
@@ -1483,10 +1432,14 @@ export function startHeroRunners(hero, reduceMotion) {
         if (document.hidden) { stop(); } else { start(); }
     });
 
-    /* Across the hero, left to right, is slowest to fastest */
+    /* Over the runners, left to right is slowest to fastest. Moving around the words leaves them alone */
     hero.addEventListener("pointermove", function (event) {
-        var box = hero.getBoundingClientRect();
-        pointerTempo = lerp(.04, 1, clamp((event.clientX - box.left) / box.width, 0, 1));
+        var stageBox = stage.getBoundingClientRect();
+        if (event.clientY < stageBox.top) {
+            pointerTempo = null;
+            return;
+        }
+        pointerTempo = lerp(.12, .92, clamp((event.clientX - stageBox.left) / stageBox.width, 0, 1));
         pointerAt = clock;
     });
     hero.addEventListener("pointerleave", function () { pointerTempo = null; });
@@ -1494,7 +1447,7 @@ export function startHeroRunners(hero, reduceMotion) {
     /* Scrolling makes everyone pick up speed for a moment, and lifts the sun */
     window.addEventListener("scroll", function () {
         var y = window.scrollY;
-        surge = Math.min(.42, surge + Math.abs(y - lastScrollY) * .0007);
+        surge = Math.min(.24, surge + Math.abs(y - lastScrollY) * .0004);
         lastScrollY = y;
         if (onScreen) {
             hero.style.setProperty("--hero-scroll", y.toFixed(1));
