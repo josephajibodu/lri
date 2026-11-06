@@ -1024,7 +1024,6 @@ import.meta.glob("../fonts/*.woff2");
         if (!viewer || typeof viewer.showModal !== "function") return;
         var links = Array.prototype.slice.call(document.querySelectorAll("[data-gallery-photo]"));
         var image = viewer.querySelector("[data-viewer-image]");
-        var count = viewer.querySelector("[data-viewer-count]");
         var current = 0;
         var swipeStart = null;
         function show(index) {
@@ -1032,7 +1031,6 @@ import.meta.glob("../fonts/*.woff2");
             var link = links[current];
             image.src = link.href;
             image.alt = link.querySelector("img").alt;
-            count.textContent = (current + 1) + " / " + links.length;
             [current + 1, current - 1].forEach(function (neighbour) {
                 new Image().src = links[(neighbour + links.length) % links.length].href;
             });

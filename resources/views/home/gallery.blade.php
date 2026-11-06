@@ -1,6 +1,5 @@
 @php
-    $photos = collect(config('gallery.photos'));
-    $featuredPhotos = $photos->where('featured', true)->take(5);
+    $featuredPhotos = collect(config('gallery.photos'))->where('featured', true)->take(5);
 @endphp
 
 @if ($featuredPhotos->isNotEmpty())
@@ -19,7 +18,7 @@
                 @endforeach
             </div>
             <div class="gl-teaser-cta">
-                <a class="btn btn-yellow" href="{{ route('gallery') }}">See all {{ $photos->count() }} photos →</a>
+                <a class="btn btn-yellow" href="{{ route('gallery') }}">See all photos →</a>
             </div>
         </div>
     </section>

@@ -8,7 +8,6 @@
                 <h1 class="wordmark gl-title"><span class="wm-line">Every Saturday,</span><span class="wm-line">in <span class="wm-hl">pictures.</span></span></h1>
                 <p class="lede">Early starts, big smiles and the people who keep showing up. This is what running with Let’s Run Ibadan looks like.</p>
                 <ul class="hero-facts">
-                    <li>{{ count($photos) }} {{ Str::plural('photo', count($photos)) }}</li>
                     <li>Every pace</li>
                     <li>One community</li>
                 </ul>
@@ -51,6 +50,5 @@
         <button class="gl-viewer-btn gl-viewer-prev" type="button" data-viewer-prev aria-label="Previous photo">←</button>
         <img class="gl-viewer-image" data-viewer-image src="data:," alt="" draggable="false">
         <button class="gl-viewer-btn gl-viewer-next" type="button" data-viewer-next aria-label="Next photo">→</button>
-        <p class="gl-viewer-count" data-viewer-count aria-live="polite"></p>
     </dialog>
 </x-layouts.app>

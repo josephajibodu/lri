@@ -1775,7 +1775,6 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .gl-viewer-close { top: 12px; right: 12px; }
 .gl-viewer-prev { left: 12px; top: 50%; translate: 0 -50%; }
 .gl-viewer-next { right: 12px; top: 50%; translate: 0 -50%; }
-.gl-viewer-count { position: absolute; top: 24px; left: 16px; margin: 0; font: 400 .72rem/1 var(--mono); letter-spacing: .12em; }
 @media (max-width: 600px) {
     .gl-viewer-prev, .gl-viewer-next { top: auto; bottom: 12px; translate: none; }
 }

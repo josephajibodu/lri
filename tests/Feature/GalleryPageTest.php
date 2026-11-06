@@ -26,7 +26,7 @@ test('the gallery page shows every photo from config in order, linking to the la
         ->assertOk()
         ->assertSee('<title>Gallery · Let’s Run Ibadan</title>', false)
         ->assertSee('<link rel="canonical" href="'.route('gallery').'">', false)
-        ->assertSeeText('2 photos')
+        ->assertDontSeeText('2 photos')
         ->assertSeeInOrder(['Runners in first-photo.', 'Runners in second-photo.'])
         ->assertSee('href="https://assets.example.com/gallery/first-photo-large.webp" data-gallery-photo', false)
         ->assertSee('src="https://assets.example.com/gallery/first-photo-thumb.webp"', false)
@@ -44,7 +44,8 @@ test('the home page teases only the first five featured photos and links to the 
         ->assertSeeInOrder(['Runners in featured-1.', 'Runners in featured-5.'])
         ->assertDontSee('Runners in featured-6.')
         ->assertDontSee('Runners in not-featured.')
-        ->assertSeeText('See all 7 photos')
+        ->assertSeeText('See all photos')
+        ->assertDontSeeText('7 photos')
         ->assertSee('href="'.route('gallery').'"', false);
 });
 
