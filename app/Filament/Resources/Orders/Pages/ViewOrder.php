@@ -70,6 +70,24 @@ class ViewOrder extends ViewRecord
 
                     Notification::make()->title('The tickets work again')->success()->send();
                 }),
+            Action::make('markAsTestPayment')
+                ->label('Mark as test payment')
+                ->icon(Heroicon::OutlinedBeaker)
+                ->color('danger')
+                ->visible(fn (Order $record): bool => $record->status === OrderStatus::Paid && $record->tickets()->whereNotNull('checked_in_at')->doesntExist())
+                ->requiresConfirmation()
+                ->modalHeading('Mark this as a test payment?')
+                ->modalDescription(fn (Order $record): string => "Only do this for a payment made to try out checkout. {$record->buyer_name}’s tickets stop working straight away and go back on sale, and the order leaves the sales figures. The order and its payment stay on record, and no money is refunded. This can’t be undone from here.")
+                ->modalSubmitActionLabel('Yes, it’s a test')
+                ->action(function (Order $record): void {
+                    $record->update([
+                        'status' => OrderStatus::TestPayment,
+                        'marked_test_at' => now(),
+                        'marked_test_by' => auth()->id(),
+                    ]);
+
+                    Notification::make()->title('Marked as a test payment')->body('Its tickets no longer work and are back on sale.')->success()->send();
+                }),
             Action::make('markLookedAt')
                 ->label('Mark as looked at')
                 ->icon(Heroicon::OutlinedCheck)

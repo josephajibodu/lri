@@ -2,6 +2,7 @@
 
 namespace App\Reports;
 
+use App\Enums\OrderStatus;
 use App\Enums\PaymentFailureReason;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -20,7 +21,7 @@ final class PaymentMethodPerformance
      */
     public static function for(ReportPeriod $period, string $currency = 'NGN'): array
     {
-        return $period->apply(Payment::query()->where('currency', $currency), 'created_at')
+        return $period->apply(Payment::query()->where('currency', $currency)->whereRelation('order', 'status', '!=', OrderStatus::TestPayment), 'created_at')
             ->get(['id', 'method', 'status', 'failure_reason', 'amount', 'created_at', 'paid_at'])
             ->groupBy(fn (Payment $payment): string => $payment->method?->value ?? 'unknown')
             ->map(fn (Collection $payments): array => self::row($payments, $currency))

@@ -112,3 +112,39 @@ test('a second payment on a paid order is flagged for a refund instead of issuin
     expect($this->order->tickets()->count())->toBe(2);
     Log::shouldHaveReceived('warning')->once()->withArgs(fn (string $message): bool => str_contains($message, 'paid for twice'));
 });
+
+test('a test payment stays a test payment when the provider repeats that it succeeded', function () {
+    record($this->payment, PaymentStatus::Succeeded);
+    $this->order->update(['status' => OrderStatus::TestPayment]);
+
+    record($this->payment, PaymentStatus::Succeeded);
+
+    expect($this->order->fresh())
+        ->status->toBe(OrderStatus::TestPayment)
+        ->review_note->toBeNull();
+    expect($this->order->tickets()->count())->toBe(2);
+    Event::assertDispatchedTimes(OrderPaid::class, 1);
+});
+
+test('a second payment landing on a test payment is flagged and issues no tickets', function () {
+    record($this->payment, PaymentStatus::Succeeded);
+    $this->order->update(['status' => OrderStatus::TestPayment]);
+    $secondPayment = Payment::factory()->for($this->order)->create(['amount' => 2_000_000]);
+
+    record($secondPayment, PaymentStatus::Succeeded);
+
+    expect($this->order->fresh())
+        ->status->toBe(OrderStatus::TestPayment)
+        ->review_note->toContain('paid for twice');
+    expect($this->order->tickets()->count())->toBe(2);
+});
+
+test('refunding a test payment leaves the order as a test payment', function () {
+    record($this->payment, PaymentStatus::Succeeded);
+    $this->order->update(['status' => OrderStatus::TestPayment]);
+
+    $refunded = record($this->payment, PaymentStatus::Refunded);
+
+    expect($refunded->status)->toBe(PaymentStatus::Refunded);
+    expect($this->order->fresh()->status)->toBe(OrderStatus::TestPayment);
+});

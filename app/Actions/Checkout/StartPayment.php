@@ -185,7 +185,7 @@ class StartPayment
      */
     private function refuseIfSettled(Order $order): void
     {
-        if (in_array($order->status, [OrderStatus::Paid, OrderStatus::Refunded, OrderStatus::Disputed], true)) {
+        if (in_array($order->status, [OrderStatus::Paid, OrderStatus::Refunded, OrderStatus::Disputed, OrderStatus::TestPayment], true)) {
             throw CheckoutUnavailable::alreadyPaid();
         }
     }

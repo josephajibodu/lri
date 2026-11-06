@@ -182,10 +182,11 @@ class RecordPaymentUpdate
     /**
      * Mark the order paid and issue one ticket per seat, the first one in the buyer's name. Returns whether this call
      * did it. Money arriving for an order that was refunded brings back the tickets it already has, not new ones.
+     * A test payment stays a test payment, even if the provider repeats that it succeeded.
      */
     private function fulfil(Order $order, Payment $payment): bool
     {
-        if ($order->status === OrderStatus::Paid) {
+        if (in_array($order->status, [OrderStatus::Paid, OrderStatus::TestPayment], true)) {
             if ($order->payments()->where('status', PaymentStatus::Succeeded)->whereKeyNot($payment->id)->exists()) {
                 $this->flag($order, 'This order was paid for twice; one payment needs refunding.', $payment);
             }
