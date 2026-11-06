@@ -51,6 +51,12 @@ import.meta.glob("../fonts/*.woff2");
         if (ibadanDay(new Date(el.getAttribute("data-until")).getTime()) < ibadanDay(Date.now())) el.hidden = true;
     });
 
+    /* Home hero: the running crowd lives in its own file, fetched only on the page that has it */
+    var heroScene = document.querySelector("[data-hero-scene]");
+    if (heroScene) {
+        import("./hero-runners.js").then(function (scene) { scene.startHeroRunners(heroScene, reduce); });
+    }
+
     /* Draggable stickers */
     var z = 10;
     var hint = document.querySelector(".drag-hint");
