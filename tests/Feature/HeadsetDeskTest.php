@@ -2,6 +2,7 @@
 
 use App\Actions\Tickets\HandOverHeadset;
 use App\Enums\AdminPermission;
+use App\Enums\StaffRole;
 use App\Exceptions\TicketNotUsable;
 use App\Filament\Pages\HeadsetDesk;
 use App\Mail\TicketMail;
@@ -18,6 +19,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Mail::fake();
+    config()->set('lri.headset_desk.open', true);
 
     $this->staff = User::factory()->deskStaff()->create(['name' => 'Bisi Desk']);
     $this->order = Order::factory()->paid()->create(['buyer_name' => 'Ada Bello', 'buyer_email' => 'ada@example.com', 'quantity' => 2]);
@@ -57,6 +59,46 @@ test('someone whose roles don’t include the desk can’t open it', function ()
     $this->actingAs(User::factory()->withPermissions(AdminPermission::ManageOrders)->create())
         ->get('/admin/headset-desk')
         ->assertForbidden();
+});
+
+test('until the desk is opened, only a super admin can open it, whatever other roles have ticked', function () {
+    config()->set('lri.headset_desk.open', false);
+
+    $this->actingAs($this->staff)->get('/admin/headset-desk')->assertForbidden();
+    $this->actingAs(User::factory()->withRole(StaffRole::Admin)->create())->get('/admin/headset-desk')->assertForbidden();
+    $this->actingAs(User::factory()->superAdmin()->create())->get('/admin/headset-desk')->assertOk();
+});
+
+test('until the desk is opened, it’s missing from the menu of a role that has it ticked', function () {
+    config()->set('lri.headset_desk.open', false);
+
+    $this->actingAs(User::factory()->withRole(StaffRole::Admin)->create())
+        ->get('/admin/orders')
+        ->assertOk()
+        ->assertDontSeeText('Headset desk');
+});
+
+test('until the desk is opened, it stays in a super admin’s menu', function () {
+    config()->set('lri.headset_desk.open', false);
+
+    $this->actingAs(User::factory()->superAdmin()->create())
+        ->get('/admin/orders')
+        ->assertOk()
+        ->assertSeeText('Headset desk');
+});
+
+test('until the desk is opened, desk staff are refused at /admin rather than sent round in circles', function () {
+    config()->set('lri.headset_desk.open', false);
+
+    $this->actingAs($this->staff)->get('/admin')->assertForbidden();
+});
+
+test('the roles screen warns that ticking the desk does nothing until it’s opened', function () {
+    expect(AdminPermission::UseHeadsetDesk->getDescription())->not->toContain('Hidden for now');
+
+    config()->set('lri.headset_desk.open', false);
+
+    expect(AdminPermission::UseHeadsetDesk->getDescription())->toContain('Hidden for now');
 });
 
 test('the desk finds tickets by code with or without its dash, holder, or the buyer’s details', function (callable $search) {

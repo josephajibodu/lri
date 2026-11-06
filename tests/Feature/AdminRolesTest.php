@@ -15,6 +15,7 @@ uses(RefreshDatabase::class);
 
 test('each part of the admin opens only for roles that include it', function (string $url, AdminPermission $permission) {
     config()->set('lri.barracks_registration.open', true);
+    config()->set('lri.headset_desk.open', true);
     $other = $permission === AdminPermission::ManageOrders ? AdminPermission::ManageBirthdays : AdminPermission::ManageOrders;
 
     $this->actingAs(User::factory()->withPermissions($permission)->create())->get($url)->assertOk();
@@ -42,6 +43,41 @@ test('a super admin can open every part of the admin', function () {
     foreach (['/admin/dashboard', '/admin/orders', '/admin/headset-desk', '/admin/users', '/admin/roles', '/log-viewer'] as $url) {
         $this->get($url)->assertOk();
     }
+});
+
+test('everything under System opens for super admins and developers, not admins', function (string $url) {
+    $this->actingAs(User::factory()->superAdmin()->create())->get($url)->assertOk();
+    $this->actingAs(User::factory()->withRole(StaffRole::Developer)->create())->get($url)->assertOk();
+    $this->actingAs(User::factory()->withRole(StaffRole::Admin)->create())->get($url)->assertForbidden();
+})->with([
+    'webhooks' => '/admin/webhook-calls',
+    'email tool' => '/admin/email-tool-sends',
+    'logs' => '/log-viewer',
+]);
+
+test('a developer’s menu shows only what’s under System', function () {
+    $developer = User::factory()->withRole(StaffRole::Developer)->create();
+
+    $this->actingAs($developer)->get('/admin/webhook-calls')
+        ->assertOk()
+        ->assertSeeText('Webhooks')
+        ->assertSeeText('Email tool')
+        ->assertSeeText('Logs')
+        ->assertDontSeeText('Orders');
+
+    $this->actingAs($developer)->get('/admin/orders')->assertForbidden();
+});
+
+test('an admin’s menu shows every section except System', function () {
+    $this->actingAs(User::factory()->withRole(StaffRole::Admin)->create())->get('/admin/orders')
+        ->assertOk()
+        ->assertSeeText('Ticket Types')
+        ->assertSeeText('Birthdays')
+        ->assertSeeText('People')
+        ->assertDontSeeText('System')
+        ->assertDontSeeText('Webhooks')
+        ->assertDontSeeText('Email tool')
+        ->assertDontSeeText('Logs');
 });
 
 test('someone with no role can’t get into the admin', function () {
@@ -81,6 +117,7 @@ test('a new role’s parts of the admin open as soon as it’s saved and given t
 });
 
 test('changing a role’s parts of the admin takes effect straight away', function () {
+    config()->set('lri.headset_desk.open', true);
     $volunteer = User::factory()->deskStaff()->create();
     $deskRole = Role::findByName(StaffRole::HeadsetDesk->value);
 

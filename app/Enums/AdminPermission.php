@@ -47,7 +47,7 @@ enum AdminPermission: string implements HasDescription, HasLabel
         return match ($this) {
             self::ViewDashboard => 'Money in, the checkout funnel, ways to pay and where buyers come from.',
             self::ManageOrders => 'Every order with the buyer’s details, payments and journey. Can email tickets again and release disputed ones.',
-            self::UseHeadsetDesk => 'Find tickets, fill in names and hand over headsets on the day.',
+            self::UseHeadsetDesk => 'Find tickets, fill in names and hand over headsets on the day.'.(config('lri.headset_desk.open') ? '' : ' Hidden for now: only super admins can open it.'),
             self::ManageTicketTypes => 'Prices, ticket limits and when sales open.',
             self::ManageCoupons => 'Create coupons, see how much they’ve been used, and disable them.',
             self::ManagePaymentMethods => 'Switch ways to pay on or off and choose the featured ones.',

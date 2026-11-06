@@ -182,6 +182,8 @@ Every ticket has its own QR code, never one per order, with the printed code (li
 
 The headset desk is a page in the admin (**Tickets > Headset desk**, at `/admin/headset-desk`) that works on a phone. Give each person working the desk a login with the **Headset desk** role, and they'll see nothing else in the admin.
 
+The desk is hidden for now: only super admins can see it, and anyone else who scans a QR code is refused. To give it back to every role with **Headset desk** ticked, set `HEADSET_DESK_OPEN=true` in the environment and redeploy.
+
 1. Scan their QR code with your phone's camera, which opens the desk on that ticket. If it won't scan, type the code under it, their name or email, or the name of whoever bought it. Codes work with or without the dash. Tickets are grouped by order, so searching for the buyer shows everyone they paid for.
 2. Each ticket shows one of:
    - green **Paid, ready**: press **Give headset**;
@@ -269,13 +271,14 @@ To try it locally, use [Cloudflare's test keys](https://developers.cloudflare.co
 
 ### The admin
 
-Everyone signs in at `/admin`. Each person sees only the sections their roles allow: the rest are missing from their menu, and their addresses are refused. `/admin` takes each person to the first section they can see, so desk staff land straight on the desk and everyone else on the dashboard (`/admin/dashboard`).
+Everyone signs in at `/admin`. Each person sees only the sections their roles allow: the rest are missing from their menu, and their addresses are refused. `/admin` takes each person to the first section they can see, so desk staff land straight on the desk and everyone else on the dashboard (`/admin/dashboard`). Someone whose roles don't show any section is refused.
 
-Roles are set up under **Settings > Roles** by ticking the sections a role can see, and given out under **Settings > People**. Someone can have more than one role, and someone with no role can't sign in. The site starts with three roles:
+Roles are set up under **Settings > Roles** by ticking the sections a role can see, and given out under **Settings > People**. Someone can have more than one role, and someone with no role can't sign in. The site starts with four roles:
 
 - **Super admin** sees everything, including sections added later. It can't be edited, and only a super admin can make someone else one, or change or remove one.
-- **Admin** starts with every section, but can be changed. A section added later isn't ticked for it automatically.
-- **Headset desk** sees only the headset desk.
+- **Admin** starts with every section except System, but can be changed. A section added later isn't ticked for it automatically.
+- **Developer** sees only what's under System: webhooks, the email tool and the logs. Anyone else needs those sections ticked on one of their roles.
+- **Headset desk** sees only the headset desk, while [it's open](#on-the-day-the-headset-desk).
 
 Nobody can change their own roles or remove their own login, so nobody locks themselves out. A role still given to someone can't be removed. **People and roles** lets someone give anyone any role except Super admin, so only tick it for people you trust with everything.
 
@@ -461,6 +464,7 @@ Do these once, in order, when the site goes live.
    | `LOG_LEVEL` | `error` or `warning`, so the log doesn't fill up with detail |
    | `EMAIL_TOOL`, `MAILCHIMP_*` | Leave blank unless you're using [follow-up emails](#follow-up-emails-with-mailchimp) |
    | `BARRACKS_REGISTRATION_OPEN` | `false` unless the barracks permit sign-up is running |
+   | `HEADSET_DESK_OPEN` | `false` keeps the headset desk to super admins. `true` gives it back to every role with it ticked |
 
 3. **Make the app key.** It encrypts sessions and signs links. Run this once only: changing it later logs everyone out and breaks links already sent.
 
@@ -468,7 +472,7 @@ Do these once, in order, when the site goes live.
    php artisan key:generate --force
    ```
 
-4. **Create the tables.** This builds every table, plus the admin's permissions and its three starting roles.
+4. **Create the tables.** This builds every table, plus the admin's permissions and its four starting roles.
 
    ```bash
    php artisan migrate --force
