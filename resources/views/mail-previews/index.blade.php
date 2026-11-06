@@ -74,7 +74,7 @@
         <header class="mp-bar">
             <div class="mp-bar-row">
                 <div class="mp-brand">
-                    <img src="/favicon.svg" width="34" height="34" alt="">
+                    <img src="{{ \App\Support\SiteAsset::url('favicon.svg') }}" width="34" height="34" alt="">
                     <div>
                         <h1>Email previews</h1>
                         <p>Local only. Sample data, nothing is saved or sent.</p>

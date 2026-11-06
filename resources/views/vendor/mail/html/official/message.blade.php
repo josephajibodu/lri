@@ -50,7 +50,7 @@ text-decoration: none !important;
 <tr>
 <td class="card-header">
 <a href="{{ config('app.url') }}" style="display: inline-block;">
-<img src="{{ asset('images/lri-logo-email.png') }}" class="logo" width="62" height="74" alt="{{ config('lri.site.name') }}">
+<img src="{{ \App\Support\SiteAsset::url('images/lri-logo-email.png') }}" class="logo" width="62" height="74" alt="{{ config('lri.site.name') }}">
 </a>
 </td>
 </tr>

@@ -2,8 +2,8 @@
     <div class="dr-beams" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="dr-spot" aria-hidden="true"></div>
 
-    <img class="dr-headphone dr-headphone-l" src="{{ asset('images/disco-run/headphone.png') }}" width="216" height="216" alt="" aria-hidden="true">
-    <img class="dr-headphone dr-headphone-r" src="{{ asset('images/disco-run/headphone.png') }}" width="216" height="216" alt="" aria-hidden="true">
+    <img class="dr-headphone dr-headphone-l" src="{{ \App\Support\SiteAsset::url('images/disco-run/headphone.png') }}" width="216" height="216" alt="" aria-hidden="true">
+    <img class="dr-headphone dr-headphone-r" src="{{ \App\Support\SiteAsset::url('images/disco-run/headphone.png') }}" width="216" height="216" alt="" aria-hidden="true">
 
     <div class="wrap dr-hero-inner">
         <p class="dr-kicker"><span class="dr-live"></span>Let’s Run Ibadan presents</p>
@@ -39,6 +39,6 @@
     </div>
 
     <figure class="dr-hero-crowd">
-        <img src="{{ asset('images/disco-run/crowd.jpg') }}" width="1080" height="305" alt="Runners laughing and running together, each wearing a glowing silent disco headset in green, blue, red or pink." decoding="async">
+        <img src="{{ \App\Support\SiteAsset::url('images/disco-run/crowd.jpg') }}" width="1080" height="305" alt="Runners laughing and running together, each wearing a glowing silent disco headset in green, blue, red or pink." decoding="async">
     </figure>
 </section>

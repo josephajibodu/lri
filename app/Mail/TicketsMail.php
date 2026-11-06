@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Models\Order;
 use App\Models\Ticket;
 use App\Support\PersonName;
+use App\Support\SiteAsset;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -45,7 +46,7 @@ class TicketsMail extends Mailable
             with: [
                 'eventName' => $event['title'] ?? $this->order->ticketType->name,
                 'firstName' => Str::before(PersonName::forEmail($this->order->buyer_name), ' '),
-                'bannerUrl' => filled($event['email_banner'] ?? null) ? asset($event['email_banner']) : null,
+                'bannerUrl' => filled($event['email_banner'] ?? null) ? SiteAsset::url($event['email_banner']) : null,
                 'accent' => $event['email_accent'] ?? null,
                 'gradient' => $event['email_gradient'] ?? null,
                 'tagline' => $event['tagline'] ?? null,

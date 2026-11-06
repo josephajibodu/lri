@@ -12,7 +12,7 @@
                     <p class="dr-ticket-title">{{ $discoRun['title'] }}</p>
                     @if ($ticketing['state'] === 'on_sale')
                         <div class="dr-ticket-photo">
-                            <img src="{{ asset('images/disco-run/crowd.jpg') }}" width="1080" height="305" alt="" aria-hidden="true" loading="lazy" decoding="async">
+                            <img src="{{ \App\Support\SiteAsset::url('images/disco-run/crowd.jpg') }}" width="1080" height="305" alt="" aria-hidden="true" loading="lazy" decoding="async">
                         </div>
                     @endif
                     <dl class="dr-ticket-meta">

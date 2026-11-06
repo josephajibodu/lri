@@ -117,8 +117,8 @@ return [
     | DJ channels, then the run ends in a rave. Until the date is fixed,
     | leave starts_at null and the page shows the date window instead.
     | The home page features the run, with the poster (a path under
-    | public/, portrait 4:5), until it starts. The ticket emails lead with
-    | email_banner (a path under public/, about 5:4, fading at the bottom into
+    | the R2 bucket, portrait 4:5), until it starts. The ticket emails lead with
+    | email_banner (a path in the bucket, about 5:4, fading at the bottom into
     | the email's background, #0B0A10). They colour the ticket's top band and
     | the button with email_gradient (a CSS gradient; it needs to carry white
     | text), the small labels with email_accent, and close on the tagline.
@@ -227,7 +227,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | The people who started the club and the story so far, shown on the
-    | founders page in this order. A photo is a path under public/, such as
+    | founders page in this order. A photo is a path in the R2 bucket, such as
     | images/founders/name.jpg (portrait, about 4:5); leave it null to show
     | the founder's initials instead. Facts and links are label => value
     | pairs and can be left empty. The tribe can be null, and a blank line
@@ -304,7 +304,7 @@ return [
     | The club's leaders, shown on the pace setters page. Each person's group
     | is "Club-wide" for leaders of the whole club, or one of the tribes
     | above; the page shows Club-wide first, then the tribes in order, and
-    | hides any group with nobody in it. A photo is a path under public/,
+    | hides any group with nobody in it. A photo is a path in the R2 bucket,
     | such as images/pace-setters/name.jpg (portrait, about 4:5); leave it
     | null to show initials. Instagram is the handle without the @, or null.
     | Group lines are optional one-liners shown under each group's name.

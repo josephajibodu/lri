@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Enums\AdminPermission;
 use App\Filament\Pages\Auth\Login;
 use App\Http\Middleware\EnsureAdminHomeHasSection;
+use App\Support\SiteAsset;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -58,10 +59,10 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(PanelsRenderHook::SIMPLE_PAGE_START, fn (): View => view('filament.auth.login-logo'), scopes: Login::class)
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn (): View => view('filament.auth.login-back-link'), scopes: Login::class)
             ->brandName('LRI Admin')
-            ->brandLogo(asset('images/lri-logo-mark.svg'))
-            ->darkModeBrandLogo(asset('images/lri-logo-mark-on-dark.svg'))
+            ->brandLogo(SiteAsset::url('images/lri-logo-mark.svg'))
+            ->darkModeBrandLogo(SiteAsset::url('images/lri-logo-mark-on-dark.svg'))
             ->brandLogoHeight('2.5rem')
-            ->favicon(asset('favicon.svg'))
+            ->favicon(SiteAsset::url('favicon.svg'))
             ->colors([
                 'primary' => self::BRAND_YELLOW,
                 'gray' => Color::Stone,

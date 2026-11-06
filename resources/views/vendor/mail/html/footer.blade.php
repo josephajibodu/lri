@@ -4,7 +4,7 @@
 <tr>
 <td class="content-cell" align="center">
 <a href="{{ config('app.url') }}" style="display: inline-block;">
-<img src="{{ asset('images/lri-logo-on-dark.png') }}" class="footer-logo" width="64" height="76" alt="{{ config('lri.site.name') }}">
+<img src="{{ \App\Support\SiteAsset::url('images/lri-logo-on-dark.png') }}" class="footer-logo" width="64" height="76" alt="{{ config('lri.site.name') }}">
 </a>
 {{ Illuminate\Mail\Markdown::parse($slot) }}
 </td>

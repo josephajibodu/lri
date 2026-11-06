@@ -23,10 +23,10 @@
         <meta name="theme-color" content="{{ $themeColor }}">
         <meta name="checkout-events" content="{{ route('checkout-events.store') }}">
 
-        <link rel="icon" href="/favicon.ico" sizes="48x48">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-        <link rel="manifest" href="/site.webmanifest">
+        <link rel="icon" href="{{ \App\Support\SiteAsset::url('favicon.ico') }}" sizes="48x48">
+        <link rel="icon" href="{{ \App\Support\SiteAsset::url('favicon.svg') }}" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="{{ \App\Support\SiteAsset::url('apple-touch-icon.png') }}">
+        <link rel="manifest" href="{{ route('manifest') }}">
 
         <meta property="og:type" content="website">
         <meta property="og:site_name" content="{{ config('lri.site.name') }}">
@@ -34,14 +34,14 @@
         <meta property="og:title" content="{{ $title }}">
         <meta property="og:description" content="{{ $description }}">
         <meta property="og:url" content="{{ $canonical ?? url()->current() }}">
-        <meta property="og:image" content="{{ asset($image) }}">
+        <meta property="og:image" content="{{ \App\Support\SiteAsset::url($image) }}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
         <meta property="og:image:alt" content="{{ $imageAlt }}">
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $title }}">
         <meta name="twitter:description" content="{{ $description }}">
-        <meta name="twitter:image" content="{{ asset($image) }}">
+        <meta name="twitter:image" content="{{ \App\Support\SiteAsset::url($image) }}">
 
         <link rel="preload" href="{{ Vite::asset('resources/fonts/instrument-sans-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
         @vite(['resources/css/app.css', 'resources/js/app.js'])

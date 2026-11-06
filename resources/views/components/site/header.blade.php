@@ -9,6 +9,7 @@
             <a href="{{ route('home') }}#routes">Routes</a>
             <a href="{{ route('home') }}#events">Events</a>
             <a href="{{ route('home') }}#faq">FAQ</a>
+            <a href="{{ route('gallery') }}">Gallery</a>
             <a href="{{ route('founders') }}">Founders</a>
             <a href="{{ route('pace-setters') }}">Pace setters</a>
         </nav>
