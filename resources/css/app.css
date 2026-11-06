@@ -533,9 +533,11 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
 .ticket h3 { font-size: 1.15rem; padding-top: 14px; margin-top: 8px; border-top: 2px dashed var(--line); }
 .ticket p { margin: 0; color: var(--muted); font-size: .97rem; }
 .ticket-yellow { background: var(--yellow); }
-.ticket-coral { background: var(--coral); }
-.ticket-yellow p, .ticket-coral p { color: var(--on-color); }
-.ticket-yellow h3, .ticket-coral h3 { border-top-color: rgba(28, 25, 23, .3); }
+.ticket-black { background: var(--ink); color: var(--yellow); }
+.ticket-yellow p { color: var(--on-color); }
+.ticket-black p { color: var(--yellow); }
+.ticket-yellow h3 { border-top-color: rgba(28, 25, 23, .3); }
+.ticket-black h3 { border-top-color: rgba(255, 176, 0, .4); }
 @media (max-width: 960px) { .tickets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .tickets { grid-template-columns: minmax(0, 1fr); } }
 
