@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Models\Concerns\RecordsAdminActivity;
 use App\Support\Money;
 use App\Support\ReadableCode;
 use Database\Factories\OrderFactory;
@@ -49,7 +50,7 @@ use Illuminate\Support\Str;
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
-    use HasFactory;
+    use HasFactory, RecordsAdminActivity;
 
     /**
      * The default values for attributes, so a new order reads as pending before it is saved.
@@ -103,6 +104,44 @@ class Order extends Model
             'refunded_at' => 'datetime',
             'marked_test_at' => 'datetime',
         ];
+    }
+
+    public function activityLabel(): string
+    {
+        return "order {$this->reference}";
+    }
+
+    /**
+     * The receipt link's secret code is left out, along with what only tracks where a buyer came from.
+     *
+     * @return list<string>
+     */
+    protected function activityAttributes(): array
+    {
+        return [
+            'status',
+            'review_note',
+            'buyer_name',
+            'buyer_email',
+            'buyer_phone',
+            'quantity',
+            'unit_price',
+            'discount_amount',
+            'amount',
+            'expires_at',
+            'paid_at',
+            'abandoned_at',
+            'refunded_at',
+            'marked_test_at',
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function activityMoneyAttributes(): array
+    {
+        return ['unit_price', 'discount_amount', 'amount'];
     }
 
     /**

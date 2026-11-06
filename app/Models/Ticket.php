@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Models\Concerns\RecordsAdminActivity;
 use App\Support\ReadableCode;
 use Database\Factories\TicketFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -28,7 +29,7 @@ use Illuminate\Support\Str;
 class Ticket extends Model
 {
     /** @use HasFactory<TicketFactory> */
-    use HasFactory;
+    use HasFactory, RecordsAdminActivity;
 
     /**
      * Give each new ticket a code to show at the gate, such as 7K3Q-9PXM.
@@ -65,6 +66,21 @@ class Ticket extends Model
     public static function newClaimToken(): string
     {
         return Str::random(40);
+    }
+
+    public function activityLabel(): string
+    {
+        return "ticket {$this->code}";
+    }
+
+    /**
+     * The ticket link's secret code is left out.
+     *
+     * @return list<string>
+     */
+    protected function activityAttributes(): array
+    {
+        return ['code', 'holder_name', 'holder_email', 'checked_in_at'];
     }
 
     /**

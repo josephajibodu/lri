@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Orders\Pages;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
 use App\Reports\SalesBySource;
+use App\Support\AdminActivity;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Support\Icons\Heroicon;
@@ -21,7 +22,11 @@ class ListOrders extends ListRecords
                 ->label('Download CSV')
                 ->icon(Heroicon::OutlinedArrowDownTray)
                 ->color('gray')
-                ->action(fn (): StreamedResponse => $this->downloadCsv()),
+                ->action(function (): StreamedResponse {
+                    AdminActivity::record('Downloaded the orders list as a spreadsheet');
+
+                    return $this->downloadCsv();
+                }),
         ];
     }
 

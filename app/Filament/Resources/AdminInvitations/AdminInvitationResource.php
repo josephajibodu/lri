@@ -10,6 +10,7 @@ use App\Exceptions\AdminInvitationNotUsable;
 use App\Filament\Resources\AdminInvitations\Pages\ManageAdminInvitations;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\AdminInvitation;
+use App\Support\AdminActivity;
 use BackedEnum;
 use Carbon\CarbonInterface;
 use Closure;
@@ -177,6 +178,7 @@ class AdminInvitationResource extends Resource
             ->modalCancelActionLabel('Keep it')
             ->action(function (AdminInvitation $record): void {
                 $record->forceFill(['cancelled_at' => now()])->save();
+                AdminActivity::record("Cancelled the invitation to {$record->email}", $record);
 
                 Notification::make()->title('Invitation cancelled')->success()->send();
             });

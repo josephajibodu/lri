@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\CouponDiscountType;
 use App\Enums\CouponStatus;
 use App\Exceptions\CouponUnavailable;
+use App\Models\Concerns\RecordsAdminActivity;
 use App\Support\Money;
 use Database\Factories\CouponFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -37,7 +38,7 @@ use LogicException;
 class Coupon extends Model
 {
     /** @use HasFactory<CouponFactory> */
-    use HasFactory;
+    use HasFactory, RecordsAdminActivity;
 
     /**
      * The default values for attributes.
@@ -58,6 +59,40 @@ class Coupon extends Model
                 throw new LogicException('A coupon can’t be changed once it’s created. Disable it and create a new one.');
             }
         });
+    }
+
+    public function activityLabel(): string
+    {
+        return "coupon {$this->code}";
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function activityAttributes(): array
+    {
+        return [
+            'code',
+            'note',
+            'discount_type',
+            'discount_value',
+            'currency',
+            'starts_at',
+            'ends_at',
+            'max_orders',
+            'max_tickets_per_order',
+            'disabled_at',
+        ];
+    }
+
+    /**
+     * A percentage coupon's value is a percentage, not an amount of money.
+     *
+     * @return list<string>
+     */
+    protected function activityMoneyAttributes(): array
+    {
+        return $this->discount_type === CouponDiscountType::FixedAmount ? ['discount_value'] : [];
     }
 
     /**

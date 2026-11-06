@@ -7,6 +7,7 @@ use App\Enums\EmailToolSendStatus;
 use App\Filament\Resources\EmailToolSends\Pages\ManageEmailToolSends;
 use App\Jobs\SendToEmailTool;
 use App\Models\EmailToolSend;
+use App\Support\AdminActivity;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -76,6 +77,7 @@ class EmailToolSendResource extends Resource
                         $record->update(['status' => EmailToolSendStatus::Waiting, 'failed_at' => null, 'error' => null]);
 
                         SendToEmailTool::dispatch($record);
+                        AdminActivity::record("Sent the news about order {$record->order->reference} to the email tool again", $record);
 
                         Notification::make()->title('Queued to send again')->success()->send();
                     }),

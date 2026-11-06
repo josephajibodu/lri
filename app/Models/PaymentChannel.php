@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PaymentMethod;
+use App\Models\Concerns\RecordsAdminActivity;
 use Database\Factories\PaymentChannelFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,7 +28,20 @@ use Illuminate\Database\Eloquent\Model;
 class PaymentChannel extends Model
 {
     /** @use HasFactory<PaymentChannelFactory> */
-    use HasFactory;
+    use HasFactory, RecordsAdminActivity;
+
+    public function activityLabel(): string
+    {
+        return "way to pay \"{$this->display_label}\"";
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function activityAttributes(): array
+    {
+        return ['method', 'currency', 'provider', 'label', 'description', 'is_enabled', 'is_featured', 'sort_order'];
+    }
 
     /**
      * Get the attributes that should be cast.
