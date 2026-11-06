@@ -95,6 +95,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Headset Desk
+    |--------------------------------------------------------------------------
+    |
+    | The desk is hidden for now: only super admins can see it, whatever a
+    | role has ticked. Set HEADSET_DESK_OPEN=true to give it back to every
+    | role with "Headset desk" ticked.
+    |
+    */
+
+    'headset_desk' => [
+        'open' => (bool) env('HEADSET_DESK_OPEN', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Silent Disco Run
     |--------------------------------------------------------------------------
     |

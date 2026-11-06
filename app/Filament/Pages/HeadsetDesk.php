@@ -54,9 +54,18 @@ class HeadsetDesk extends Page implements HasTable
 
     protected static ?int $navigationSort = 0;
 
+    /**
+     * Only super admins, until the desk is opened with HEADSET_DESK_OPEN. Then, anyone whose roles include it.
+     */
     public static function canAccess(): bool
     {
-        return auth()->user()?->can(AdminPermission::UseHeadsetDesk->value) ?? false;
+        $user = auth()->user();
+
+        if (! config('lri.headset_desk.open')) {
+            return $user?->isSuperAdmin() ?? false;
+        }
+
+        return $user?->can(AdminPermission::UseHeadsetDesk->value) ?? false;
     }
 
     public function getSubheading(): string

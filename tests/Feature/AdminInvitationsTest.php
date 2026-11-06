@@ -192,6 +192,7 @@ test('the invitation page says who invited the person and what they’ll be', fu
 });
 
 test('accepting makes a login with the invited roles, signs the person in and takes them into the admin', function () {
+    config()->set('lri.headset_desk.open', true);
     [$invitation, $token] = invitationForKemi();
 
     $this->post(route('invitations.accept', $token), acceptForm())
@@ -221,6 +222,7 @@ test('accepting uses the invited email address whatever the form sends', functio
 });
 
 test('accepting while signed in as someone else leaves the browser signed in as the new person', function () {
+    config()->set('lri.headset_desk.open', true);
     [, $token] = invitationForKemi();
     $organiser = User::factory()->superAdmin()->create();
 

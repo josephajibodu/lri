@@ -96,6 +96,7 @@ test('a test payment’s ticket link stops working and its buyer is told why', f
 });
 
 test('the headset desk shows a test payment and offers no headset for it', function () {
+    config()->set('lri.headset_desk.open', true);
     $order = Order::factory()->testPayment()->create();
     $ticket = Ticket::factory()->named()->for($order)->create(['ticket_type_id' => $order->ticket_type_id]);
     $this->actingAs(User::factory()->deskStaff()->create());
