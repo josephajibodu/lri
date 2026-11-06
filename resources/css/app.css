@@ -107,7 +107,7 @@
 /*
  * Let's Run Ibadan.
  * Light only: a warm off-white base with white cards and flat colour in a few places.
- * LRI yellow (#FEB203, from the logo) marks brand moments and never carries text on the light base;
+ * LRI orange (#FFB000, from the logo) marks brand moments and never carries text on the light base;
  * text sits on yellow blocks instead. Green, sky, pink and coral appear on stickers and event tiles.
  */
 :root {
@@ -118,7 +118,7 @@
     --ink: #1C1917;
     --muted: #67615B;
     --line: #DCD8D0;
-    --yellow: #FEB203;
+    --yellow: #FFB000;
     --gold-ink: #8A5A00;
     --green: #3DAE6E;
     --sky: #62AEEA;
@@ -1306,7 +1306,7 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-tone-green { --tone: #39E58C; --tone-ink: #12804A; }
 .dr-tone-sky { --tone: #4FB6FF; --tone-ink: #1769AA; }
 .dr-tone-pink { --tone: #FF7EC4; --tone-ink: #C2337F; }
-.dr-tone-yellow { --tone: #FEB203; --tone-ink: #8A5A00; }
+.dr-tone-yellow { --tone: #FFB000; --tone-ink: #8A5A00; }
 .dr {
     --ch: var(--tone, var(--yellow));
     --night: #0B0A10;
@@ -1381,7 +1381,7 @@ textarea.input { resize: vertical; min-height: 3.2em; }
     pointer-events: none;
     background:
         radial-gradient(40vmax 40vmax at var(--mx) var(--my), color-mix(in srgb, var(--ch) 28%, transparent), transparent 60%),
-        radial-gradient(circle at 50% 120%, rgba(254, 178, 3, .14), transparent 55%);
+        radial-gradient(circle at 50% 120%, rgba(255, 176, 0, .14), transparent 55%);
     transition: background .5s;
 }
 /* Mirror-ball flecks, scattered on a big disc that slowly turns so they sweep across the wall in arcs */
@@ -1399,7 +1399,7 @@ textarea.input { resize: vertical; min-height: 3.2em; }
     background-image:
         radial-gradient(circle, #FF2E8A 0 4px, transparent 5px),
         radial-gradient(circle, #8B3DFF 0 3px, transparent 4px),
-        radial-gradient(circle, #FEB203 0 5px, transparent 6px),
+        radial-gradient(circle, #FFB000 0 5px, transparent 6px),
         radial-gradient(circle, #4FB6FF 0 3px, transparent 4px),
         radial-gradient(circle, #39E58C 0 4px, transparent 5px),
         radial-gradient(circle, #FF6B57 0 3px, transparent 4px);

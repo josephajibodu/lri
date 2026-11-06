@@ -3,7 +3,7 @@
     /* In dark mode Filament colours its buttons with shade 600, and the real yellow is shade 400. */
     html.dark {
         --primary-500: #FFC83D;
-        --primary-600: #FEB203;
+        --primary-600: #FFB000;
     }
 
     .fi-body { background-color: #EEECE7; }
@@ -16,9 +16,9 @@
         inset: 0 0 auto;
         z-index: 31;
         height: 3px;
-        background-color: #FEB203;
+        background-color: #FFB000;
     }
-    .fi-simple-main { border-top: 4px solid #FEB203; }
+    .fi-simple-main { border-top: 4px solid #FFB000; }
 
     /* Page headings the same size as the sign-in page's. */
     .fi-header-heading { font-size: 1.5rem; line-height: 2rem; }

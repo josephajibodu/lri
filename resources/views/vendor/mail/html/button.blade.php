@@ -1,4 +1,4 @@
-@props(['url', 'accent' => '#FEB203', 'gradient' => null])
+@props(['url', 'accent' => '#FFB000', 'gradient' => null])
 <table class="action" width="100%" cellpadding="0" cellspacing="0" role="presentation">
 <tr>
 <td class="button-cell" align="center" bgcolor="{{ $accent }}" style="background-color: {{ $accent }};@if ($gradient) background-image: {{ $gradient }};@endif">
