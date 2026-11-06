@@ -58,8 +58,8 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(PanelsRenderHook::SIMPLE_PAGE_START, fn (): View => view('filament.auth.login-logo'), scopes: Login::class)
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn (): View => view('filament.auth.login-back-link'), scopes: Login::class)
             ->brandName('LRI Admin')
-            ->brandLogo(asset('images/lri-logo-email.png'))
-            ->darkModeBrandLogo(asset('images/lri-logo-on-dark.png'))
+            ->brandLogo(asset('images/lri-logo-mark.svg'))
+            ->darkModeBrandLogo(asset('images/lri-logo-mark-on-dark.svg'))
             ->brandLogoHeight('2.5rem')
             ->favicon(asset('favicon.svg'))
             ->colors([
