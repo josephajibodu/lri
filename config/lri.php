@@ -241,7 +241,7 @@ return [
                 'name' => 'Priscilla Adedeji',
                 'role' => 'Co-founder',
                 'tribe' => 'Oluyole / Akala',
-                'photo' => null,
+                'photo' => 'images/founders/priscilla.jpg',
                 'quote' => 'We didn’t just set out to build a running club. We wanted to create a community where everyone feels they belong, where every pace matters, and where people inspire each other to become better versions of themselves.',
                 'bio' => "Priscilla is the Co-Founder of Let’s Run Ibadan, a passionate runner, community builder and advocate for health, wellness and meaningful connections.\n\nWhat began as a shared vision to bring people together through running has grown into a thriving community that encourages movement, friendship and personal growth.\n\nWith a passion for creating experiences that bring people together, Priscilla plays an active role in shaping LRI’s vision, building partnerships, organising events and creating a culture where everyone feels welcome, supported and motivated to keep showing up.",
                 'facts' => [
