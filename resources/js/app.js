@@ -51,31 +51,11 @@ import.meta.glob("../fonts/*.woff2");
         if (ibadanDay(new Date(el.getAttribute("data-until")).getTime()) < ibadanDay(Date.now())) el.hidden = true;
     });
 
-    /* Draggable stickers */
-    var z = 10;
-    var hint = document.querySelector(".drag-hint");
-    document.querySelectorAll(".sticker").forEach(function (st) {
-        var sx = 0, sy = 0, ox = 0, oy = 0, dragging = false;
-        st.addEventListener("pointerdown", function (e) {
-            dragging = true;
-            st.setPointerCapture(e.pointerId);
-            sx = e.clientX; sy = e.clientY;
-            ox = parseFloat(st.dataset.dx || 0); oy = parseFloat(st.dataset.dy || 0);
-            st.classList.add("grabbing");
-            st.style.zIndex = ++z;
-            if (hint) hint.classList.add("used");
-        });
-        st.addEventListener("pointermove", function (e) {
-            if (!dragging) return;
-            var dx = ox + e.clientX - sx, dy = oy + e.clientY - sy;
-            st.dataset.dx = dx; st.dataset.dy = dy;
-            st.style.setProperty("--dx", dx + "px");
-            st.style.setProperty("--dy", dy + "px");
-        });
-        function end() { dragging = false; st.classList.remove("grabbing"); }
-        st.addEventListener("pointerup", end);
-        st.addEventListener("pointercancel", end);
-    });
+    /* Home hero: the running crowd lives in its own file, fetched only on the page that has it */
+    var heroScene = document.querySelector("[data-hero-scene]");
+    if (heroScene) {
+        import("./hero-runners.js").then(function (scene) { scene.startHeroRunners(heroScene, reduce); });
+    }
 
     /* Pace playground */
     function initPace() {

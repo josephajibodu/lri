@@ -12,6 +12,8 @@
  * Fonts, self-hosted so the first paint does not wait on another site.
  * Latin and Latin Extended subsets of Anybody, Instrument Sans and Martian Mono (all SIL Open Font License),
  * with the full width and weight ranges the stretch animations use.
+ * Instrument Sans and Martian Mono have no naira sign, so U+20A6 is left out of their ranges. With it in, a price
+ * downloads a file that can't draw it, then falls back to a system font anyway. Anybody does have it, so it stays there.
  */
 @font-face {
     font-family: "Anybody";
@@ -56,7 +58,7 @@
     font-stretch: 75% 100%;
     font-display: swap;
     src: url("../fonts/instrument-sans-italic-latin-ext.woff2") format("woff2");
-    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20A5, U+20A7-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
     font-family: "Instrument Sans";
@@ -74,7 +76,7 @@
     font-stretch: 75% 100%;
     font-display: swap;
     src: url("../fonts/instrument-sans-latin-ext.woff2") format("woff2");
-    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20A5, U+20A7-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
     font-family: "Instrument Sans";
@@ -92,7 +94,7 @@
     font-stretch: 100%;
     font-display: swap;
     src: url("../fonts/martian-mono-latin-ext.woff2") format("woff2");
-    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20A5, U+20A7-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
     font-family: "Martian Mono";
@@ -285,9 +287,32 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
     .head-row .btn { margin-left: auto; }
 }
 
-/* Hero */
-.hero { position: relative; overflow-x: hidden; overflow-x: clip; padding-block: clamp(44px, 7vw, 92px) clamp(48px, 7vw, 84px); }
-.hero-inner { position: relative; display: grid; justify-items: center; text-align: center; gap: 22px; }
+/*
+ * Hero: the words in one calm centred column, and the Saturday crowd running at sunrise in its own space below them.
+ * The canvas starts below the words, so the animation can never run across them.
+ */
+.hero {
+    --road-height: clamp(100px, 15svh, 168px);
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100svh - 118px);
+    overflow-x: hidden;
+    overflow-x: clip;
+    background: radial-gradient(90% 72% at 50% 100%, rgba(255, 176, 0, .28), rgba(255, 176, 0, .09) 50%, transparent 76%);
+}
+.hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; height: calc(var(--road-height) * .34); background: linear-gradient(to bottom, rgba(238, 236, 231, 0), var(--bg)); pointer-events: none; }
+.hero-copy {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    justify-items: center;
+    gap: clamp(12px, 2svh, 22px);
+    width: 100%;
+    padding-block: clamp(20px, 3.6svh, 56px) clamp(8px, 1.6svh, 24px);
+    text-align: center;
+}
 .wordmark {
     font-family: var(--sans);
     font-weight: 400;
@@ -298,13 +323,61 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
 }
 .wm-line { display: block; }
 .wm-hl { display: inline-block; padding: 0 .1em .04em .06em; background: var(--yellow); }
+.hero .wordmark { font-size: clamp(3.4rem, min(8.8vw, 12svh), 7.8rem); }
 @media (prefers-reduced-motion: no-preference) {
     .wm-line { animation: stride .9s cubic-bezier(.2, .8, .2, 1) backwards; }
     .wm-line + .wm-line { animation-delay: .12s; }
+    .hero-sun { animation: hero-sunrise 2.2s cubic-bezier(.16, .8, .24, 1) backwards; }
+    .hero-copy .hero-facts, .hero-copy .lede, .hero-copy .cta-row { animation: hero-fade .7s ease backwards; }
+    .hero-copy .lede { animation-delay: .12s; }
+    .hero-copy .cta-row { animation-delay: .2s; }
 }
 @keyframes stride { from { font-stretch: 75%; letter-spacing: -.08em; } to { font-stretch: 100%; letter-spacing: -.045em; } }
+@keyframes hero-sunrise { from { translate: 0 42%; } to { translate: 0 0; } }
+@keyframes hero-fade { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
 .lede { margin: 0; max-width: 34em; color: var(--muted); font-size: clamp(1.05rem, 1.5vw, 1.2rem); }
+.hero .lede { max-width: 38em; }
 .cta-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.hero-stage { position: relative; z-index: -1; flex: 1 1 auto; min-height: clamp(110px, 16svh, 260px); touch-action: pan-y pinch-zoom; }
+.hero-sun {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    height: min(170%, 52vw, 560px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--yellow);
+    transform: translate(-50%, 46%) translateY(calc(var(--hero-scroll, 0) * -.08px));
+}
+.hero-canvas { position: absolute; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .7s ease; }
+.hero.is-live .hero-canvas { opacity: 1; }
+.hero-road { flex: none; height: var(--road-height); background: #DAD6CB; touch-action: pan-y pinch-zoom; }
+.hero-controls { position: absolute; left: 0; right: 0; bottom: clamp(10px, 1.4vw, 16px); z-index: 2; display: flex; pointer-events: none; }
+.hero-pause {
+    position: relative;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid rgba(28, 25, 23, .16);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .78);
+    color: var(--ink);
+    cursor: pointer;
+    pointer-events: auto;
+    transition: background .15s ease;
+}
+.hero-pause:hover { background: var(--card); }
+.hero-pause[hidden] { display: none; }
+.hero-pause::before { content: ""; position: absolute; inset: 10px 11px; background: linear-gradient(to right, currentColor 0 34%, transparent 34% 66%, currentColor 66%); }
+.hero-pause[aria-pressed="true"]::before { inset: 9px 8px 9px 12px; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+@media (max-width: 600px) {
+    .hero { --road-height: clamp(96px, 14svh, 130px); }
+    .hero-stage { min-height: 124px; }
+    .hero .wordmark { font-size: 16vw; }
+    .hero .cta-row { flex-direction: column; width: 100%; gap: 10px; }
+    .hero .cta-row .btn { justify-content: center; }
+}
 .hero-facts { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px; margin: 0; padding: .65em 1.15em; border: 1px solid var(--line); border-radius: 999px; background: var(--card); list-style: none; font: 400 .68rem/1.3 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink); }
 .hero-facts li { display: inline-flex; align-items: center; gap: 8px; }
 .hero-facts li + li::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--yellow); }
@@ -316,99 +389,8 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
   .hero-facts { gap: 6px 8px; padding: .6em .8em; font-size: .58rem; letter-spacing: .02em; }
 }
 
-/* Stickers */
-.stickers { position: absolute; inset: 0; pointer-events: none; }
-.sticker {
-    --dx: 0px;
-    --dy: 0px;
-    --rot: 0deg;
-    position: absolute;
-    display: grid;
-    place-items: center;
-    text-align: center;
-    pointer-events: auto;
-    cursor: grab;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-    transform: translate(var(--dx), var(--dy)) rotate(var(--rot));
-    transition: scale .15s ease;
-    filter: drop-shadow(0 6px 10px rgba(28, 25, 23, .12));
-}
-.sticker.grabbing { cursor: grabbing; scale: 1.08; }
-.s-badge { width: 136px; height: 136px; top: 44%; left: 1%; --rot: -8deg; }
-.s-badge svg { width: 100%; height: 100%; overflow: visible; }
-.badge-disc { fill: var(--yellow); }
-.badge-ring { font: 700 10px var(--mono); fill: var(--on-color); text-transform: uppercase; }
-.badge-core { font: italic 900 28px var(--display); font-stretch: 120%; fill: var(--on-color); }
-@media (prefers-reduced-motion: no-preference) {
-    .badge-spin { transform-origin: 68px 68px; animation: spin 18s linear infinite; }
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.s-burst {
-    width: 124px;
-    height: 124px;
-    top: 40%;
-    right: 2%;
-    --rot: 10deg;
-    background: var(--ink);
-    color: var(--yellow);
-    clip-path: polygon(50% 0%, 61% 13%, 77% 6%, 80% 23%, 97% 25%, 89% 41%, 100% 54%, 85% 63%, 89% 80%, 72% 80%, 64% 96%, 50% 86%, 36% 96%, 28% 80%, 11% 80%, 15% 63%, 0% 54%, 11% 41%, 3% 25%, 20% 23%, 23% 6%, 39% 13%);
-    filter: none;
-}
-.s-burst b { display: block; font: italic 900 1.9rem/.9 var(--display); font-stretch: 110%; }
-.s-burst small { color: var(--card); font: 600 .56rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
-.s-pill {
-    bottom: 0;
-    left: 8%;
-    --rot: 5deg;
-    padding: .65em 1.05em;
-    border: 2px solid var(--ink);
-    border-radius: 999px;
-    background: var(--card);
-    font: 700 .95rem/1 var(--sans);
-    white-space: nowrap;
-}
-.s-pill { display: flex; align-items: center; gap: .4em; }
-.s-pill::before { content: "✓"; color: var(--gold-ink); }
-.s-km {
-    top: 4%;
-    right: 11%;
-    width: 96px;
-    height: 96px;
-    --rot: 12deg;
-    border-radius: 50%;
-    border: 2px dashed var(--on-color);
-    background: var(--green);
-    color: var(--on-color);
-    font: 800 1.7rem/1 var(--mono);
-}
-.s-km small { display: block; font: 600 .55rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
-.s-tag {
-    bottom: 3%;
-    right: 4%;
-    --rot: -5deg;
-    padding: .7em 1.05em;
-    border-radius: 12px;
-    background: var(--coral);
-    color: var(--on-color);
-    font: italic 800 1rem/1 var(--display);
-    font-stretch: 105%;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-.drag-hint { margin: 0; font: 400 .66rem/1 var(--mono); letter-spacing: .08em; color: var(--muted); transition: opacity .4s ease; }
-.drag-hint.used { opacity: 0; }
-@media (min-width: 1081px) { .drag-hint { position: absolute; right: 4%; bottom: -36px; } }
-@media (max-width: 1080px) {
-    .stickers { position: relative; inset: auto; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px 18px; margin-top: 18px; }
-    .sticker { position: relative; top: auto; right: auto; bottom: auto; left: auto; }
-    .s-badge { width: 116px; height: 116px; }
-    .s-burst { width: 108px; height: 108px; }
-}
-
 /* Next run: race-bib countdown */
-.next { padding-block: 0 clamp(56px, 8vw, 96px); }
+.next { padding-block: clamp(40px, 6vw, 72px) clamp(56px, 8vw, 96px); }
 .bib-card {
     position: relative;
     padding: 0 clamp(22px, 4vw, 44px) 48px;
@@ -464,7 +446,11 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
 .marquee { overflow: hidden; border-block: 2px solid var(--ink); background: var(--yellow); color: var(--on-color); }
 .marquee-track { display: flex; width: max-content; }
 .marquee-group { display: flex; align-items: center; gap: 28px; padding: 14px; font: italic 900 clamp(1.4rem, 3vw, 2.2rem)/1 var(--display); font-stretch: 115%; text-transform: uppercase; white-space: nowrap; }
-.marquee-group i { font-style: normal; font-size: .8em; }
+/*
+ * None of our fonts have the star, so naming Anybody here would only download its upright file for nothing.
+ * Instrument Sans is already loaded on every page. The nudge matches where Anybody's baseline puts the star.
+ */
+.marquee-group i { font-family: "Instrument Sans", "Arial Black", Impact, sans-serif; font-style: normal; font-size: .8em; transform: translateY(-.0825em); }
 @media (prefers-reduced-motion: no-preference) {
     .marquee-track { animation: slide 32s linear infinite; }
     .marquee:hover .marquee-track { animation-play-state: paused; }

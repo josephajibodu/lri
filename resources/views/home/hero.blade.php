@@ -1,5 +1,7 @@
-<section class="hero" id="top">
-    <div class="wrap hero-inner">
+<section class="hero" id="top" data-hero-scene>
+    <canvas class="hero-canvas" data-hero-canvas aria-hidden="true"></canvas>
+
+    <div class="wrap hero-copy">
         <ul class="hero-facts">
             <li>Everyone</li>
             <li>Every pace</li>
@@ -11,21 +13,12 @@
             <a class="btn btn-yellow" href="{{ config('lri.links.member_form') }}" target="_blank" rel="noopener">Become a member ↗</a>
             <a class="btn" href="{{ config('lri.links.instagram') }}" target="_blank" rel="noopener">Follow @@letsrunibadan</a>
         </div>
+    </div>
 
-        <div class="stickers" aria-hidden="true">
-            <div class="sticker s-badge">
-                <svg viewBox="0 0 136 136">
-                    <defs><path id="badge-circle" d="M68 68 m-49 0 a49 49 0 1 1 98 0 a49 49 0 1 1 -98 0"></path></defs>
-                    <circle class="badge-disc" cx="68" cy="68" r="67"></circle>
-                    <g class="badge-spin"><text class="badge-ring"><textPath href="#badge-circle" textLength="304" lengthAdjust="spacing">Everyone · Every pace · One community ·</textPath></text></g>
-                    <text class="badge-core" x="68" y="78" text-anchor="middle">LRI</text>
-                </svg>
-            </div>
-            <div class="sticker s-burst"><span><b>6:30</b><small>AM · Sat</small></span></div>
-            <div class="sticker s-pill">Walking allowed</div>
-            <div class="sticker s-km"><span>5+<small>km</small></span></div>
-            <div class="sticker s-tag">No one left behind</div>
-        </div>
-        <p class="drag-hint" aria-hidden="true">Psst. The stickers move.</p>
+    <div class="hero-stage" data-hero-stage aria-hidden="true"><span class="hero-sun"></span></div>
+    <div class="hero-road" data-hero-road></div>
+
+    <div class="wrap hero-controls">
+        <button class="hero-pause" type="button" data-hero-pause aria-pressed="false" aria-label="Pause the runners" hidden></button>
     </div>
 </section>

@@ -2,6 +2,19 @@
 
 use Carbon\CarbonImmutable;
 
+test('the home page hero keeps its words and buttons in the page, and everything the running crowd draws on', function () {
+    config()->set('lri.links.member_form', 'https://forms.example.com/join-lri');
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSeeInOrder(['<h1 class="wordmark">', 'Let’s run,', 'Ibadan.', '</h1>'], false)
+        ->assertSeeText('We meet every Saturday at 6:30 AM')
+        ->assertSee('href="https://forms.example.com/join-lri"', false)
+        ->assertSeeInOrder(['data-hero-scene', 'data-hero-canvas', 'data-hero-stage', 'data-hero-road', 'data-hero-pause'], false)
+        ->assertSee('aria-label="Pause the runners"', false)
+        ->assertDontSee('class="sticker', false);
+});
+
 test('the home page shows the next community run from config', function () {
     config()->set('lri.disco_run.starts_at', '2026-01-09 18:00');
     config()->set('lri.next_run', [
