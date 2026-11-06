@@ -45,7 +45,7 @@ text-decoration: none !important;
 <!--[if mso]><table align="center" width="560" cellpadding="0" cellspacing="0" role="presentation"><tr><td><![endif]-->
 <table class="card" align="center" width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="#FFFFFF">
 <tr>
-<td class="brand-stripe" bgcolor="#FEB203" height="5">&nbsp;</td>
+<td class="brand-stripe" bgcolor="#FFB000" height="5">&nbsp;</td>
 </tr>
 <tr>
 <td class="card-header">

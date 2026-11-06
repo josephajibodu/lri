@@ -125,13 +125,14 @@ class HeadsetDesk extends Page implements HasTable
                     ->badge()
                     ->state(fn (Ticket $record): string => match (true) {
                         $record->order->status === OrderStatus::Disputed => 'Payment disputed',
+                        $record->order->status === OrderStatus::TestPayment => 'Test payment',
                         ! $record->isValid() => 'Not paid',
                         $record->isCollected() => 'Headset already given',
                         ! $record->isNamed() => 'Needs a name',
                         default => 'Paid, ready',
                     })
                     ->color(fn (string $state): string => match ($state) {
-                        'Not paid', 'Payment disputed', 'Headset already given' => 'danger',
+                        'Not paid', 'Payment disputed', 'Test payment', 'Headset already given' => 'danger',
                         'Needs a name' => 'warning',
                         default => 'success',
                     })

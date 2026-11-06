@@ -27,7 +27,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 class AdminPanelProvider extends PanelProvider
 {
     /**
-     * LRI yellow (#FEB203) is shade 400, because Filament puts light-mode buttons on 400 and their hovers on 300. The
+     * LRI orange (#FFB000) is shade 400, because Filament puts light-mode buttons on 400 and their hovers on 300. The
      * tints and the gold (700, for yellow text that's readable on a light background) come from the site's own colours.
      * The darkest shades are the site's ink, which is what Filament then uses for the text on those buttons.
      *
@@ -38,7 +38,7 @@ class AdminPanelProvider extends PanelProvider
         100 => '#FFF1CC',
         200 => '#FFE28A',
         300 => '#FFC83D',
-        400 => '#FEB203',
+        400 => '#FFB000',
         500 => '#E09C00',
         600 => '#B87F00',
         700 => '#8A5A00',

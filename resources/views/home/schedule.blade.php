@@ -21,7 +21,7 @@
                 <h3>6:30 AM run</h3>
                 <p>5 km and up from your tribe’s meeting point.</p>
             </article>
-            <article class="ticket ticket-coral">
+            <article class="ticket ticket-black">
                 <span class="t-day">1st Sat</span>
                 <h3>All tribes</h3>
                 <p>Every tribe runs together as one community, then we hang out.</p>

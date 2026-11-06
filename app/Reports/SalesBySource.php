@@ -17,7 +17,7 @@ final class SalesBySource
      */
     public static function for(ReportPeriod $period, string $currency = 'NGN'): array
     {
-        return $period->apply(Order::query()->where('currency', $currency), 'created_at')
+        return $period->apply(Order::query()->where('currency', $currency)->where('status', '!=', OrderStatus::TestPayment), 'created_at')
             ->get(['id', 'status', 'amount', 'attribution'])
             ->groupBy(fn (Order $order): string => self::sourceOf($order).'|'.($order->attribution['campaign'] ?? ''))
             ->map(function (Collection $orders, string $key) use ($currency): array {

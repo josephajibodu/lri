@@ -43,6 +43,8 @@ use Illuminate\Support\Str;
     'tickets_emailed_at',
     'abandoned_at',
     'refunded_at',
+    'marked_test_at',
+    'marked_test_by',
 ])]
 class Order extends Model
 {
@@ -99,6 +101,7 @@ class Order extends Model
             'tickets_emailed_at' => 'datetime',
             'abandoned_at' => 'datetime',
             'refunded_at' => 'datetime',
+            'marked_test_at' => 'datetime',
         ];
     }
 
@@ -144,6 +147,16 @@ class Order extends Model
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    /**
+     * The organiser who marked this order as a test payment.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function markedTestBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'marked_test_by');
     }
 
     /**

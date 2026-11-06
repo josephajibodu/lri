@@ -80,7 +80,7 @@ test('the tickets email falls back to the ticket name and club colours when the 
     $mail = new TicketsMail($order->load('tickets'));
 
     $mail->assertSeeInHtml('Your ticket codes and receipt for the Community Run ticket.')
-        ->assertSeeInHtml('border-right: 1px dashed #FEB203', false)
+        ->assertSeeInHtml('border-right: 1px dashed #FFB000', false)
         ->assertDontSeeInHtml('class="banner"', false)
         ->assertSeeInHtml('class="logo"', false)
         ->assertDontSeeInHtml('background-image', false)

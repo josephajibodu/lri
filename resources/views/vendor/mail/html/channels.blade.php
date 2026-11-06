@@ -1,5 +1,5 @@
-@props(['channels', 'accent' => '#FEB203'])
-@php($tones = ['coral' => '#FF6B57', 'green' => '#39E58C', 'sky' => '#4FB6FF', 'pink' => '#FF7EC4', 'yellow' => '#FEB203'])
+@props(['channels', 'accent' => '#FFB000'])
+@php($tones = ['coral' => '#FF6B57', 'green' => '#39E58C', 'sky' => '#4FB6FF', 'pink' => '#FF7EC4', 'yellow' => '#FFB000'])
 <p class="channels-title">{{ count($channels) }} channels. {{ count($channels) }} vibes.</p>
 <p class="channels-text">Your headset, your call.</p>
 <table class="channels" width="100%" cellpadding="0" cellspacing="0" role="presentation">

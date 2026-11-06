@@ -119,7 +119,7 @@ Each section of the page is its own Blade file:
 
 ### Brand and styles
 
-The colours are CSS custom properties at the top of the page styles in `resources/css/app.css`. The main ones are `--yellow` (`#FEB203`, the LRI yellow), `--bg` (the off-white base) and `--ink` (text). Yellow is never used for text on the light background, because it is hard to read there. Text sits on a yellow block instead, as in the hero and the section headings.
+The colours are CSS custom properties at the top of the page styles in `resources/css/app.css`. The main ones are `--yellow` (`#FFB000`, the LRI orange), `--bg` (the off-white base) and `--ink` (text). Yellow is never used for text on the light background, because it is hard to read there. Text sits on a yellow block instead, as in the hero and the section headings.
 
 The admin uses the same colours, and follows the same rule: its yellow buttons have dark text. The shades of yellow are in `app/Providers/Filament/AdminPanelProvider.php`. The background, the yellow stripe and the other small touches are in `resources/views/filament/brand-styles.blade.php`.
 
@@ -190,6 +190,7 @@ The desk is hidden for now: only super admins can see it, and anyone else who sc
    - red **Headset already given**, with when and by whom: don't give another;
    - amber **Needs a name**, with how many tickets on that order are unnamed: press **Save and give headset**, type in the ticket's code and the person's name and email, and they're emailed their ticket. A ticket with no name has nothing to check someone against, so its code is the proof: it's on their QR code, or the buyer can read it out from their email or receipt. Staff can't see it until it's searched for in full. No code, no headset;
    - **Payment disputed**: the buyer's bank is disputing the payment, so don't hand over a headset;
+   - **Test payment**: the order was marked as a test, so don't hand over a headset;
    - **Not paid**: the order isn't paid, or was refunded.
 3. **Change name** fixes a typo on a named ticket before the headset goes out.
 
@@ -245,6 +246,10 @@ Tickets only work while the order is paid for.
 - **Partial refund:** the tickets keep working, and the order is flagged for an organiser to decide.
 - **Chargeback:** when the buyer's bank disputes a payment, the tickets go on hold at once and keep their places. Winning makes them work again, and losing counts as a refund. If a dispute closes without a ruling, an organiser presses **Release tickets** on the order once Bachs confirms the money is staying.
 - **A payment that lands late** is honoured, since the buyer has paid, even if the event has since sold out or the coupon has run out. The order is flagged so an organiser can decide whether to refund it.
+
+### Test payments
+
+A payment made to try out checkout is still a real payment, so it isn't deleted. Open the order in **Tickets > Orders** and press **Mark as test payment**. Its tickets stop working (the ticket link stops opening and the headset desk shows **Test payment**), their places and coupon use go back on offer, and it leaves the sales figures. The order keeps its status, who marked it and when, and its payment stays on record. No money is refunded, and if you refund it in Bachs later it stays a test payment. An order with a collected headset can't be marked.
 
 Orders that need a person show **Needs a look** in **Tickets > Orders**, with a count in the menu, a filter, and the reason on the order. **Mark as looked at** clears the note without changing anything else.
 

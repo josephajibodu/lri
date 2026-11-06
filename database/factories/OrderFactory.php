@@ -52,6 +52,17 @@ class OrderFactory extends Factory
     }
 
     /**
+     * A paid order an organiser has marked as a test payment.
+     */
+    public function testPayment(): static
+    {
+        return $this->paid()->state(fn (): array => [
+            'status' => OrderStatus::TestPayment,
+            'marked_test_at' => now(),
+        ]);
+    }
+
+    /**
      * An order the buyer left without paying.
      */
     public function abandoned(): static
