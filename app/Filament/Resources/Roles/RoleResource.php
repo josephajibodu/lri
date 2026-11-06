@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Roles;
 use App\Enums\AdminPermission;
 use App\Enums\StaffRole;
 use App\Filament\Resources\Roles\Pages\ManageRoles;
+use App\Support\AdminActivity;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -68,6 +69,8 @@ class RoleResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $roleBefore = [];
+
         return $table
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('permissions')->withCount('users'))
             ->columns([
@@ -86,9 +89,39 @@ class RoleResource extends Resource
                 TextColumn::make('users_count')->label('People'),
             ])
             ->recordActions([
-                EditAction::make()->after(fn () => static::forgetCachedPermissions()),
-                DeleteAction::make(),
+                EditAction::make()
+                    ->before(function (Role $record) use (&$roleBefore): void {
+                        $roleBefore = static::whatTheLogRecords($record);
+                    })
+                    ->after(function (Role $record) use (&$roleBefore): void {
+                        static::forgetCachedPermissions();
+                        AdminActivity::recordChange("Changed role \"{$record->name}\"", $record, $roleBefore, static::whatTheLogRecords($record));
+                    }),
+                DeleteAction::make()
+                    ->before(function (Role $record) use (&$roleBefore): void {
+                        $roleBefore = static::whatTheLogRecords($record);
+                    })
+                    ->after(function (Role $record) use (&$roleBefore): void {
+                        AdminActivity::recordChange("Deleted role \"{$record->name}\"", $record, $roleBefore, []);
+                    }),
             ]);
+    }
+
+    /**
+     * A role as the activity log shows it. Roles belong to the permissions package, so they're recorded by hand.
+     *
+     * @return array{name: string, can_see: string}
+     */
+    public static function whatTheLogRecords(Role $role): array
+    {
+        return [
+            'name' => $role->name,
+            'can_see' => $role->permissions()->pluck('name')
+                ->map(fn (string $name): ?string => AdminPermission::tryFrom($name)?->getLabel())
+                ->filter()
+                ->sort()
+                ->join(', '),
+        ];
     }
 
     /**

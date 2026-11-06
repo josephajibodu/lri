@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsAdminActivity;
 use App\Support\Money;
 use Database\Factories\TicketTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -28,7 +29,41 @@ use Illuminate\Support\Carbon;
 class TicketType extends Model
 {
     /** @use HasFactory<TicketTypeFactory> */
-    use HasFactory;
+    use HasFactory, RecordsAdminActivity;
+
+    public function activityLabel(): string
+    {
+        return "ticket type \"{$this->name}\"";
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function activityAttributes(): array
+    {
+        return [
+            'event',
+            'name',
+            'slug',
+            'description',
+            'price',
+            'currency',
+            'capacity',
+            'max_per_order',
+            'sales_start_at',
+            'sales_end_at',
+            'is_active',
+            'sort_order',
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function activityMoneyAttributes(): array
+    {
+        return ['price'];
+    }
 
     /**
      * Get the attributes that should be cast.

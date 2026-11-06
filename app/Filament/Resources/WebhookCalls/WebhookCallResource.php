@@ -5,6 +5,7 @@ namespace App\Filament\Resources\WebhookCalls;
 use App\Actions\Checkout\HandleWebhookCall;
 use App\Filament\Resources\WebhookCalls\Pages\ManageWebhookCalls;
 use App\Models\WebhookCall;
+use App\Support\AdminActivity;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
@@ -107,6 +108,8 @@ class WebhookCallResource extends Resource
                     ->requiresConfirmation()
                     ->modalDescription('Runs this webhook through again. Safe to repeat: a payment is never fulfilled twice.')
                     ->action(function (WebhookCall $record, HandleWebhookCall $handleWebhookCall): void {
+                        AdminActivity::record("Ran the {$record->provider} webhook \"{$record->type}\" again", $record);
+
                         try {
                             $handleWebhookCall->handle($record);
                         } catch (Throwable $exception) {

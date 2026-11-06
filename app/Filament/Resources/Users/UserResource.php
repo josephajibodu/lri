@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Users;
 use App\Enums\StaffRole;
 use App\Filament\Resources\Users\Pages\ManageUsers;
 use App\Models\User;
+use App\Support\AdminActivity;
 use BackedEnum;
 use Closure;
 use Filament\Actions\DeleteAction;
@@ -73,6 +74,8 @@ class UserResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $rolesBefore = '';
+
         return $table
             ->columns([
                 TextColumn::make('name')->searchable(),
@@ -81,9 +84,34 @@ class UserResource extends Resource
                 TextColumn::make('created_at')->label('Added')->date('j M Y'),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->before(function (User $record) use (&$rolesBefore): void {
+                        $rolesBefore = static::roleNames($record);
+                    })
+                    ->after(function (User $record) use (&$rolesBefore): void {
+                        static::recordRoleChange($record, $rolesBefore);
+                    }),
                 DeleteAction::make(),
             ]);
+    }
+
+    /**
+     * Put a change to someone's roles on the activity log. Saving the form changes roles without touching the person's
+     * own row, so it isn't recorded by itself.
+     */
+    public static function recordRoleChange(User $user, string $rolesBefore): void
+    {
+        AdminActivity::recordChange(
+            "Changed the roles of {$user->activityLabel()}",
+            $user,
+            before: ['roles' => $rolesBefore],
+            after: ['roles' => static::roleNames($user)],
+        );
+    }
+
+    private static function roleNames(User $user): string
+    {
+        return $user->roles()->orderBy('name')->pluck('name')->join(', ');
     }
 
     /**

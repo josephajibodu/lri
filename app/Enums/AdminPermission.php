@@ -56,7 +56,7 @@ enum AdminPermission: string implements HasDescription, HasLabel
             self::ManagePeople => 'Invite and add people, and create roles and give them out. Only for people you trust with everything.',
             self::ManageWebhooks => 'Payment provider notifications, and replaying them.',
             self::ManageEmailTool => 'What was sent to the email tool, and sending again.',
-            self::ViewLogs => 'The site’s error and activity logs.',
+            self::ViewLogs => 'The site’s technical error logs. The record of who changed what is only for super admins.',
         };
     }
 }

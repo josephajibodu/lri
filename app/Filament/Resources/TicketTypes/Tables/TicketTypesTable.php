@@ -4,6 +4,7 @@ namespace App\Filament\Resources\TicketTypes\Tables;
 
 use App\Enums\OrderStatus;
 use App\Models\TicketType;
+use App\Support\AdminActivity;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -16,6 +17,7 @@ class TicketTypesTable
         return $table
             ->modifyQueryUsing(fn ($query) => $query->withSum(['orders as tickets_sold' => fn ($query) => $query->where('status', OrderStatus::Paid)], 'quantity'))
             ->reorderable('sort_order')
+            ->afterReordering(fn () => AdminActivity::record('Changed the order of the ticket types'))
             ->defaultSort('sort_order')
             ->columns([
                 TextColumn::make('name')->description(fn (TicketType $ticketType): string => $ticketType->slug),

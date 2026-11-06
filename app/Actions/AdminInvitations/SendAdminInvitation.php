@@ -6,6 +6,7 @@ use App\Exceptions\AdminInvitationNotUsable;
 use App\Mail\AdminInvitationMail;
 use App\Models\AdminInvitation;
 use App\Models\User;
+use App\Support\AdminActivity;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -31,6 +32,14 @@ class SendAdminInvitation
             $token = $invitation->renewLink();
             $invitation->roles()->sync($roleIds);
 
+            AdminActivity::recordChange(
+                "Invited {$email} to the admin",
+                $invitation,
+                before: [],
+                after: ['roles' => $invitation->roles()->orderBy('name')->pluck('name')->join(', ')],
+                by: $invitedBy,
+            );
+
             return [$invitation, $token];
         });
 
@@ -49,6 +58,8 @@ class SendAdminInvitation
         $this->ensureCanBeInvited($invitation->email, except: $invitation);
 
         $this->email($invitation, $invitation->renewLink());
+
+        AdminActivity::record("Sent {$invitation->email} a new invitation link", $invitation);
 
         return $invitation;
     }

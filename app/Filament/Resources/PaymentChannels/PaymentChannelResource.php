@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PaymentChannels;
 use App\Enums\PaymentMethod;
 use App\Filament\Resources\PaymentChannels\Pages\ManagePaymentChannels;
 use App\Models\PaymentChannel;
+use App\Support\AdminActivity;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
@@ -75,6 +76,7 @@ class PaymentChannelResource extends Resource
     {
         return $table
             ->reorderable('sort_order')
+            ->afterReordering(fn () => AdminActivity::record('Changed the order of the ways to pay'))
             ->defaultSort('sort_order')
             ->description('Drag to set the order buyers see. Run php artisan payments:sync-channels to pick up methods newly switched on at the provider.')
             ->columns([

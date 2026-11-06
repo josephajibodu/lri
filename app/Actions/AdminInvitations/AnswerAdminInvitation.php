@@ -5,6 +5,7 @@ namespace App\Actions\AdminInvitations;
 use App\Exceptions\AdminInvitationNotUsable;
 use App\Models\AdminInvitation;
 use App\Models\User;
+use App\Support\AdminActivity;
 use Illuminate\Support\Facades\DB;
 use SensitiveParameter;
 
@@ -39,6 +40,14 @@ class AnswerAdminInvitation
             $user->syncRoles($invitation->roles);
 
             $invitation->forceFill(['accepted_at' => now()])->save();
+
+            AdminActivity::recordChange(
+                'Accepted their invitation and joined the admin',
+                $user,
+                before: [],
+                after: ['roles' => $invitation->roles()->orderBy('name')->pluck('name')->join(', ')],
+                by: $user,
+            );
 
             return $user;
         });

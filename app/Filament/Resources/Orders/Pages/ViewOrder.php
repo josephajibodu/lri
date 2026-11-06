@@ -9,6 +9,7 @@ use App\Filament\Resources\Orders\OrderResource;
 use App\Mail\TicketsMail;
 use App\Models\Order;
 use App\Payments\Exceptions\PaymentProviderException;
+use App\Support\AdminActivity;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
@@ -41,6 +42,7 @@ class ViewOrder extends ViewRecord
                     }
 
                     $record->refresh();
+                    AdminActivity::record("Checked order {$record->reference} with the payment provider", $record);
                     Notification::make()->title('Checked: the order is '.strtolower($record->status->label()))->success()->send();
                 }),
             Action::make('resendTickets')
@@ -53,6 +55,7 @@ class ViewOrder extends ViewRecord
                 ->action(function (Order $record): void {
                     Mail::to($record->buyer_email, $record->buyer_name)->queue(new TicketsMail($record->load(['ticketType', 'tickets'])));
                     $record->update(['tickets_emailed_at' => now()]);
+                    AdminActivity::record("Emailed the tickets for order {$record->reference} again, to {$record->buyer_email}", $record);
 
                     Notification::make()->title('Tickets on their way to '.$record->buyer_email)->success()->send();
                 }),

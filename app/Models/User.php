@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\StaffRole;
+use App\Models\Concerns\RecordsAdminActivity;
+use App\Support\AdminActivity;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -21,7 +23,32 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasFactory, HasRoles, Notifiable, RecordsAdminActivity;
+
+    /**
+     * A password is never recorded, so the log only says that it changed.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (User $user): void {
+            if ($user->wasChanged('password')) {
+                AdminActivity::record("Changed the password of {$user->activityLabel()}", $user);
+            }
+        });
+    }
+
+    public function activityLabel(): string
+    {
+        return "admin {$this->name}";
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function activityAttributes(): array
+    {
+        return ['name', 'email'];
+    }
 
     /**
      * Get the attributes that should be cast.
