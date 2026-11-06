@@ -53,6 +53,19 @@ test('the tickets email leads with the event poster instead of the logo, in the 
         ->assertSeeInHtml('Your ticket codes and receipt for the Ibadan Silent Disco Run.');
 });
 
+test('the tickets email loads its poster and logo from the R2 bucket', function () {
+    config()->set('filesystems.disks.r2.url', 'https://assets.example.com');
+    config()->set('lri.disco_run.email_banner', 'images/disco-run/email-hero.jpg');
+
+    $order = Order::factory()->paid()->for(TicketType::factory()->state(['event' => 'disco-run']))
+        ->create(['quantity' => 1]);
+    Ticket::factory()->for($order)->create(['ticket_type_id' => $order->ticket_type_id]);
+
+    (new TicketsMail($order->load('tickets')))
+        ->assertSeeInHtml('https://assets.example.com/images/disco-run/email-hero.jpg')
+        ->assertSeeInHtml('https://assets.example.com/images/lri-logo-on-dark.png');
+});
+
 test('the tickets email sums up the event’s channels and closes on its tagline', function () {
     config()->set('lri.disco_run.tagline', 'One night only.');
     config()->set('lri.disco_run.channels', [

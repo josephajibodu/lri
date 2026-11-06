@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\SiteAsset;
 use Carbon\CarbonImmutable;
 use Illuminate\View\View;
 
@@ -71,8 +72,8 @@ class HomeController extends Controller
                 'name' => $site['name'],
                 'alternateName' => $site['alternate_name'],
                 'url' => $homeUrl,
-                'logo' => asset('images/lri-logo.png'),
-                'image' => asset('images/og-image.png'),
+                'logo' => SiteAsset::url('images/lri-logo.png'),
+                'image' => SiteAsset::url('images/og-image.png'),
                 'description' => $site['description'],
                 'slogan' => $site['slogan'],
                 'sport' => 'Running',
@@ -104,7 +105,7 @@ class HomeController extends Controller
                 'eventStatus' => 'https://schema.org/EventScheduled',
                 'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
                 'isAccessibleForFree' => true,
-                'image' => asset('images/og-image.png'),
+                'image' => SiteAsset::url('images/og-image.png'),
                 'url' => $homeUrl.'#next',
                 'location' => [
                     '@type' => 'Place',

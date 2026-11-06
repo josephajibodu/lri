@@ -8,6 +8,7 @@ use App\Http\Controllers\CheckoutEventController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\DiscoRunController;
 use App\Http\Controllers\FoundersController;
+use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MailPreviewController;
 use App\Http\Controllers\OrderController;
@@ -22,11 +23,15 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', HomeController::class)->name('home');
 Route::get('/founders', FoundersController::class)->name('founders');
 Route::get('/pace-setters', PaceSettersController::class)->name('pace-setters');
+Route::get('/gallery', GalleryController::class)->name('gallery');
 Route::get('/silent-disco-run', DiscoRunController::class)->middleware(IdentifyVisitor::class)->name('disco-run');
 Route::permanentRedirect('/disco-run', '/silent-disco-run');
 
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
+Route::get('/site.webmanifest', [SeoController::class, 'manifest'])->name('manifest');
+Route::get('/{oldAssetAddress}', [SeoController::class, 'redirectToBucket'])
+    ->where('oldAssetAddress', 'favicon\.ico|favicon\.svg|apple-touch-icon\.png|icon-192\.png|icon-512\.png|images/.+');
 
 Route::get('/birthdays/share', [BirthdayController::class, 'create'])->name('birthdays.create');
 Route::post('/birthdays', [BirthdayController::class, 'store'])

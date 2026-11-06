@@ -7,7 +7,7 @@
         </div>
         @if ($discoRun)
             <a class="up-next" href="{{ route('disco-run') }}">
-                <img class="up-next-poster" src="{{ asset($discoRun['poster']) }}" width="800" height="1000" alt="" loading="lazy" decoding="async">
+                <img class="up-next-poster" src="{{ \App\Support\SiteAsset::url($discoRun['poster']) }}" width="800" height="1000" alt="" loading="lazy" decoding="async">
                 <span class="up-next-body">
                     <span class="up-next-label"><span class="up-next-dot" aria-hidden="true"></span>Up next</span>
                     <span class="up-next-title">Silent Disco Run</span>

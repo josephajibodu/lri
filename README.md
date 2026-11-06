@@ -1,4 +1,4 @@
-<p align="center"><img src="public/favicon.svg" width="96" alt="Let's Run Ibadan logo"></p>
+<p align="center"><img src="https://assets.letsrunibadan.com/favicon.svg" width="96" alt="Let's Run Ibadan logo"></p>
 
 <h1 align="center">Let's Run Ibadan</h1>
 
@@ -86,8 +86,8 @@ The site also serves:
 
 - **Structured data** on the home page (schema.org JSON-LD), describing the club, the website and the next run as a free event. The run is listed only until it starts.
 - **`/sitemap.xml`** listing the pages to index, and **`/robots.txt`** pointing crawlers to it.
-- **A link preview image** at `public/images/og-image.png`, used by WhatsApp, Instagram, X and others.
-- **Icons:** `favicon.ico`, `favicon.svg`, `apple-touch-icon.png` and the `site.webmanifest` icons in `public/`.
+- **A link preview image** at `images/og-image.png` in the R2 bucket, used by WhatsApp, Instagram, X and others.
+- **Icons:** `favicon.ico`, `favicon.svg`, `apple-touch-icon.png`, `icon-192.png` and `icon-512.png` in the R2 bucket. `/site.webmanifest` is built in `SeoController`.
 - **`noindex` on error pages**, so they never appear in search results.
 
 All of these build their links from the address the site is served on, and use `https` when `APP_ENV=production`. Set `APP_URL` to the live address too.
@@ -123,7 +123,7 @@ The colours are CSS custom properties at the top of the page styles in `resource
 
 The admin uses the same colours, and follows the same rule: its yellow buttons have dark text. The shades of yellow are in `app/Providers/Filament/AdminPanelProvider.php`. The background, the yellow stripe and the other small touches are in `resources/views/filament/brand-styles.blade.php`.
 
-The logo is an SVG redraw of the LRI logo in `resources/views/components/logo.blade.php` (full logo), `resources/views/components/logo-mark.blade.php` (the LRI mark) and `public/favicon.svg`. Replace them with the original artwork when it is available.
+The logo is an SVG redraw of the LRI logo in `images/lri-logo.svg` (full logo), `images/lri-logo-mark.svg` (the LRI mark) and `favicon.svg` in the R2 bucket. Replace them with the original artwork when it is available.
 
 ## Ticket payments
 
@@ -432,6 +432,22 @@ vendor/bin/pint --dirty
 
 `tests/Feature/HomePageTest.php` checks that the page shows the next run and the links from `config/lri.php`. Tests run without built assets because `tests/TestCase.php` turns Vite off. They never reach Bachs or Mailchimp: `phpunit.xml` blanks the keys, and the tests fake both APIs.
 
+## Images and icons
+
+No images or icons are kept in the code. They live in a public Cloudflare R2 bucket, and `App\Support\SiteAsset::url()` builds their addresses from `R2_PUBLIC_URL`. To add or replace one, upload it and use its path in the bucket:
+
+```bash
+php artisan assets:upload path/to/new-photo.jpg --to=images
+```
+
+Gallery photos are listed in `config/gallery.php`. Each one needs a `-large.webp` (1600 px on the long edge) and a `-thumb.webp` (640 px wide) under `gallery/` in the bucket.
+
+What people upload, such as passport photographs and birthday photos, goes to a separate private bucket that has no public address. To move existing uploads from a server's disk into it:
+
+```bash
+php artisan assets:upload storage/app/private --disk=r2_private
+```
+
 ## Deployment
 
 The site runs on any host with PHP 8.4, including [Laravel Cloud](https://cloud.laravel.com). It needs:
@@ -467,6 +483,10 @@ Do these once, in order, when the site goes live.
    | `MAIL_MAILER` and its settings | A real mail service. Until this is set, ticket emails only go to the log file and nobody gets their tickets |
    | `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Who ticket emails come from. Change it from `hello@example.com` |
    | `LOG_LEVEL` | `error` or `warning`, so the log doesn't fill up with detail |
+   | `FILESYSTEM_DISK` | `r2_private`, so people's uploads go to the private R2 bucket |
+   | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT` | The Cloudflare R2 API token and the account's S3 address |
+   | `R2_BUCKET`, `R2_PUBLIC_URL` | The public bucket for images and icons, and its web address. See [Images and icons](#images-and-icons) |
+   | `R2_PRIVATE_BUCKET` | The private bucket for uploads such as passport photographs. It must have no public address |
    | `EMAIL_TOOL`, `MAILCHIMP_*` | Leave blank unless you're using [follow-up emails](#follow-up-emails-with-mailchimp) |
    | `BARRACKS_REGISTRATION_OPEN` | `false` unless the barracks permit sign-up is running |
    | `HEADSET_DESK_OPEN` | `false` keeps the headset desk to super admins. `true` gives it back to every role with it ticked |

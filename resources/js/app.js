@@ -1018,6 +1018,50 @@ import.meta.glob("../fonts/*.woff2");
         });
     });
 
+    /* Gallery: photos open in a full-screen viewer with arrows, keys and swipes. Without JavaScript each link opens the photo itself */
+    function initGalleryViewer() {
+        var viewer = $("gallery-viewer");
+        if (!viewer || typeof viewer.showModal !== "function") return;
+        var links = Array.prototype.slice.call(document.querySelectorAll("[data-gallery-photo]"));
+        var image = viewer.querySelector("[data-viewer-image]");
+        var count = viewer.querySelector("[data-viewer-count]");
+        var current = 0;
+        var swipeStart = null;
+        function show(index) {
+            current = (index + links.length) % links.length;
+            var link = links[current];
+            image.src = link.href;
+            image.alt = link.querySelector("img").alt;
+            count.textContent = (current + 1) + " / " + links.length;
+            [current + 1, current - 1].forEach(function (neighbour) {
+                new Image().src = links[(neighbour + links.length) % links.length].href;
+            });
+        }
+        links.forEach(function (link, index) {
+            link.addEventListener("click", function (event) {
+                event.preventDefault();
+                show(index);
+                viewer.showModal();
+            });
+        });
+        viewer.querySelector("[data-viewer-close]").addEventListener("click", function () { viewer.close(); });
+        viewer.querySelector("[data-viewer-prev]").addEventListener("click", function () { show(current - 1); });
+        viewer.querySelector("[data-viewer-next]").addEventListener("click", function () { show(current + 1); });
+        viewer.addEventListener("keydown", function (event) {
+            if (event.key === "ArrowLeft") { show(current - 1); }
+            if (event.key === "ArrowRight") { show(current + 1); }
+        });
+        viewer.addEventListener("close", function () { links[current].focus(); });
+        image.addEventListener("pointerdown", function (event) { swipeStart = event.clientX; });
+        image.addEventListener("pointerup", function (event) {
+            if (swipeStart === null) return;
+            var distance = event.clientX - swipeStart;
+            swipeStart = null;
+            if (Math.abs(distance) > 40) { show(current + (distance < 0 ? 1 : -1)); }
+        });
+    }
+    initGalleryViewer();
+
     /* Ask before an undo that can't be taken back */
     document.querySelectorAll("form[data-confirm]").forEach(function (form) {
         form.addEventListener("submit", function (event) {
