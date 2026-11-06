@@ -49,7 +49,7 @@
     <dialog class="gl-viewer" id="gallery-viewer" aria-label="Photo viewer">
         <button class="gl-viewer-btn gl-viewer-close" type="button" data-viewer-close aria-label="Close">✕</button>
         <button class="gl-viewer-btn gl-viewer-prev" type="button" data-viewer-prev aria-label="Previous photo">←</button>
-        <img class="gl-viewer-image" data-viewer-image src="data:," alt="">
+        <img class="gl-viewer-image" data-viewer-image src="data:," alt="" draggable="false">
         <button class="gl-viewer-btn gl-viewer-next" type="button" data-viewer-next aria-label="Next photo">→</button>
         <p class="gl-viewer-count" data-viewer-count aria-live="polite"></p>
     </dialog>
