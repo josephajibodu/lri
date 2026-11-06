@@ -12,6 +12,8 @@
  * Fonts, self-hosted so the first paint does not wait on another site.
  * Latin and Latin Extended subsets of Anybody, Instrument Sans and Martian Mono (all SIL Open Font License),
  * with the full width and weight ranges the stretch animations use.
+ * Instrument Sans and Martian Mono have no naira sign, so U+20A6 is left out of their ranges. With it in, a price
+ * downloads a file that can't draw it, then falls back to a system font anyway. Anybody does have it, so it stays there.
  */
 @font-face {
     font-family: "Anybody";
@@ -56,7 +58,7 @@
     font-stretch: 75% 100%;
     font-display: swap;
     src: url("../fonts/instrument-sans-italic-latin-ext.woff2") format("woff2");
-    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20A5, U+20A7-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
     font-family: "Instrument Sans";
@@ -74,7 +76,7 @@
     font-stretch: 75% 100%;
     font-display: swap;
     src: url("../fonts/instrument-sans-latin-ext.woff2") format("woff2");
-    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20A5, U+20A7-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
     font-family: "Instrument Sans";
@@ -92,7 +94,7 @@
     font-stretch: 100%;
     font-display: swap;
     src: url("../fonts/martian-mono-latin-ext.woff2") format("woff2");
-    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20A5, U+20A7-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
     font-family: "Martian Mono";
@@ -444,7 +446,11 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
 .marquee { overflow: hidden; border-block: 2px solid var(--ink); background: var(--yellow); color: var(--on-color); }
 .marquee-track { display: flex; width: max-content; }
 .marquee-group { display: flex; align-items: center; gap: 28px; padding: 14px; font: italic 900 clamp(1.4rem, 3vw, 2.2rem)/1 var(--display); font-stretch: 115%; text-transform: uppercase; white-space: nowrap; }
-.marquee-group i { font-style: normal; font-size: .8em; }
+/*
+ * None of our fonts have the star, so naming Anybody here would only download its upright file for nothing.
+ * Instrument Sans is already loaded on every page. The nudge matches where Anybody's baseline puts the star.
+ */
+.marquee-group i { font-family: "Instrument Sans", "Arial Black", Impact, sans-serif; font-style: normal; font-size: .8em; transform: translateY(-.0825em); }
 @media (prefers-reduced-motion: no-preference) {
     .marquee-track { animation: slide 32s linear infinite; }
     .marquee:hover .marquee-track { animation-play-state: paused; }
