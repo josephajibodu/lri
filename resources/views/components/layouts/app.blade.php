@@ -6,6 +6,7 @@
     'image' => 'images/og-image.png',
     'imageAlt' => 'Let’s run, Ibadan. A run club for everyone, every pace, every Saturday at 6:30 AM.',
     'themeColor' => '#FFB000',
+    'chat' => true,
 ])
 
 <!DOCTYPE html>
@@ -50,5 +51,9 @@
     </head>
     <body>
         {{ $slot }}
+
+        @if ($chat)
+            <x-site.whatsapp-chat />
+        @endif
     </body>
 </html>

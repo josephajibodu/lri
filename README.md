@@ -490,6 +490,7 @@ Do these once, in order, when the site goes live.
    | `EMAIL_TOOL`, `MAILCHIMP_*` | Leave blank unless you're using [follow-up emails](#follow-up-emails-with-mailchimp) |
    | `BARRACKS_REGISTRATION_OPEN` | `false` unless the barracks permit sign-up is running |
    | `HEADSET_DESK_OPEN` | `false` keeps the headset desk to super admins. `true` gives it back to every role with it ticked |
+   | `WHATSAPP_CHAT_NUMBER` | The WhatsApp number for the chat button in the corner of public pages, in full with the country code (for example `234 803 123 4567`). Empty hides the button |
 
 3. **Make the app key.** It encrypts sessions and signs links. Run this once only: changing it later logs everyone out and breaks links already sent.
 

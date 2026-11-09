@@ -1040,6 +1040,42 @@ import.meta.glob("../fonts/*.woff2");
     }
     initGalleryViewer();
 
+    /* WhatsApp chat: after a few seconds a note pops up beside the button, once per visit, and never again once closed or used */
+    function initWhatsAppChat() {
+        var chat = document.querySelector("[data-wa-chat]");
+        if (!chat) return;
+        var note = chat.querySelector("[data-wa-chat-note]");
+        var button = chat.querySelector("[data-wa-chat-link]");
+        var key = "lri-wa-chat-note";
+        function remembered() {
+            try { return window.sessionStorage.getItem(key); } catch (e) { return "seen"; }
+        }
+        function remember(value) {
+            try { window.sessionStorage.setItem(key, value); } catch (e) {}
+        }
+        function hide() {
+            note.hidden = true;
+            remember("closed");
+        }
+        chat.querySelector("[data-wa-chat-close]").addEventListener("click", function () {
+            hide();
+            button.focus();
+        });
+        button.addEventListener("click", hide);
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !note.hidden) hide();
+        });
+        if (remembered()) return;
+        window.setTimeout(function () {
+            if (remembered() || document.querySelector("dialog[open]")) return;
+            note.hidden = false;
+            note.classList.add("is-in");
+            button.classList.add("is-nudging");
+            remember("shown");
+        }, (parseInt(chat.dataset.noteAfter, 10) || 8) * 1000);
+    }
+    initWhatsAppChat();
+
     /* Ask before an undo that can't be taken back */
     document.querySelectorAll("form[data-confirm]").forEach(function (form) {
         form.addEventListener("submit", function (event) {

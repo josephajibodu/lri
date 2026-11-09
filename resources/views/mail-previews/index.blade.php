@@ -7,7 +7,7 @@
     $screen = $devices[$device];
 @endphp
 
-<x-layouts.app title="Email previews · Let’s Run Ibadan" robots="noindex, nofollow">
+<x-layouts.app title="Email previews · Let’s Run Ibadan" robots="noindex, nofollow" :chat="false">
     <x-slot:head>
         {{-- Kept here because this page is never routed in production, so its styles stay out of the site's stylesheet. --}}
         <style>
