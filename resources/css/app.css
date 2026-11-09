@@ -1765,3 +1765,66 @@ textarea.input { resize: vertical; min-height: 3.2em; }
     .gl-viewer-prev, .gl-viewer-next { top: auto; bottom: 12px; translate: none; }
 }
 @media (prefers-reduced-motion: reduce) { .gl-tile, .gl-tile:hover { transition: none; transform: none; } }
+
+/* WhatsApp chat button, fixed in the corner, with a note that pops up once per visit */
+.wa-chat {
+    position: fixed;
+    right: max(16px, env(safe-area-inset-right, 0px));
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    z-index: 45;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    pointer-events: none;
+}
+.wa-chat > * { pointer-events: auto; }
+.wa-chat-btn {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: #25D366;
+    color: var(--ink);
+    box-shadow: var(--pop);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.wa-chat-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+.wa-chat-btn:active { transform: none; box-shadow: none; }
+.wa-chat-note {
+    position: relative;
+    width: min(280px, calc(100vw - 32px));
+    padding: 14px 40px 14px 16px;
+    border: 2px solid var(--ink);
+    border-radius: 16px 16px 4px 16px;
+    background: var(--card);
+    box-shadow: var(--pop);
+}
+.wa-chat-note[hidden] { display: none; }
+.wa-chat-note-title { margin: 0 0 4px; font-weight: 600; letter-spacing: -.01em; }
+.wa-chat-note-text { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.4; }
+.wa-chat-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+.wa-chat-close:hover { background: var(--bg); color: var(--ink); }
+@media (prefers-reduced-motion: no-preference) {
+    .wa-chat-note.is-in { animation: wa-chat-pop .35s cubic-bezier(.2, .8, .2, 1) both; }
+    .wa-chat-btn.is-nudging { animation: wa-chat-nudge .9s ease 2; }
+}
+@keyframes wa-chat-pop { from { opacity: 0; transform: translateY(10px) scale(.96); transform-origin: bottom right; } }
+@keyframes wa-chat-nudge { 0%, 100% { rotate: 0deg; } 20% { rotate: -12deg; } 40% { rotate: 10deg; } 60% { rotate: -6deg; } 80% { rotate: 3deg; } }
+@media print { .wa-chat { display: none; } }

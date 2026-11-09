@@ -199,6 +199,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | WhatsApp Chat
+    |--------------------------------------------------------------------------
+    |
+    | The chat button in the corner of every public page, which opens a
+    | WhatsApp chat with this number. Write the number in full with the
+    | country code (234...); spaces and a leading + are fine. Leave it empty
+    | to hide the button. The message is filled in for the visitor, who can
+    | change it before sending. The note pops up next to the button after
+    | this many seconds, once per visit, until the visitor closes it.
+    |
+    */
+
+    'whatsapp_chat' => [
+        'number' => preg_replace('/\D+/', '', (string) env('WHATSAPP_CHAT_NUMBER')),
+        'message' => 'Hi Let’s Run Ibadan, I need some help.',
+        'note_after_seconds' => 8,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Instagram Highlights
     |--------------------------------------------------------------------------
     |
