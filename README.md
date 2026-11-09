@@ -265,11 +265,11 @@ Holding tickets costs nothing, so `payments.unpaid_limits` in `config/payments.p
 
 Those limits go by email and internet address, and both are easy to change, so a script could still reserve a lot of tickets without paying. To stop that, the ticket form uses [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile/), a free check that a real browser is placing the order. Buyers usually see nothing. Now and then, Cloudflare asks them to click a box.
 
-It's off until `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are set, which is how it stays out of the way locally. To turn it on, add a widget in the Cloudflare dashboard under Turnstile, in Managed mode, with your domain as its hostname, and put its two keys in `.env`.
+It only runs when `TURNSTILE_ENABLED=true` and `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are set, which is how it stays out of the way locally. To turn it on, add a widget in the Cloudflare dashboard under Turnstile, in Managed mode, with your domain as its hostname, put its two keys in `.env`, set `TURNSTILE_ENABLED=true`, and run `php artisan optimize`. To switch it off again without losing the keys, set `TURNSTILE_ENABLED=false` and run `php artisan optimize`.
 
 - **Failing the check:** the order is refused, and the buyer is asked to try again.
 - **If Cloudflare's server can't answer, or the secret key is wrong:** the order goes through and the problem is reported in the logs, so that kind of outage doesn't stop sales.
-- **If the check can't load in buyers' browsers, or the site key is wrong:** nobody can order, because the site can't tell that apart from a script skipping the check on purpose. So after setting the keys, buy a ticket on the live site to check it. If this happens during a sale, empty both keys in `.env` and run `php artisan optimize`, which switches the check off.
+- **If the check can't load in buyers' browsers, or the site key is wrong:** nobody can order, because the site can't tell that apart from a script skipping the check on purpose. So after setting the keys, buy a ticket on the live site to check it. If this happens during a sale, set `TURNSTILE_ENABLED=false` in `.env` and run `php artisan optimize`, which switches the check off.
 - **Buyers need JavaScript on,** and a strict ad blocker can stop the check loading. They're told either way.
 
 To try it locally, use [Cloudflare's test keys](https://developers.cloudflare.com/turnstile/troubleshooting/testing/). Remove them afterwards.
@@ -479,7 +479,7 @@ Do these once, in order, when the site goes live.
    | `DB_*` | The live MySQL database. Create the empty database first |
    | `BACHS_SECRET_KEY` | The live key, starting `sk_live_`. With any other key, or a `BACHS_BASE_URL` other than the live one, the live site refuses to open checkouts, because anyone could get real tickets with test payments |
    | `BACHS_WEBHOOK_SECRET` | The signing secret of the webhook you add in step 9 |
-| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | The keys of your Cloudflare Turnstile widget. Without them there's no [bot check](#the-bot-check) |
+| `TURNSTILE_ENABLED`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | The switch and keys of your Cloudflare Turnstile widget. Without `TURNSTILE_ENABLED=true` and both keys there's no [bot check](#the-bot-check) |
    | `MAIL_MAILER` and its settings | A real mail service. Until this is set, ticket emails only go to the log file and nobody gets their tickets |
    | `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Who ticket emails come from. Change it from `hello@example.com` |
    | `LOG_LEVEL` | `error` or `warning`, so the log doesn't fill up with detail |
