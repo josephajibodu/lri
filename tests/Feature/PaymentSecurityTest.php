@@ -1063,12 +1063,25 @@ test('phone numbers in the CSV download stay as they are', function () {
 
 function turnOnBotCheck(array $answer = ['success' => true], int $status = 200): void
 {
+    config()->set('services.turnstile.enabled', true);
     config()->set('services.turnstile.site_key', 'site-key');
     config()->set('services.turnstile.secret_key', 'secret-key');
     Http::fake(['challenges.cloudflare.com/*' => Http::response($answer, $status)]);
 }
 
 test('with no keys set there is no bot check, on the page or when ordering', function () {
+    $this->get(route('disco-run'))->assertOk()->assertDontSee('cf-turnstile')->assertDontSee('challenges.cloudflare.com');
+
+    $this->post(route('orders.store'), attackForm())->assertRedirect();
+
+    expect(Order::query()->count())->toBe(1);
+    Http::assertNotSent(fn (ClientRequest $request): bool => str_contains($request->url(), 'challenges.cloudflare.com'));
+});
+
+test('with its keys set but the switch off, there is no bot check, on the page or when ordering', function () {
+    turnOnBotCheck();
+    config()->set('services.turnstile.enabled', false);
+
     $this->get(route('disco-run'))->assertOk()->assertDontSee('cf-turnstile')->assertDontSee('challenges.cloudflare.com');
 
     $this->post(route('orders.store'), attackForm())->assertRedirect();
@@ -1126,6 +1139,7 @@ test('fixing a typo doesn’t use up the bot check’s token', function () {
 
 test('if Cloudflare can’t give an answer, or our key is wrong, the sale goes on and the problem is reported', function (Closure $answer) {
     Exceptions::fake();
+    config()->set('services.turnstile.enabled', true);
     config()->set('services.turnstile.site_key', 'site-key');
     config()->set('services.turnstile.secret_key', 'secret-key');
     Http::fake(['challenges.cloudflare.com/*' => $answer()]);

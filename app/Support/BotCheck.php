@@ -8,7 +8,7 @@ use RuntimeException;
 
 /**
  * Cloudflare Turnstile, which checks that an order comes from a real browser and not a script reserving tickets in bulk.
- * It's off until its keys are set. Someone who fails the check is refused, but if Cloudflare's server can't give an answer,
+ * It's off unless TURNSTILE_ENABLED is true and its keys are set. Someone who fails the check is refused, but if Cloudflare's server can't give an answer,
  * or our own key is wrong, the order goes through and the problem is reported: an outage elsewhere shouldn't stop ticket
  * sales, and nothing a visitor sends can cause either one. A token that never arrives is always refused, even if it's
  * because the check couldn't load in the buyer's browser, since a script skipping the check looks exactly the same.
@@ -31,7 +31,8 @@ final class BotCheck
 
     public static function isOn(): bool
     {
-        return filled(config('services.turnstile.site_key')) && filled(config('services.turnstile.secret_key'));
+        return config('services.turnstile.enabled') === true
+            && filled(config('services.turnstile.site_key')) && filled(config('services.turnstile.secret_key'));
     }
 
     public static function siteKey(): ?string
