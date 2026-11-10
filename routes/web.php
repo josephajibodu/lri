@@ -74,15 +74,15 @@ Route::middleware(['signed:checkout_id', IdentifyVisitor::class])->group(functio
         ->name('orders.pay');
 });
 
+Route::get('/orders/{order:reference}/pick-up', [OrderController::class, 'pickUp'])
+    ->middleware(['signed', 'throttle:order-pages', IdentifyVisitor::class])
+    ->name('orders.pick-up');
+
 Route::get('/receipts/{order:receipt_token}', [OrderController::class, 'receipt'])->name('receipts.show');
 Route::scopeBindings()->middleware('throttle:ticket-changes')->prefix('/receipts/{order:receipt_token}/tickets/{ticket}')->group(function () {
     Route::put('/', [TicketController::class, 'update'])->name('receipts.tickets.update');
     Route::post('/link', [TicketController::class, 'shareLink'])->name('receipts.tickets.share-link');
     Route::delete('/link', [TicketController::class, 'cancelLink'])->name('receipts.tickets.cancel-link');
-Route::get('/orders/{order:reference}/pick-up', [OrderController::class, 'pickUp'])
-    ->middleware(['signed', 'throttle:order-pages', IdentifyVisitor::class])
-    ->name('orders.pick-up');
-
     Route::post('/reissue', [TicketController::class, 'reissue'])->name('receipts.tickets.reissue');
 });
 
@@ -115,9 +115,9 @@ if (! app()->isProduction()) {
     Route::get('/mail-previews/admin-invitation/{page}', [MailPreviewController::class, 'invitationPage'])
         ->whereIn('page', ['accept', 'decline'])
         ->name('mail-previews.invitation-page');
-    Route::get('/mail-previews/{preview?}', [MailPreviewController::class, 'index'])->name('mail-previews.index');
-    Route::get('/mail-previews/{preview}/render', [MailPreviewController::class, 'show'])->name('mail-previews.show');
-}
     Route::get('/mail-previews/abandoned-order/pick-up', [MailPreviewController::class, 'pickUpPage'])
         ->middleware(IdentifyVisitor::class)
         ->name('mail-previews.pick-up');
+    Route::get('/mail-previews/{preview?}', [MailPreviewController::class, 'index'])->name('mail-previews.index');
+    Route::get('/mail-previews/{preview}/render', [MailPreviewController::class, 'show'])->name('mail-previews.show');
+}
