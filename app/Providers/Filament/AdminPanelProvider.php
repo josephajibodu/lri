@@ -69,6 +69,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->navigationGroups([
                 NavigationGroup::make('Tickets'),
+                NavigationGroup::make('Marketing'),
                 NavigationGroup::make('Club'),
                 NavigationGroup::make('Settings'),
                 NavigationGroup::make('System'),
