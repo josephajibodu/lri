@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
@@ -43,6 +44,7 @@ use Illuminate\Support\Str;
     'paid_at',
     'tickets_emailed_at',
     'abandoned_at',
+    'reminder_sent_at',
     'refunded_at',
     'marked_test_at',
     'marked_test_by',
@@ -101,6 +103,7 @@ class Order extends Model
             'paid_at' => 'datetime',
             'tickets_emailed_at' => 'datetime',
             'abandoned_at' => 'datetime',
+            'reminder_sent_at' => 'datetime',
             'refunded_at' => 'datetime',
             'marked_test_at' => 'datetime',
         ];
@@ -229,6 +232,28 @@ class Order extends Model
     public function scopeUnpaidHold(Builder $query): void
     {
         $query->where('status', OrderStatus::Pending)->where('expires_at', '>', now());
+    }
+
+    /**
+     * Limit the query to abandoned orders whose buyer can be emailed a reminder to come back. It must be the buyer's
+     * latest order, and none of their orders may have been paid, refunded, disputed, marked a test, still be open, or
+     * had a reminder already. So nobody who bought since, or already heard from us, gets one, and someone who left
+     * twice gets one email, about their latest try.
+     *
+     * @param  Builder<Order>  $query
+     */
+    public function scopeAwaitingReminder(Builder $query): void
+    {
+        $query->where('status', OrderStatus::Abandoned)
+            ->whereNull('reminder_sent_at')
+            ->whereNotExists(fn (QueryBuilder $other) => $other
+                ->from('orders as other_orders')
+                ->whereColumn('other_orders.id', '!=', 'orders.id')
+                ->whereRaw('lower(other_orders.buyer_email) = lower(orders.buyer_email)')
+                ->where(fn (QueryBuilder $other) => $other
+                    ->where('other_orders.status', '!=', OrderStatus::Abandoned->value)
+                    ->orWhereColumn('other_orders.id', '>', 'orders.id')
+                    ->orWhereNotNull('other_orders.reminder_sent_at')));
     }
 
     /**

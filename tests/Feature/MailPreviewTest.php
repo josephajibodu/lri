@@ -95,3 +95,16 @@ test('an unknown email is not found', function () {
     $this->get('/mail-previews/nope')->assertNotFound();
     $this->get('/mail-previews/nope/render')->assertNotFound();
 });
+
+test('the reminder to finish an order previews with sample data, and its button fills in the real ticket form', function () {
+    $this->get('/mail-previews/abandoned-order/render')
+        ->assertOk()
+        ->assertSeeText('Still coming, Ada?')
+        ->assertSee(route('mail-previews.pick-up'), false);
+
+    $this->get('/mail-previews/abandoned-order/pick-up')
+        ->assertRedirect(route('disco-run').'#tickets')
+        ->assertSessionHasInput(['name' => 'Ada Bello', 'quantity' => 2, 'coupon' => 'LRILOVE']);
+
+    expect(Order::count())->toBe(0);
+});

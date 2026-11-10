@@ -35,6 +35,41 @@ class OrderController extends Controller
     private const RecheckAfterSeconds = 5;
 
     /**
+     * Where the reminder email's button leads: back to the ticket form, filled in with what the buyer typed last time,
+     * so they can pick up where they left off. The visit is tagged as coming from the reminder, so a sale it brings
+     * in shows under where buyers come from. A buyer who has paid since is sent to their receipt instead.
+     */
+    public function pickUp(Request $request, Order $order): RedirectResponse
+    {
+        if ($order->status === OrderStatus::Paid) {
+            return redirect($order->receiptUrl());
+        }
+
+        $this->recordCheckoutStep->handle(CheckoutStep::ReminderOpened, IdentifyVisitor::visitorId($request), order: $order);
+
+        return redirect()
+            ->to(route('disco-run', ['utm_source' => 'email', 'utm_medium' => 'reminder', 'utm_campaign' => 'abandoned-order']).'#tickets')
+            ->withInput(self::checkoutFormFor($order));
+    }
+
+    /**
+     * What an order's buyer typed into the ticket form, ready to fill it in again.
+     *
+     * @return array{quantity: int, name: string, email: string, phone: ?string, coupon: ?string, marketing_consent: bool}
+     */
+    public static function checkoutFormFor(Order $order): array
+    {
+        return [
+            'quantity' => $order->quantity,
+            'name' => $order->buyer_name,
+            'email' => $order->buyer_email,
+            'phone' => $order->buyer_phone,
+            'coupon' => $order->coupon?->code,
+            'marketing_consent' => $order->marketing_consent,
+        ];
+    }
+
+    /**
      * Take the buyer's details, hold their tickets and open a checkout with the way to pay they chose.
      */
     public function store(StoreOrderRequest $request, PlaceOrder $placeOrder, StartPayment $startPayment): RedirectResponse|JsonResponse

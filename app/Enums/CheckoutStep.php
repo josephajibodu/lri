@@ -24,6 +24,8 @@ enum CheckoutStep: string implements HasColor, HasLabel
     case CheckoutExpired = 'checkout_expired';
     case OrderAbandoned = 'order_abandoned';
     case CheckoutResumed = 'checkout_resumed';
+    case ReminderSent = 'reminder_sent';
+    case ReminderOpened = 'reminder_opened';
 
     /**
      * The step as organisers read it.
@@ -45,6 +47,8 @@ enum CheckoutStep: string implements HasColor, HasLabel
             self::CheckoutExpired => 'Checkout expired',
             self::OrderAbandoned => 'Abandoned the order',
             self::CheckoutResumed => 'Came back to finish paying',
+            self::ReminderSent => 'Was emailed a reminder to come back',
+            self::ReminderOpened => 'Came back from the reminder email',
         };
     }
 

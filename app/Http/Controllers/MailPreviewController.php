@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\CouponDiscountType;
 use App\Enums\OrderStatus;
 use App\Enums\StaffRole;
+use App\Mail\AbandonedOrderMail;
 use App\Mail\AdminInvitationMail;
 use App\Mail\TicketMail;
 use App\Mail\TicketsMail;
@@ -14,6 +15,7 @@ use App\Models\Order;
 use App\Models\Ticket;
 use App\Models\TicketType;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Collection;
@@ -83,6 +85,17 @@ class MailPreviewController extends Controller
     }
 
     /**
+     * Where the previewed reminder's button leads: the real ticket form, filled in with the sample buyer's details,
+     * just as the live link does for a real buyer. Nothing is saved.
+     */
+    public function pickUpPage(): RedirectResponse
+    {
+        return redirect()
+            ->to(route('disco-run').'#tickets')
+            ->withInput(OrderController::checkoutFormFor($this->sampleAbandonedOrder()));
+    }
+
+    /**
      * The emails to preview, keyed by the name used in the link.
      *
      * @return Collection<string, array{name: string, description: string, mail: callable(): Mailable}>
@@ -110,6 +123,16 @@ class MailPreviewController extends Controller
                 'description' => 'Sent to a friend the buyer got a ticket for, once their name goes on it.',
                 'mail' => fn (): Mailable => new TicketMail($this->sampleOrder(quantity: 3)->tickets[1]),
             ],
+            'abandoned-order' => [
+                'name' => 'Reminder to finish an order',
+                'description' => 'Sent by an organiser, from Marketing > Abandoned orders, to a buyer who left without paying. Each buyer gets it once.',
+                'mail' => fn (): Mailable => new AbandonedOrderMail($this->sampleAbandonedOrder(), buttonUrl: route('mail-previews.pick-up')),
+            ],
+            'abandoned-order-one' => [
+                'name' => 'Reminder to finish an order, one ticket',
+                'description' => 'The same reminder when the buyer wanted one ticket and had no coupon.',
+                'mail' => fn (): Mailable => new AbandonedOrderMail($this->sampleAbandonedOrder(quantity: 1, withCoupon: false), buttonUrl: route('mail-previews.pick-up')),
+            ],
             'admin-invitation' => [
                 'name' => 'Invitation to the admin',
                 'description' => 'Sent when an organiser invites someone to help run the admin. Our official look, for anything that isn’t about an event.',
@@ -131,6 +154,18 @@ class MailPreviewController extends Controller
             ->forceFill(['expires_at' => now()->addHours(config('lri.admin_invitations.lifetime_hours'))])
             ->setRelation('invitedBy', new User(['name' => 'Joseph Ajibodu']))
             ->setRelation('roles', collect([new Role(['name' => StaffRole::HeadsetDesk->value])]));
+    }
+
+    /**
+     * An abandoned Disco Run order, built in memory so nothing touches the database.
+     */
+    private function sampleAbandonedOrder(int $quantity = 2, bool $withCoupon = true): Order
+    {
+        $order = $this->sampleOrder(quantity: $quantity, withCoupon: $withCoupon)
+            ->forceFill(['status' => OrderStatus::Abandoned, 'paid_at' => null, 'abandoned_at' => now()->subDay(), 'buyer_phone' => '+2348031234567'])
+            ->setRelation('tickets', collect());
+
+        return $order;
     }
 
     /**
