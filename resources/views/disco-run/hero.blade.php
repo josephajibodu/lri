@@ -26,13 +26,16 @@
 
         <p class="dr-lede">Headsets on. The city hears nothing, you hear everything. Run and vibe through Ibadan at night on three live DJ channels, then we rave at the finish.</p>
 
-        {{-- The price, the headset and who can come sit next to the date and place, on the first screen of a phone, so nobody has to scroll to find out --}}
+        {{-- The price, the headset and who can come sit next to the date and place, on the first screen of a phone, so nobody has to scroll to find out.
+             While a sale every buyer gets is running, the price is what one ticket costs with it, the same as the ticket form shows. --}}
         @php
             $price = match ($ticketing['state']) {
                 'on_sale' => $ticketing['ticketType']->unitPrice()->format(),
                 'soon' => $discoRun['price'],
                 'sold_out' => null,
             };
+            $saleDiscount = $ticketing['state'] === 'on_sale' ? $ticketing['automaticCoupon']?->discountFor($ticketing['ticketType']->unitPrice(), 1) : null;
+            $salePrice = $saleDiscount?->amount > 0 ? App\Support\Money::of($ticketing['ticketType']->price - $saleDiscount->amount, $ticketing['ticketType']->currency)->format() : null;
         @endphp
         <div class="dr-hero-details">
             <ul class="dr-facts">
@@ -42,7 +45,9 @@
             </ul>
 
             <div class="dr-offer">
-                @if ($price)
+                @if ($salePrice)
+                    <p class="dr-offer-price">{{ $salePrice }} <s class="dr-offer-was"><span class="sr-only">instead of </span>{{ $price }}</s></p>
+                @elseif ($price)
                     <p class="dr-offer-price">{{ $price }}</p>
                 @endif
                 <ul class="dr-offer-notes">

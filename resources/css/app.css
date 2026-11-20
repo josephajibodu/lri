@@ -1444,6 +1444,7 @@ textarea.input { resize: vertical; min-height: 3.2em; }
     .dr-offer { display: flex; align-items: baseline; gap: 14px; }
 }
 .dr-offer-price { margin: 0; font-size: 1.5rem; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; color: var(--label); }
+.dr-offer-was { margin-left: 4px; color: var(--dim); font-size: 1rem; font-weight: 500; }
 .dr-offer-notes { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 10px; margin: 0; padding: 0; list-style: none; font-size: .95rem; font-weight: 500; color: var(--label-2); }
 @media (prefers-reduced-motion: no-preference) {
     .dr-beams span { animation: dr-sweep 9s ease-in-out infinite alternate; }

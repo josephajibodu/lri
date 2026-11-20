@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PaymentMethod;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\PaymentChannel;
 use App\Models\TicketType;
@@ -60,6 +61,16 @@ test('the top of the page gives the ticket’s price, the headset and every pace
     $this->get(route('disco-run'))
         ->assertOk()
         ->assertSeeInOrder(['class="dr-hero"', '₦15,000', 'Headset included', 'Walk, jog or run', 'Get your ticket ↓'], false);
+});
+
+test('the top of the page gives the sale price with the full price struck through while a sale every buyer gets is running', function () {
+    TicketType::factory()->create(['price' => 1_500_000]);
+    PaymentChannel::factory()->create();
+    Coupon::factory()->automatic()->create(['code' => 'BLACKFRIDAY']);
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSeeInOrder(['class="dr-hero"', '₦12,000', '<s class="dr-offer-was"><span class="sr-only">instead of </span>₦15,000</s>', 'Get your ticket ↓'], false);
 });
 
 test('the top of the page gives the announced price while tickets aren’t on sale yet', function () {
