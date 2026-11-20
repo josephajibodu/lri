@@ -100,6 +100,7 @@ test('the reminder to finish an order previews with sample data, and its button 
     $this->get('/mail-previews/abandoned-order/render')
         ->assertOk()
         ->assertSeeText('Still coming, Ada?')
+        ->assertSeeText('LRILOVE, filled in for you. Ends')
         ->assertSee(route('mail-previews.pick-up'), false);
 
     $this->get('/mail-previews/abandoned-order/pick-up')

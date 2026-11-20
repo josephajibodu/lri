@@ -9,6 +9,7 @@ use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\TicketType;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -115,6 +116,39 @@ test('a reminder for an order without a coupon tells the buyer about a sale ever
     $mail = new AbandonedOrderMail($order->load(['ticketType', 'coupon']));
 
     $mail->assertSeeInText('BLACKFRIDAY, filled in for you');
+});
+
+test('the reminder says when the coupon ends, in Ibadan time', function (Closure $orderWithCoupon) {
+    $this->travelTo(CarbonImmutable::parse('2026-11-25 10:00', 'Africa/Lagos'));
+    $endsAt = CarbonImmutable::parse('2026-11-28 23:59', 'Africa/Lagos')->utc();
+
+    $mail = new AbandonedOrderMail($orderWithCoupon($endsAt)->load(['ticketType', 'coupon']));
+
+    $mail->assertSeeInText('filled in for you. Ends Saturday 28 November, 11:59 PM');
+})->with([
+    'the buyer’s own coupon' => [fn (CarbonImmutable $endsAt) => abandonedOrder(['coupon_id' => Coupon::factory()->create(['ends_at' => $endsAt])->id])],
+    'a sale everyone gets' => [function (CarbonImmutable $endsAt) {
+        Coupon::factory()->automatic()->create(['ends_at' => $endsAt]);
+
+        return abandonedOrder();
+    }],
+]);
+
+test('a coupon that has ended since isn’t offered again, and a sale running now takes its place', function () {
+    $order = abandonedOrder(['coupon_id' => Coupon::factory()->create(['code' => 'LRILOVE', 'ends_at' => now()->addHour()])->id]);
+    $this->travel(2)->hours();
+
+    $mail = new AbandonedOrderMail($order->load(['ticketType', 'coupon']));
+    $mail->assertDontSeeInText('LRILOVE');
+    $mail->assertDontSeeInText('filled in for you');
+
+    $this->get(URL::temporarySignedRoute('orders.pick-up', now()->addDay(), ['order' => $order->reference]))
+        ->assertSessionHasInput('name', $order->buyer_name);
+    expect(session()->getOldInput('coupon'))->toBeNull();
+
+    Coupon::factory()->automatic()->create(['code' => 'BLACKFRIDAY']);
+
+    (new AbandonedOrderMail($order->load(['ticketType', 'coupon'])))->assertSeeInText('BLACKFRIDAY, filled in for you');
 });
 
 test('the reminder’s link fills in the ticket form with what the buyer typed and tags the visit', function () {
