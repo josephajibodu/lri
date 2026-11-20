@@ -151,7 +151,7 @@ return [
             'Three live DJ channels to switch between',
             'Pacers and sweepers so nobody is left behind',
             'Water on the route',
-            'The rave after the run',
+            'The rave at the finish',
         ],
         'channels' => [
             ['tone' => 'coral'],

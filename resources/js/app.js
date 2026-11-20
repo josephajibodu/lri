@@ -787,6 +787,8 @@ import.meta.glob("../fonts/*.woff2");
                 var couponRemove = couponBox.querySelector("[data-coupon-remove]");
                 var couponApplied = couponBox.querySelector("[data-coupon-applied]");
                 var couponError = couponBox.querySelector('[data-error-for="coupon"]');
+                /* A sale every buyer gets comes with its terms on the page. Nobody typed it, so its box stays shut and only the total shows it. */
+                var automaticCoupon = couponBox.dataset.couponTerms ? JSON.parse(couponBox.dataset.couponTerms) : null;
 
                 var useCoupon = function (coupon) {
                     appliedCoupon = coupon;
@@ -796,7 +798,7 @@ import.meta.glob("../fonts/*.woff2");
                     couponError.textContent = "";
                     couponApply.hidden = Boolean(coupon);
                     couponRemove.hidden = !coupon;
-                    couponApplied.hidden = !coupon;
+                    couponApplied.hidden = !coupon || coupon === automaticCoupon;
                     setQuantity(Number(quantity.value));
                 };
 
@@ -849,11 +851,8 @@ import.meta.glob("../fonts/*.woff2");
                     useCoupon(null);
                     couponInput.value = "";
                     couponInput.focus();
-                    var automaticNote = couponBox.querySelector("[data-coupon-automatic]");
-                    if (automaticNote) automaticNote.hidden = true;
                 });
-                /* A sale every buyer gets comes with its terms on the page, so there's nothing to ask the site. */
-                if (couponBox.dataset.couponTerms) useCoupon(JSON.parse(couponBox.dataset.couponTerms));
+                if (automaticCoupon) useCoupon(automaticCoupon);
                 else if (couponInput.value) applyCoupon();
             }
         }

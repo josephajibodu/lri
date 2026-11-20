@@ -179,16 +179,17 @@ test('the ticket form offers a coupon box, folded away until someone needs it', 
         ->assertSee(route('coupons.check'), false);
 });
 
-test('a coupon every buyer gets arrives already applied on the ticket form, with the full price struck through', function () {
+test('a coupon every buyer gets arrives already applied on the ticket form, with the full price struck through and its box left shut', function () {
     Coupon::factory()->automatic()->create(['code' => 'BLACKFRIDAY']);
 
-    $this->get(route('disco-run'))
-        ->assertOk()
+    $response = $this->get(route('disco-run'));
+
+    $response->assertOk()
         ->assertSee('value="BLACKFRIDAY"', false)
         ->assertSee('data-coupon-terms=', false)
         ->assertSeeInOrder(['₦8,000', '₦10,000'])
-        ->assertSeeText('20% off: −₦2,000. You pay ₦8,000.')
-        ->assertSeeText('Everyone gets this right now.');
+        ->assertDontSeeText('You pay ₦8,000.');
+    expect($response->getContent())->not->toMatch('/<details class="dr-coupon"[^>]*\sopen[\s>]/');
 });
 
 test('a coupon is only filled in for everyone while it can be used', function (Closure $makeCoupon) {
@@ -198,7 +199,7 @@ test('a coupon is only filled in for everyone while it can be used', function (C
     $this->get(route('disco-run'))
         ->assertOk()
         ->assertDontSee('value="BLACKFRIDAY"', false)
-        ->assertDontSeeText('Everyone gets this right now.')
+        ->assertDontSee('data-coupon-terms=', false)
         ->assertSeeText('₦10,000');
 })->with([
     'one buyers have to type' => [fn () => Coupon::factory()->create(['code' => 'BLACKFRIDAY'])],
@@ -220,11 +221,12 @@ test('when more than one coupon is given to everyone, the newest applies', funct
 test('a code the buyer typed before stays in the form while a sale is on', function () {
     Coupon::factory()->automatic()->create(['code' => 'BLACKFRIDAY']);
 
-    $this->withSession(['_old_input' => ['coupon' => 'FRIEND10']])
-        ->get(route('disco-run'))
-        ->assertOk()
+    $response = $this->withSession(['_old_input' => ['coupon' => 'FRIEND10']])->get(route('disco-run'));
+
+    $response->assertOk()
         ->assertSee('value="FRIEND10"', false)
-        ->assertDontSeeText('Everyone gets this right now.');
+        ->assertDontSee('data-coupon-terms=', false);
+    expect($response->getContent())->toMatch('/<details class="dr-coupon"[^>]*\sopen[\s>]/');
 });
 
 test('a buyer coming back without a coupon gets the sale filled in', function () {
@@ -234,7 +236,7 @@ test('a buyer coming back without a coupon gets the sale filled in', function ()
         ->get(route('disco-run'))
         ->assertOk()
         ->assertSee('value="BLACKFRIDAY"', false)
-        ->assertSeeText('20% off: −₦4,000. You pay ₦16,000.');
+        ->assertSeeInOrder(['₦16,000', '₦20,000']);
 });
 
 test('paying the discounted total counts as paid in full, and the receipt names the coupon', function () {

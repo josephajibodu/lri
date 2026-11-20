@@ -84,7 +84,7 @@
                                 <p class="dr-field-error" data-error-for="phone">@error('phone'){{ $message }}@enderror</p>
                             </div>
 
-                            <details class="dr-coupon" data-coupon data-coupon-url="{{ route('coupons.check') }}" @if ($appliedCoupon) data-coupon-terms="{{ json_encode($appliedCoupon->checkoutTermsFor($ticketType)) }}" @endif @if ($couponCode || $errors->has('coupon')) open @endif>
+                            <details class="dr-coupon" data-coupon data-coupon-url="{{ route('coupons.check') }}" @if ($appliedCoupon) data-coupon-terms="{{ json_encode($appliedCoupon->checkoutTermsFor($ticketType)) }}" @endif @if (($couponCode && ! $appliedCoupon) || $errors->has('coupon')) open @endif>
                                 <summary>Have a coupon?</summary>
                                 <div class="dr-field">
                                     <label for="coupon">Coupon code</label>
@@ -94,10 +94,7 @@
                                         <button class="dr-order-link" type="button" data-coupon-remove hidden>Remove</button>
                                     </div>
                                     <p class="dr-field-hint" data-coupon-hint @if ($appliedCoupon) hidden @endif>It comes off your total when you choose how to pay.</p>
-                                    <p class="dr-coupon-applied" role="status" data-coupon-applied @if (! $appliedCoupon) hidden @endif>@if ($appliedCoupon){{ $appliedCoupon->describe() }}: −{{ $discount->format() }}. You pay {{ $toPay->format() }}.@endif</p>
-                                    @if ($appliedCoupon)
-                                        <p class="dr-field-hint" data-coupon-automatic>Everyone gets this right now. There’s nothing to type.</p>
-                                    @endif
+                                    <p class="dr-coupon-applied" role="status" data-coupon-applied hidden></p>
                                     <p class="dr-field-error" data-error-for="coupon">@error('coupon'){{ $message }}@enderror</p>
                                 </div>
                             </details>
