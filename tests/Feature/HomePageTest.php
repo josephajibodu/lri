@@ -1,6 +1,9 @@
 <?php
 
 use Carbon\CarbonImmutable;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 test('the home page hero keeps its words and buttons in the page, and everything the running crowd draws on', function () {
     config()->set('lri.links.member_form', 'https://forms.example.com/join-lri');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\EventTicketing;
 use App\Support\SiteAsset;
 use Carbon\CarbonImmutable;
 use Illuminate\View\View;
@@ -9,16 +10,20 @@ use Illuminate\View\View;
 class HomeController extends Controller
 {
     /**
-     * Show the community home page.
+     * Show the community home page. While a sale runs on the Silent Disco Run's tickets, its countdown takes the
+     * top bar.
      */
     public function __invoke(): View
     {
         $nextRun = config('lri.next_run');
         $nextRun['starts_at'] = CarbonImmutable::parse($nextRun['starts_at'], $nextRun['timezone']);
 
+        $discoRun = $this->upcomingDiscoRun();
+
         return view('home', [
             'nextRun' => $nextRun,
-            'discoRun' => $this->upcomingDiscoRun(),
+            'discoRun' => $discoRun,
+            'discoRunSale' => $discoRun ? EventTicketing::now('disco-run')['sale'] : null,
             'structuredData' => $this->structuredData($nextRun),
         ]);
     }

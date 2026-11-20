@@ -2,7 +2,10 @@
 
 use App\Providers\AppServiceProvider;
 use Carbon\CarbonImmutable;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
+
+uses(RefreshDatabase::class);
 
 /**
  * @return array{'@context': string, '@graph': list<array<string, mixed>>}

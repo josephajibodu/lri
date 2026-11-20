@@ -49,6 +49,10 @@
                                     <s class="dr-price-was" aria-hidden="true" data-checkout-was @if (! $discount) hidden @endif>{{ $fullTotal->format() }}</s>
                                 </div>
                                 <p class="dr-stub-note">{{ $ticketType->unitPrice()->format() }} a ticket · {{ $ticketType->description ?? $discoRun['price_note'] }}</p>
+                                @if ($appliedCoupon && $ticketing['sale']?->countdown())
+                                    <p class="dr-sale-ends" data-while-sale data-coupon-automatic data-sale-ends-in="{{ $ticketing['sale']->secondsLeft() }}"><span class="dr-sale-dot" aria-hidden="true"></span><span>Sale price ends in <span data-sale-countdown>{{ $ticketing['sale']->countdown() }}</span></span></p>
+                                    <p class="dr-sale-ends" data-after-sale hidden>The sale has ended, so tickets are back to {{ $ticketType->unitPrice()->format() }}.</p>
+                                @endif
                                 <div class="dr-field dr-field-quantity">
                                     <label for="quantity">Tickets</label>
                                     <div class="dr-stepper">

@@ -34,8 +34,7 @@
                 'soon' => $discoRun['price'],
                 'sold_out' => null,
             };
-            $saleDiscount = $ticketing['state'] === 'on_sale' ? $ticketing['automaticCoupon']?->discountFor($ticketing['ticketType']->unitPrice(), 1) : null;
-            $salePrice = $saleDiscount?->amount > 0 ? App\Support\Money::of($ticketing['ticketType']->price - $saleDiscount->amount, $ticketing['ticketType']->currency)->format() : null;
+            $salePrice = $ticketing['sale']?->price()->format();
         @endphp
         <div class="dr-hero-details">
             <ul class="dr-facts">
@@ -46,7 +45,8 @@
 
             <div class="dr-offer">
                 @if ($salePrice)
-                    <p class="dr-offer-price">{{ $salePrice }} <s class="dr-offer-was"><span class="sr-only">instead of </span>{{ $price }}</s></p>
+                    <p class="dr-offer-price" data-while-sale>{{ $salePrice }} <s class="dr-offer-was"><span class="sr-only">instead of </span>{{ $price }}</s></p>
+                    <p class="dr-offer-price" data-after-sale hidden>{{ $price }}</p>
                 @elseif ($price)
                     <p class="dr-offer-price">{{ $price }}</p>
                 @endif
