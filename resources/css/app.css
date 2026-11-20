@@ -1434,8 +1434,17 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-eq span { width: clamp(4px, .7vw, 7px); height: calc(var(--h) * 100%); border-radius: 3px; background: var(--ch); transform-origin: bottom; transition: background .5s; }
 .dr-lede { margin: 0; max-width: 34em; color: var(--label-2); font-size: clamp(1.05rem, 1.6vw, 1.25rem); }
 .dr-facts { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin: 0; padding: .65em 1.15em; border: 1px solid var(--glass-line); border-radius: 999px; background: var(--surface); list-style: none; font: 400 .7rem/1.3 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
-.dr-facts li { display: inline-flex; align-items: center; gap: 8px; }
-.dr-facts li + li::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--ch); }
+.dr-facts li, .dr-offer-notes li { display: inline-flex; align-items: center; gap: 8px; }
+.dr-facts li + li::before, .dr-offer-notes li + li::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--ch); }
+/* The price, the headset and the pace read like a price tag under the facts on a phone, and sit beside them on wider screens so a short laptop still shows the buttons */
+.dr-hero-details { display: grid; justify-items: center; gap: 14px; }
+.dr-offer { display: grid; justify-items: center; gap: 2px; }
+@media (min-width: 700px) {
+    .dr-hero-details { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px 24px; }
+    .dr-offer { display: flex; align-items: baseline; gap: 14px; }
+}
+.dr-offer-price { margin: 0; font-size: 1.5rem; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; color: var(--label); }
+.dr-offer-notes { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 10px; margin: 0; padding: 0; list-style: none; font-size: .95rem; font-weight: 500; color: var(--label-2); }
 @media (prefers-reduced-motion: no-preference) {
     .dr-beams span { animation: dr-sweep 9s ease-in-out infinite alternate; }
     .dr-beams span:nth-child(2) { animation-duration: 7s; animation-delay: -3s; }

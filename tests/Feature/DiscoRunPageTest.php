@@ -53,6 +53,37 @@ test('the disco run page uses the flyer for link previews', function () {
         ->assertSee('<meta name="twitter:image" content="'.asset('images/disco-run/og-image.jpg').'">', false);
 });
 
+test('the top of the page gives the ticket’s price, the headset and every pace before the ticket button', function () {
+    TicketType::factory()->create(['price' => 1_500_000]);
+    PaymentChannel::factory()->create();
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSeeInOrder(['class="dr-hero"', '₦15,000', 'Headset included', 'Walk, jog or run', 'Get your ticket ↓'], false);
+});
+
+test('the top of the page gives the announced price while tickets aren’t on sale yet', function () {
+    config()->set('lri.disco_run.price', '₦12,000');
+    PaymentChannel::factory()->create();
+    TicketType::factory()->inactive()->create(['price' => 1_500_000]);
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSeeInOrder(['class="dr-hero"', '₦12,000', 'Headset included'], false)
+        ->assertDontSee('₦15,000');
+});
+
+test('the top of the page leaves the price out once tickets are sold out', function () {
+    $ticketType = TicketType::factory()->limitedTo(2)->create(['price' => 1_500_000]);
+    PaymentChannel::factory()->create();
+    Order::factory()->for($ticketType)->paid()->create(['quantity' => 2]);
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSeeText('Headset included')
+        ->assertDontSee('₦15,000');
+});
+
 test('the ticket says tickets open soon until a ticket is on sale', function () {
     PaymentChannel::factory()->create();
     TicketType::factory()->inactive()->create();
