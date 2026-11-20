@@ -728,6 +728,7 @@ import.meta.glob("../fonts/*.woff2");
         var buttons = form.querySelectorAll("button[name=channel]");
         var quantity = form.querySelector("[data-checkout-quantity]");
         var total = form.querySelector("[data-checkout-total]");
+        var fullTotal = form.querySelector("[data-checkout-was]");
 
         if (form.hasAttribute("data-checkout-form-start")) {
             form.addEventListener("focusin", function started() {
@@ -751,6 +752,11 @@ import.meta.glob("../fonts/*.woff2");
                 var discount = appliedCoupon ? appliedCoupon.discounts[count] || 0 : 0;
                 var toPay = Number(total.dataset.unitPrice) * count - discount;
                 total.textContent = format.format(toPay / 100);
+                /* With a coupon, the full price stays beside the total, struck through. */
+                if (fullTotal) {
+                    fullTotal.textContent = format.format(Number(total.dataset.unitPrice) * count / 100);
+                    fullTotal.hidden = discount <= 0;
+                }
                 if (appliedCoupon) {
                     couponBox.querySelector("[data-coupon-applied]").textContent = appliedCoupon.description + ": −" + format.format(discount / 100) + ". You pay " + format.format(toPay / 100) + ".";
                 }
@@ -843,8 +849,12 @@ import.meta.glob("../fonts/*.woff2");
                     useCoupon(null);
                     couponInput.value = "";
                     couponInput.focus();
+                    var automaticNote = couponBox.querySelector("[data-coupon-automatic]");
+                    if (automaticNote) automaticNote.hidden = true;
                 });
-                if (couponInput.value) applyCoupon();
+                /* A sale every buyer gets comes with its terms on the page, so there's nothing to ask the site. */
+                if (couponBox.dataset.couponTerms) useCoupon(JSON.parse(couponBox.dataset.couponTerms));
+                else if (couponInput.value) applyCoupon();
             }
         }
 

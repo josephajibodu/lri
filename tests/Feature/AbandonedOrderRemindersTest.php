@@ -108,6 +108,15 @@ test('the reminder names the tickets at today’s price and its button picks up 
     $mail->assertSeeInHtml(e(route('orders.pick-up', $order->reference)), false);
 });
 
+test('a reminder for an order without a coupon tells the buyer about a sale everyone gets right now', function () {
+    Coupon::factory()->automatic()->create(['code' => 'BLACKFRIDAY']);
+    $order = abandonedOrder(['buyer_name' => 'Ada Bello']);
+
+    $mail = new AbandonedOrderMail($order->load(['ticketType', 'coupon']));
+
+    $mail->assertSeeInText('BLACKFRIDAY, filled in for you');
+});
+
 test('the reminder’s link fills in the ticket form with what the buyer typed and tags the visit', function () {
     $coupon = Coupon::factory()->create(['code' => 'LRILOVE']);
     $order = abandonedOrder(['buyer_name' => 'Ada Bello', 'buyer_email' => 'ada@example.com', 'buyer_phone' => '+2348031234567', 'quantity' => 3, 'coupon_id' => $coupon->id]);

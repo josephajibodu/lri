@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Support\PersonName;
 use App\Support\SiteAsset;
@@ -42,13 +43,14 @@ class AbandonedOrderMail extends Mailable
     }
 
     /**
-     * Get the message content definition. The price is today's, since that's what the buyer will pay now.
+     * Get the message content definition. The price is today's, since that's what the buyer will pay now. So is the
+     * coupon: one the buyer didn't use, but that every buyer gets right now, is filled in for them too.
      */
     public function content(): Content
     {
         $ticketType = $this->order->ticketType;
         $event = $ticketType->eventDetails();
-        $coupon = $this->order->coupon;
+        $coupon = $this->order->coupon ?? Coupon::automaticFor($ticketType);
 
         return new Content(
             markdown: 'mail.abandoned-order',

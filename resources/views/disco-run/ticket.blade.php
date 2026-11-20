@@ -30,19 +30,29 @@
                 <div class="dr-ticket-stub">
                     @if ($ticketing['state'] === 'on_sale')
                         @php($ticketType = $ticketing['ticketType'])
+                        @php($quantity = (int) old('quantity', 1))
+                        @php($couponCode = old('coupon') ?: $ticketing['automaticCoupon']?->code)
+                        {{-- A sale every buyer gets arrives already applied, so the lower price shows straight away. --}}
+                        @php($appliedCoupon = filled($couponCode) && App\Models\Coupon::normalizeCode($couponCode) === $ticketing['automaticCoupon']?->code ? $ticketing['automaticCoupon'] : null)
+                        @php($fullTotal = $ticketType->unitPrice()->times($quantity))
+                        @php($discount = $appliedCoupon?->discountFor($ticketType->unitPrice(), $quantity))
+                        @php($toPay = $discount ? App\Support\Money::of($fullTotal->amount - $discount->amount, $fullTotal->currency) : $fullTotal)
 
                         <form class="dr-checkout" method="POST" action="{{ route('orders.store') }}" data-checkout data-checkout-form-start novalidate>
                             @csrf
                             <input type="hidden" name="ticket_type" value="{{ $ticketType->slug }}">
 
                             <div class="dr-checkout-summary">
-                                <p class="dr-price" aria-live="polite" data-checkout-total data-unit-price="{{ $ticketType->price }}" data-currency="{{ $ticketType->currency }}">{{ $ticketType->unitPrice()->times((int) old('quantity', 1))->format() }}</p>
+                                <div class="dr-price-group">
+                                    <p class="dr-price" aria-live="polite" data-checkout-total data-unit-price="{{ $ticketType->price }}" data-currency="{{ $ticketType->currency }}">{{ $toPay->format() }}</p>
+                                    <s class="dr-price-was" aria-hidden="true" data-checkout-was @if (! $discount) hidden @endif>{{ $fullTotal->format() }}</s>
+                                </div>
                                 <p class="dr-stub-note">{{ $ticketType->unitPrice()->format() }} a ticket · {{ $ticketType->description ?? $discoRun['price_note'] }}</p>
                                 <div class="dr-field dr-field-quantity">
                                     <label for="quantity">Tickets</label>
                                     <div class="dr-stepper">
                                         <button class="dr-stepper-btn" type="button" data-checkout-step="-1" aria-label="One ticket fewer" hidden>−</button>
-                                        <input class="dr-stepper-input" id="quantity" name="quantity" type="number" inputmode="numeric" min="1" max="{{ $ticketing['maxQuantity'] }}" value="{{ old('quantity', 1) }}" data-checkout-quantity>
+                                        <input class="dr-stepper-input" id="quantity" name="quantity" type="number" inputmode="numeric" min="1" max="{{ $ticketing['maxQuantity'] }}" value="{{ $quantity }}" data-checkout-quantity>
                                         <button class="dr-stepper-btn" type="button" data-checkout-step="1" aria-label="One ticket more" hidden>+</button>
                                     </div>
                                 </div>
@@ -78,17 +88,20 @@
                                 <span>Email me about LRI runs and events. You can stop any time.</span>
                             </label>
 
-                            <details class="dr-coupon" data-coupon data-coupon-url="{{ route('coupons.check') }}" @if (old('coupon') || $errors->has('coupon')) open @endif>
+                            <details class="dr-coupon" data-coupon data-coupon-url="{{ route('coupons.check') }}" @if ($appliedCoupon) data-coupon-terms="{{ json_encode($appliedCoupon->checkoutTermsFor($ticketType)) }}" @endif @if ($couponCode || $errors->has('coupon')) open @endif>
                                 <summary>Have a coupon?</summary>
                                 <div class="dr-field">
                                     <label for="coupon">Coupon code</label>
                                     <div class="dr-coupon-row">
-                                        <input class="dr-input" id="coupon" name="coupon" type="text" value="{{ old('coupon') }}" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" data-coupon-input>
+                                        <input class="dr-input" id="coupon" name="coupon" type="text" value="{{ $couponCode }}" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" data-coupon-input>
                                         <button class="btn btn-sm dr-btn" type="button" data-coupon-apply hidden>Apply</button>
                                         <button class="dr-order-link" type="button" data-coupon-remove hidden>Remove</button>
                                     </div>
-                                    <p class="dr-field-hint" data-coupon-hint>It comes off your total when you choose how to pay.</p>
-                                    <p class="dr-coupon-applied" role="status" data-coupon-applied hidden></p>
+                                    <p class="dr-field-hint" data-coupon-hint @if ($appliedCoupon) hidden @endif>It comes off your total when you choose how to pay.</p>
+                                    <p class="dr-coupon-applied" role="status" data-coupon-applied @if (! $appliedCoupon) hidden @endif>@if ($appliedCoupon){{ $appliedCoupon->describe() }}: −{{ $discount->format() }}. You pay {{ $toPay->format() }}.@endif</p>
+                                    @if ($appliedCoupon)
+                                        <p class="dr-field-hint" data-coupon-automatic>Everyone gets this right now. There’s nothing to type.</p>
+                                    @endif
                                     <p class="dr-field-error" data-error-for="coupon">@error('coupon'){{ $message }}@enderror</p>
                                 </div>
                             </details>

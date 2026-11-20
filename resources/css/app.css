@@ -1568,6 +1568,9 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-ticket-stub::before { top: -13px; rotate: -45deg; }
 .dr-ticket-stub::after { bottom: -13px; rotate: 135deg; }
 .dr-price { margin: 0; font: 700 clamp(2rem, 4vw, 2.75rem)/1 var(--sans); letter-spacing: -.02em; color: var(--label); }
+.dr-price-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.dr-price-was { color: var(--dim); font-size: 1.05rem; font-weight: 500; }
+.dr-price-was[hidden] { display: none; }
 .dr-stub-note { margin: 0; color: var(--dim); font-size: .88rem; }
 
 /* Checkout: the ticket stub becomes the order form, with the featured ways to pay up front */
