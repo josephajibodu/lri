@@ -1,7 +1,10 @@
 <?php
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+
+uses(RefreshDatabase::class);
 
 test('pages load icons and link previews from the R2 bucket once its address is set', function () {
     config()->set('filesystems.disks.r2.url', 'https://assets.example.com/');

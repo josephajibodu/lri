@@ -130,7 +130,7 @@ class CouponResource extends Resource
                     ->schema([
                         Toggle::make('applies_automatically')
                             ->label('Give it to every buyer automatically')
-                            ->helperText('For a sale, like Black Friday. Nobody has to type the code: the ticket page opens with it already applied and the lower price showing. Set an end date below so the sale stops on its own.'),
+                            ->helperText('For a sale, like Black Friday. Nobody has to type the code: the ticket page opens with it already applied and the lower price showing. Set an end date below: the sale stops on its own then, and the site shows buyers a countdown to it.'),
                     ]),
                 Section::make('Limits')
                     ->contained(false)

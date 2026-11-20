@@ -259,6 +259,83 @@ h2 em { font-style: italic; font-weight: 500; color: var(--ink); background: var
     .topbar-disco .topbar-title { font-size: .86rem; white-space: nowrap; }
     .topbar-when { white-space: nowrap; }
 }
+/*
+ * Sale bar: while a sale every buyer gets is running it takes the top of the page, in the event strip's night-and-neon
+ * look, with a clock counting down to its end and a line along the bottom that drains as the time runs out.
+ */
+.sale-bar {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(38% 220% at 10% 50%, rgba(255, 46, 138, .3), transparent 70%),
+        radial-gradient(34% 220% at 90% 50%, rgba(139, 61, 255, .28), transparent 70%),
+        #0A0710;
+    color: #F7F2FA;
+}
+.sale-bar p { margin: 0; }
+.sale-bar-row { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px 28px; padding-block: 14px 17px; }
+.sale-bar-row[hidden], .sale-bar-unit[hidden] { display: none; }
+.sale-bar-deal { display: grid; gap: 4px; flex: none; }
+.sale-bar-kicker { font: 600 .62rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: #FFB14A; }
+.sale-bar-off { font: italic 900 clamp(1.6rem, 3vw, 2.15rem)/.95 var(--display); font-stretch: 115%; text-transform: uppercase; background: linear-gradient(90deg, #FF5FD2, #FF6A2B 70%, #FFB14A); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 10px rgba(255, 46, 138, .45)); }
+.sale-bar-copy { display: grid; gap: 5px; min-width: 0; margin-right: auto; }
+.sale-bar-headline { font-weight: 600; font-size: 1rem; line-height: 1.3; }
+.sale-bar-headline strong { font-family: var(--display); font-weight: 800; }
+.sale-bar-headline s { margin-left: 2px; color: #A99DB8; font-weight: 500; }
+.sale-bar-terms { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .84rem; color: #DCD3E6; }
+.sale-bar-ends { display: inline-flex; align-items: center; gap: 8px; }
+.sale-bar-dot, .dr-sale-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: #FF6A2B; }
+.sale-bar-clock { display: flex; align-items: baseline; gap: 10px; flex: none; padding: 9px 16px 10px; border: 1px solid rgba(255, 255, 255, .14); border-radius: 14px; background: rgba(255, 255, 255, .04); font-variant-numeric: tabular-nums; transition: border-color .4s, box-shadow .4s; }
+.sale-bar-in { align-self: center; max-width: 4.5em; font: 600 .56rem/1.25 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: #A99DB8; }
+.sale-bar-unit b { font: 800 clamp(1.3rem, 2.4vw, 1.7rem)/1 var(--display); color: #fff; }
+.sale-bar-unit i { margin-left: 2px; font: normal 600 .7rem/1 var(--mono); color: #FF5FD2; }
+.sale-bar-cta { flex: none; white-space: nowrap; padding: .72em 1.25em; border-radius: 999px; background: linear-gradient(100deg, #FFB14A, #FF6A2B 55%, #FF2E8A); color: #0A0710; font-weight: 700; font-size: .92rem; text-decoration: none; transition: box-shadow .2s, transform .15s; }
+.sale-bar-cta:hover { transform: translateY(-1px); box-shadow: 0 0 22px rgba(255, 46, 138, .7); }
+.sale-bar-cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.sale-bar-over { justify-content: center; padding-block: 12px; font-weight: 600; text-align: center; }
+.sale-bar-track { position: absolute; inset: auto 0 0; height: 3px; background: rgba(255, 255, 255, .1); }
+.sale-bar-track[hidden] { display: none; }
+.sale-bar-fill { display: block; width: calc(var(--left, 1) * 100%); height: 100%; background: linear-gradient(90deg, #FF2E8A, #FF6A2B, #FFB14A); box-shadow: 0 0 10px rgba(255, 106, 43, .8); transition: width 1s linear; }
+/* On the last day the clock lights up and the dot beats faster */
+.sale-bar.is-last-day .sale-bar-clock { border-color: rgba(255, 95, 210, .6); box-shadow: 0 0 24px rgba(255, 46, 138, .35), inset 0 0 18px rgba(255, 46, 138, .12); }
+.sale-bar.is-last-day .sale-bar-unit b { color: #FFD1EC; }
+@media (prefers-reduced-motion: no-preference) {
+    .sale-bar-dot, .dr-sale-dot { animation: sale-pulse 1.6s ease-out infinite; }
+    .sale-bar.is-last-day .sale-bar-dot { animation-duration: .9s; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sale-bar-fill, .sale-bar-cta, .sale-bar-cta:hover { transition: none; transform: none; }
+}
+@keyframes sale-pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 106, 43, .7); } 100% { box-shadow: 0 0 0 9px rgba(255, 106, 43, 0); } }
+/* Phones: the deal, the clock and the button in one row. The words stay for screen readers. */
+@media (max-width: 760px) {
+    .sale-bar-row { gap: 10px; padding-block: 10px 13px; }
+    .sale-bar-copy { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .sale-bar-deal { margin-right: auto; gap: 3px; }
+    .sale-bar-off { font-size: 1.3rem; }
+    .sale-bar-clock { gap: 6px; padding: 6px 10px 7px; border-radius: 11px; }
+    .sale-bar-in { display: none; }
+    .sale-bar-unit b { font-size: 1.05rem; }
+    .sale-bar-unit i { font-size: .58rem; }
+    .sale-bar-cta { padding: .62em .95em; font-size: .82rem; }
+}
+.sale-bar-cta-short { display: none; }
+/* Small phones: a shorter button and a tighter clock, so the row still fits */
+@media (max-width: 400px) {
+    .sale-bar-row { gap: 8px; }
+    .sale-bar-kicker { font-size: .55rem; letter-spacing: .1em; }
+    .sale-bar-off { font-size: 1.15rem; }
+    .sale-bar-clock { gap: 4px; padding: 5px 8px 6px; }
+    .sale-bar-unit b { font-size: .95rem; }
+    .sale-bar-unit i { font-size: .5rem; }
+    .sale-bar-cta { padding: .55em .8em; font-size: .78rem; }
+    .sale-bar-cta-long { display: none; }
+    .sale-bar-cta-short { display: inline; }
+}
+@media (max-width: 340px) {
+    .sale-bar-unit[data-sale-unit="s"] { display: none; }
+}
+
 .site-head {
     position: sticky;
     top: env(safe-area-inset-top, 0px);
@@ -1582,6 +1659,11 @@ textarea.input { resize: vertical; min-height: 3.2em; }
 .dr-price-was { color: var(--dim); font-size: 1.05rem; font-weight: 500; }
 .dr-price-was[hidden] { display: none; }
 .dr-stub-note { margin: 0; color: var(--dim); font-size: .88rem; }
+/* While a sale is on, how long its price lasts sits under the total, counting down with the bar at the top */
+.dr-sale-ends { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--label); font-size: .88rem; font-weight: 600; }
+.dr-sale-ends[hidden] { display: none; }
+.dr-sale-ends [data-sale-countdown] { font-variant-numeric: tabular-nums; }
+.dr-sale-dot { background: #FF2E8A; }
 
 /* Checkout: the ticket stub becomes the order form, with the featured ways to pay up front */
 .dr-ticket-checkout { grid-template-columns: minmax(0, 1.2fr) minmax(300px, 1fr); max-width: none; }

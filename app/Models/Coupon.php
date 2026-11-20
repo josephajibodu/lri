@@ -274,14 +274,22 @@ class Coupon extends Model
     }
 
     /**
+     * What the coupon takes off, such as "20% off" or "₦2,000 off", without its limits.
+     */
+    public function amountOff(): string
+    {
+        return match ($this->discount_type) {
+            CouponDiscountType::Percentage => "{$this->discount_value}% off",
+            CouponDiscountType::FixedAmount => Money::of($this->discount_value, $this->currency)->format().' off',
+        };
+    }
+
+    /**
      * The coupon in words, such as "20% off on up to 2 tickets".
      */
     public function describe(): string
     {
-        $discount = match ($this->discount_type) {
-            CouponDiscountType::Percentage => "{$this->discount_value}% off",
-            CouponDiscountType::FixedAmount => Money::of($this->discount_value, $this->currency)->format().' off',
-        };
+        $discount = $this->amountOff();
 
         return match ($this->max_tickets_per_order) {
             null => $discount,

@@ -3,7 +3,11 @@
         <script type="application/ld+json">@json($structuredData)</script>
     </x-slot:head>
 
-    <x-site.topbar :next-run="$nextRun" :disco-run="$discoRun" />
+    @if ($discoRunSale)
+        <x-site.sale-bar :sale="$discoRunSale" :event="$discoRun['title']" :href="route('disco-run').'#tickets'" kicker="Disco Run sale" />
+    @else
+        <x-site.topbar :next-run="$nextRun" :disco-run="$discoRun" />
+    @endif
     <x-site.header />
 
     <main>

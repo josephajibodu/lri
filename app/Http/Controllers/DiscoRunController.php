@@ -5,10 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Checkout\RecordCheckoutStep;
 use App\Enums\CheckoutStep;
 use App\Http\Middleware\IdentifyVisitor;
-use App\Models\Coupon;
-use App\Models\PaymentChannel;
-use App\Models\TicketType;
-use Illuminate\Database\Eloquent\Collection;
+use App\Support\EventTicketing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
@@ -21,7 +18,7 @@ class DiscoRunController extends Controller
     public function __invoke(Request $request, RecordCheckoutStep $recordCheckoutStep): View
     {
         $discoRun = config('lri.disco_run');
-        $ticketing = $this->ticketing();
+        $ticketing = EventTicketing::now('disco-run');
 
         if (! $this->isBot($request)) {
             $recordCheckoutStep->handle(CheckoutStep::TicketPageViewed, IdentifyVisitor::visitorId($request), properties: [
@@ -48,30 +45,5 @@ class DiscoRunController extends Controller
     private function isBot(Request $request): bool
     {
         return (bool) preg_match('/bot|crawl|spider|slurp|preview|facebookexternalhit|whatsapp|telegram|discord|curl|wget|python|headless/i', (string) $request->userAgent());
-    }
-
-    /**
-     * What the ticket card offers: the ticket on sale, the ways to pay for it and any coupon every buyer gets right
-     * now, or why it can't be bought yet.
-     *
-     * @return array{state: 'soon'|'sold_out'|'on_sale', ticketType: ?TicketType, channels: Collection<int, PaymentChannel>, maxQuantity: int, automaticCoupon: ?Coupon}
-     */
-    private function ticketing(): array
-    {
-        $ticketType = TicketType::query()->onSale()->where('event', 'disco-run')->orderBy('sort_order')->first();
-        $channels = $ticketType ? PaymentChannel::query()->offeredIn($ticketType->currency)->get() : new Collection;
-        $maxQuantity = $ticketType?->maxQuantity() ?? 0;
-
-        return [
-            'state' => match (true) {
-                $ticketType === null, $channels->isEmpty() => 'soon',
-                $maxQuantity < 1 => 'sold_out',
-                default => 'on_sale',
-            },
-            'ticketType' => $ticketType,
-            'channels' => $channels,
-            'maxQuantity' => $maxQuantity,
-            'automaticCoupon' => $ticketType ? Coupon::automaticFor($ticketType) : null,
-        ];
     }
 }

@@ -851,9 +851,16 @@ import.meta.glob("../fonts/*.woff2");
                     useCoupon(null);
                     couponInput.value = "";
                     couponInput.focus();
+                    form.querySelectorAll("[data-coupon-automatic]").forEach(function (note) { note.hidden = true; });
                 });
                 if (automaticCoupon) useCoupon(automaticCoupon);
                 else if (couponInput.value) applyCoupon();
+                /* A sale that ends while the form is open comes off the total, as it would when the order is placed. */
+                document.addEventListener("sale:ended", function () {
+                    if (!automaticCoupon || appliedCoupon !== automaticCoupon) return;
+                    useCoupon(null);
+                    couponInput.value = "";
+                });
             }
         }
 
@@ -950,6 +957,47 @@ import.meta.glob("../fonts/*.woff2");
                 });
         });
     });
+
+    /*
+     * Sale countdown: the bar at the top and the line under the ticket price count down to the end of a sale every
+     * buyer gets. The page is given the seconds left, not the end time, so a phone with its clock set wrong still
+     * counts right. At zero the page goes back to full price: what only shows during the sale hides, what replaces
+     * it shows, and the ticket form takes the sale off its total.
+     */
+    var saleSource = document.querySelector("[data-sale-ends-in]");
+    if (saleSource) {
+        var saleEndsAt = Date.now() + Number(saleSource.dataset.saleEndsIn) * 1000;
+        var saleSecondsAtLoad = Math.max(1, Number(saleSource.dataset.saleEndsIn));
+        var saleFills = Array.prototype.map.call(document.querySelectorAll("[data-sale-fill]"), function (fill) {
+            return { el: fill, shareAtLoad: Number(fill.style.getPropertyValue("--left")) || 0 };
+        });
+        var saleTimer;
+        var saleTick = function () {
+            var left = Math.max(0, Math.round((saleEndsAt - Date.now()) / 1000));
+            var parts = { d: Math.floor(left / 86400), h: Math.floor(left % 86400 / 3600), m: Math.floor(left % 3600 / 60), s: left % 60 };
+
+            document.querySelectorAll("[data-sale-unit]").forEach(function (unit) {
+                unit.querySelector("b").textContent = pad(parts[unit.dataset.saleUnit]);
+                if (unit.dataset.saleUnit === "d") unit.hidden = parts.d === 0;
+            });
+            document.querySelectorAll("[data-sale-countdown]").forEach(function (el) {
+                el.textContent = (parts.d ? parts.d + "d " : "") + pad(parts.h) + "h " + pad(parts.m) + "m " + pad(parts.s) + "s";
+            });
+            saleFills.forEach(function (fill) {
+                fill.el.style.setProperty("--left", String(fill.shareAtLoad * left / saleSecondsAtLoad));
+            });
+            document.querySelectorAll("[data-sale-bar]").forEach(function (bar) { bar.classList.toggle("is-last-day", left < 86400); });
+
+            if (left === 0) {
+                clearInterval(saleTimer);
+                document.querySelectorAll("[data-while-sale]").forEach(function (el) { el.hidden = true; });
+                document.querySelectorAll("[data-after-sale]").forEach(function (el) { el.hidden = false; });
+                document.dispatchEvent(new CustomEvent("sale:ended"));
+            }
+        };
+        saleTick();
+        saleTimer = setInterval(saleTick, 1000);
+    }
 
     /* Order page: while a payment is being confirmed, check every few seconds and reload when it settles */
     var poll = document.querySelector("[data-order-poll]");
