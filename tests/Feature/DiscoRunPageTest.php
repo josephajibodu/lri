@@ -210,5 +210,5 @@ test('the disco run page lets people share the flyer on WhatsApp or download it'
         ->assertOk()
         ->assertSee('src="'.asset('images/disco-run/flyer.jpg').'"', false)
         ->assertSee('href="'.asset('images/disco-run/flyer-full.jpg').'" download', false)
-        ->assertSee('href="https://wa.me/?text='.rawurlencode('Silent Disco Run with Let’s Run Ibadan, Fri 11 Dec, 6 PM in Bodija, Ibadan. Headsets on, walk and vibe, then rave. No running needed. Get your ticket: '.route('disco-run')).'"', false);
+        ->assertSee('href="https://wa.me/?text='.rawurlencode('Silent Disco Run with Let’s Run Ibadan, Fri 11 Dec, 6 PM in Bodija, Ibadan. Headsets on, walk and vibe, then rave. No running needed. Get your ticket: '.route('disco-run', ['utm_source' => 'whatsapp', 'utm_medium' => 'share'])).'"', false);
 });

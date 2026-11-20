@@ -29,6 +29,7 @@ use App\Models\Order;
 use App\Models\PaymentChannel;
 use App\Models\Ticket;
 use App\Models\TicketType;
+use App\Models\TrackedLink;
 use App\Models\User;
 use App\Models\WebhookCall;
 use App\Support\AdminActivity;
@@ -165,6 +166,7 @@ test('each kind of record an admin can change is recorded', function (Model $mod
     'an order' => [fn () => Order::factory()->create(), ['review_note' => 'Looks odd'], 'Review note'],
     'a ticket' => [fn () => Ticket::factory()->create(), ['holder_name' => 'Kemi Ade'], 'Holder name'],
     'a coupon' => [fn () => Coupon::factory()->create(), ['disabled_at' => now()], 'Disabled at'],
+    'a tracked link' => [fn () => TrackedLink::factory()->create(), ['name' => 'Instagram story'], 'Name'],
     'a way to pay' => [fn () => PaymentChannel::factory()->create(['is_featured' => false]), ['is_featured' => true], 'Is featured'],
     'a person' => [fn () => User::factory()->create(), ['email' => 'kemi@example.com'], 'Email'],
 ]);

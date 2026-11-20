@@ -79,9 +79,9 @@ test('where the visitor came from is credited on their order', function () {
 });
 
 test('a visit from another site is credited to that site', function () {
-    $this->withHeader('Referer', 'https://l.instagram.com/?u=x')->get(route('disco-run'));
+    $this->withHeader('Referer', 'https://blog.example.com/best-runs')->get(route('disco-run'));
 
-    expect(CheckoutEvent::query()->sole()->properties['source'])->toBe('l.instagram.com');
+    expect(CheckoutEvent::query()->sole()->properties['source'])->toBe('blog.example.com');
 });
 
 test('a paid order leaves the whole journey under one visitor and order', function () {

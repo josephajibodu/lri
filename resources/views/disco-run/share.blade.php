@@ -1,4 +1,5 @@
-@php($shareText = 'Silent Disco Run with Let’s Run Ibadan'.($startsAt ? ', '.$startsAt->format('D j M, g A') : '').($discoRun['venue'] ? ' in '.$discoRun['venue'] : '').'. Headsets on, walk and vibe, then rave. No running needed. Get your ticket: '.route('disco-run'))
+{{-- The shared link carries WhatsApp's tags, so everyone who opens a forwarded copy is credited to WhatsApp sharing instead of reading as direct. --}}
+@php($shareText = 'Silent Disco Run with Let’s Run Ibadan'.($startsAt ? ', '.$startsAt->format('D j M, g A') : '').($discoRun['venue'] ? ' in '.$discoRun['venue'] : '').'. Headsets on, walk and vibe, then rave. No running needed. Get your ticket: '.route('disco-run', ['utm_source' => 'whatsapp', 'utm_medium' => 'share']))
 <section class="dr-sec dr-share" id="share">
     <div class="wrap dr-share-grid">
         <figure class="dr-poster" data-reveal>

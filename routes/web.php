@@ -16,16 +16,26 @@ use App\Http\Controllers\PaceSettersController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\TrackedLinkController;
 use App\Http\Middleware\EnsureBarracksRegistrationIsOpen;
 use App\Http\Middleware\IdentifyVisitor;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', HomeController::class)->name('home');
-Route::get('/founders', FoundersController::class)->name('founders');
-Route::get('/pace-setters', PaceSettersController::class)->name('pace-setters');
-Route::get('/gallery', GalleryController::class)->name('gallery');
-Route::get('/silent-disco-run', DiscoRunController::class)->middleware(IdentifyVisitor::class)->name('disco-run');
+// Every public page notes where its visitor came from, so whichever page they land on, the tickets credit the right place.
+Route::middleware(IdentifyVisitor::class)->group(function () {
+    Route::get('/', HomeController::class)->name('home');
+    Route::get('/founders', FoundersController::class)->name('founders');
+    Route::get('/pace-setters', PaceSettersController::class)->name('pace-setters');
+    Route::get('/gallery', GalleryController::class)->name('gallery');
+    Route::get('/silent-disco-run', DiscoRunController::class)->name('disco-run');
+});
 Route::permanentRedirect('/disco-run', '/silent-disco-run');
+
+// Tracked links: a short address for each place a link is shared, which counts the tap and sends the visitor on with
+// that place's tags. An address that doesn't exist (a typo, or a link that was deleted) still lands on the tickets.
+Route::get('/go/{trackedLink:slug}', TrackedLinkController::class)
+    ->missing(fn () => redirect()->route('disco-run'))
+    ->name('tracked-links.show');
 
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
