@@ -15,6 +15,7 @@ use App\Models\Order;
 use App\Models\Ticket;
 use App\Models\TicketType;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
@@ -196,7 +197,12 @@ class MailPreviewController extends Controller
         $order->setRelation('ticketType', $ticketType);
 
         if ($withCoupon) {
-            $coupon = new Coupon(['code' => 'LRILOVE', 'discount_type' => CouponDiscountType::Percentage, 'discount_value' => 20]);
+            $coupon = new Coupon([
+                'code' => 'LRILOVE',
+                'discount_type' => CouponDiscountType::Percentage,
+                'discount_value' => 20,
+                'ends_at' => CarbonImmutable::now('Africa/Lagos')->addDays(3)->setTime(23, 59)->utc(),
+            ]);
             $discount = $coupon->discountFor($order->unitPrice(), $quantity)->amount;
 
             $order->forceFill(['discount_amount' => $discount, 'amount' => $order->amount - $discount])->setRelation('coupon', $coupon);

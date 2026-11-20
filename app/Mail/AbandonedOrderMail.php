@@ -44,13 +44,15 @@ class AbandonedOrderMail extends Mailable
 
     /**
      * Get the message content definition. The price is today's, since that's what the buyer will pay now. So is the
-     * coupon: one the buyer didn't use, but that every buyer gets right now, is filled in for them too.
+     * coupon: the buyer's own while it still works, otherwise a sale every buyer gets right now, if there is one. A
+     * coupon with an end date says when it ends, so the buyer knows how long the lower price lasts.
      */
     public function content(): Content
     {
         $ticketType = $this->order->ticketType;
         $event = $ticketType->eventDetails();
-        $coupon = $this->order->coupon ?? Coupon::automaticFor($ticketType);
+        $coupon = $this->order->coupon?->hasEnded() === false ? $this->order->coupon : Coupon::automaticFor($ticketType);
+        $couponEndsAt = $coupon?->ends_at?->toImmutable()->setTimezone($event['timezone'] ?? config('app.timezone'));
 
         return new Content(
             markdown: 'mail.abandoned-order',
@@ -65,7 +67,11 @@ class AbandonedOrderMail extends Mailable
                 'channels' => $event['channels'] ?? [],
                 'details' => array_filter([
                     'Tickets' => $this->order->quantity.' × '.$ticketType->unitPrice()->format(),
-                    'Coupon' => $coupon ? "{$coupon->code}, filled in for you" : null,
+                    'Coupon' => match (true) {
+                        $coupon === null => null,
+                        $couponEndsAt === null => "{$coupon->code}, filled in for you",
+                        default => "{$coupon->code}, filled in for you. Ends {$couponEndsAt->format('l j F, g:i A')}",
+                    },
                     'When' => $ticketType->eventWhen(),
                     'Where' => $event['venue'] ?? null,
                 ]),

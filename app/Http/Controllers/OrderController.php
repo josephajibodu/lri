@@ -53,7 +53,8 @@ class OrderController extends Controller
     }
 
     /**
-     * What an order's buyer typed into the ticket form, ready to fill it in again.
+     * What an order's buyer typed into the ticket form, ready to fill it in again. A coupon that has ended since is
+     * left out, so a sale running now can take its place.
      *
      * @return array{quantity: int, name: string, email: string, phone: ?string, coupon: ?string, marketing_consent: bool}
      */
@@ -64,7 +65,7 @@ class OrderController extends Controller
             'name' => $order->buyer_name,
             'email' => $order->buyer_email,
             'phone' => $order->buyer_phone,
-            'coupon' => $order->coupon?->code,
+            'coupon' => $order->coupon?->hasEnded() === false ? $order->coupon->code : null,
             'marketing_consent' => $order->marketing_consent,
         ];
     }
