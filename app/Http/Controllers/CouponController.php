@@ -31,11 +31,6 @@ class CouponController extends Controller
             throw ValidationException::withMessages(['coupon' => $problem->getMessage()]);
         }
 
-        return response()->json([
-            'code' => $coupon->code,
-            'description' => $coupon->describe(),
-            'discounts' => collect(range(1, $ticketType->max_per_order))
-                ->mapWithKeys(fn (int $quantity): array => [$quantity => $coupon->discountFor($ticketType->unitPrice(), $quantity)->amount]),
-        ]);
+        return response()->json($coupon->checkoutTermsFor($ticketType));
     }
 }

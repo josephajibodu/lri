@@ -34,6 +34,7 @@ use LogicException;
     'ends_at',
     'max_orders',
     'max_tickets_per_order',
+    'applies_automatically',
 ])]
 class Coupon extends Model
 {
@@ -81,6 +82,7 @@ class Coupon extends Model
             'ends_at',
             'max_orders',
             'max_tickets_per_order',
+            'applies_automatically',
             'disabled_at',
         ];
     }
@@ -109,6 +111,7 @@ class Coupon extends Model
             'ends_at' => 'datetime',
             'max_orders' => 'integer',
             'max_tickets_per_order' => 'integer',
+            'applies_automatically' => 'boolean',
             'disabled_at' => 'datetime',
         ];
     }
@@ -134,6 +137,40 @@ class Coupon extends Model
     public function scopeWithCode(Builder $query, string $code): void
     {
         $query->where('code', self::normalizeCode($code));
+    }
+
+    /**
+     * The coupon every buyer of this ticket gets without typing it, such as a Black Friday sale, or null when none is
+     * running. If organisers leave more than one running, the newest wins.
+     */
+    public static function automaticFor(TicketType $ticketType): ?self
+    {
+        return self::query()
+            ->where('applies_automatically', true)
+            ->whereNull('disabled_at')
+            ->where(fn (Builder $query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+            ->where(fn (Builder $query) => $query->whereNull('ends_at')->orWhere('ends_at', '>', now()))
+            ->latest()
+            ->latest('id')
+            ->get()
+            ->first(fn (Coupon $coupon): bool => $coupon->whyUnusableOn($ticketType) === null);
+    }
+
+    /**
+     * What the ticket form needs to show this coupon: its code, its terms in words, and what it takes off at each
+     * quantity, in kobo, so the total stays right as the buyer changes the number of tickets.
+     *
+     * @return array{code: string, description: string, discounts: array<int, int>}
+     */
+    public function checkoutTermsFor(TicketType $ticketType): array
+    {
+        return [
+            'code' => $this->code,
+            'description' => $this->describe(),
+            'discounts' => collect(range(1, $ticketType->max_per_order))
+                ->mapWithKeys(fn (int $quantity): array => [$quantity => $this->discountFor($ticketType->unitPrice(), $quantity)->amount])
+                ->all(),
+        ];
     }
 
     /**

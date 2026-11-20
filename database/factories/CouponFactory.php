@@ -36,6 +36,14 @@ class CouponFactory extends Factory
     }
 
     /**
+     * A coupon every buyer gets without typing it, such as a sale.
+     */
+    public function automatic(): static
+    {
+        return $this->state(['applies_automatically' => true]);
+    }
+
+    /**
      * A coupon an organiser has switched off.
      */
     public function disabled(): static

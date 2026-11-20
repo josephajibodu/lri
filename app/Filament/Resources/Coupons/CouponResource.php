@@ -125,6 +125,13 @@ class CouponResource extends Resource
                             ->iconColor('primary')
                             ->visible(fn (): bool => static::ticketToPreview() !== null),
                     ]),
+                Section::make('Who gets it')
+                    ->contained(false)
+                    ->schema([
+                        Toggle::make('applies_automatically')
+                            ->label('Give it to every buyer automatically')
+                            ->helperText('For a sale, like Black Friday. Nobody has to type the code: the ticket page opens with it already applied and the lower price showing. Set an end date below so the sale stops on its own.'),
+                    ]),
                 Section::make('Limits')
                     ->contained(false)
                     ->schema([
@@ -228,6 +235,9 @@ class CouponResource extends Resource
                 TextEntry::make('code')->copyable()->fontFamily('mono')->weight(FontWeight::Bold),
                 TextEntry::make('status')->badge()->state(fn (Coupon $record): CouponStatus => $record->status()),
                 TextEntry::make('discount')->state(fn (Coupon $record): string => $record->describe()),
+                TextEntry::make('applies_automatically')
+                    ->label('Who gets it')
+                    ->state(fn (Coupon $record): string => $record->applies_automatically ? 'Every buyer, automatically' : 'Buyers who type the code'),
                 TextEntry::make('note')->label('What it’s for')->placeholder('–'),
                 TextEntry::make('window')->label('When it works')->state(fn (Coupon $record): string => static::window($record)),
                 TextEntry::make('max_orders')->label('How many orders can use it')->placeholder('No limit'),
@@ -256,7 +266,9 @@ class CouponResource extends Resource
                     ->fontFamily('mono')
                     ->weight(FontWeight::Bold)
                     ->description(fn (Coupon $record): ?string => $record->note),
-                TextColumn::make('discount')->state(fn (Coupon $record): string => $record->describe()),
+                TextColumn::make('discount')
+                    ->state(fn (Coupon $record): string => $record->describe())
+                    ->description(fn (Coupon $record): ?string => $record->applies_automatically ? 'Every buyer, automatically' : null),
                 TextColumn::make('status')->badge()->state(fn (Coupon $record): CouponStatus => $record->status()),
                 TextColumn::make('window')->label('When it works')->state(fn (Coupon $record): string => static::window($record)),
                 TextColumn::make('used')

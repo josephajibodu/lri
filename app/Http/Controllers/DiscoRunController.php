@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Checkout\RecordCheckoutStep;
 use App\Enums\CheckoutStep;
 use App\Http\Middleware\IdentifyVisitor;
+use App\Models\Coupon;
 use App\Models\PaymentChannel;
 use App\Models\TicketType;
 use Illuminate\Database\Eloquent\Collection;
@@ -50,9 +51,10 @@ class DiscoRunController extends Controller
     }
 
     /**
-     * What the ticket card offers: the ticket on sale and the ways to pay for it, or why it can't be bought yet.
+     * What the ticket card offers: the ticket on sale, the ways to pay for it and any coupon every buyer gets right
+     * now, or why it can't be bought yet.
      *
-     * @return array{state: 'soon'|'sold_out'|'on_sale', ticketType: ?TicketType, channels: Collection<int, PaymentChannel>, maxQuantity: int}
+     * @return array{state: 'soon'|'sold_out'|'on_sale', ticketType: ?TicketType, channels: Collection<int, PaymentChannel>, maxQuantity: int, automaticCoupon: ?Coupon}
      */
     private function ticketing(): array
     {
@@ -69,6 +71,7 @@ class DiscoRunController extends Controller
             'ticketType' => $ticketType,
             'channels' => $channels,
             'maxQuantity' => $maxQuantity,
+            'automaticCoupon' => $ticketType ? Coupon::automaticFor($ticketType) : null,
         ];
     }
 }

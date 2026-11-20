@@ -179,6 +179,64 @@ test('the ticket form offers a coupon box, folded away until someone needs it', 
         ->assertSee(route('coupons.check'), false);
 });
 
+test('a coupon every buyer gets arrives already applied on the ticket form, with the full price struck through', function () {
+    Coupon::factory()->automatic()->create(['code' => 'BLACKFRIDAY']);
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSee('value="BLACKFRIDAY"', false)
+        ->assertSee('data-coupon-terms=', false)
+        ->assertSeeInOrder(['₦8,000', '₦10,000'])
+        ->assertSeeText('20% off: −₦2,000. You pay ₦8,000.')
+        ->assertSeeText('Everyone gets this right now.');
+});
+
+test('a coupon is only filled in for everyone while it can be used', function (Closure $makeCoupon) {
+    $this->freezeTime();
+    $makeCoupon();
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertDontSee('value="BLACKFRIDAY"', false)
+        ->assertDontSeeText('Everyone gets this right now.')
+        ->assertSeeText('₦10,000');
+})->with([
+    'one buyers have to type' => [fn () => Coupon::factory()->create(['code' => 'BLACKFRIDAY'])],
+    'one switched off' => [fn () => Coupon::factory()->automatic()->disabled()->create(['code' => 'BLACKFRIDAY'])],
+    'one that hasn’t started' => [fn () => Coupon::factory()->automatic()->create(['code' => 'BLACKFRIDAY', 'starts_at' => now()->addMinute()])],
+    'one that has ended' => [fn () => Coupon::factory()->automatic()->create(['code' => 'BLACKFRIDAY', 'ends_at' => now()->subMinute()])],
+    'one fully used' => [fn () => Order::factory()->paid()->for(Coupon::factory()->automatic()->state(['code' => 'BLACKFRIDAY', 'max_orders' => 1]))->create()],
+    'one for another ticket' => [fn () => Coupon::factory()->automatic()->hasAttached(TicketType::factory()->state(['event' => 'another-event']))->create(['code' => 'BLACKFRIDAY'])],
+]);
+
+test('when more than one coupon is given to everyone, the newest applies', function () {
+    $this->freezeTime();
+    Coupon::factory()->automatic()->create(['code' => 'EARLYBIRD', 'created_at' => now()->subDay()]);
+    Coupon::factory()->automatic()->create(['code' => 'BLACKFRIDAY']);
+
+    $this->get(route('disco-run'))->assertOk()->assertSee('value="BLACKFRIDAY"', false)->assertDontSee('value="EARLYBIRD"', false);
+});
+
+test('a code the buyer typed before stays in the form while a sale is on', function () {
+    Coupon::factory()->automatic()->create(['code' => 'BLACKFRIDAY']);
+
+    $this->withSession(['_old_input' => ['coupon' => 'FRIEND10']])
+        ->get(route('disco-run'))
+        ->assertOk()
+        ->assertSee('value="FRIEND10"', false)
+        ->assertDontSeeText('Everyone gets this right now.');
+});
+
+test('a buyer coming back without a coupon gets the sale filled in', function () {
+    Coupon::factory()->automatic()->create(['code' => 'BLACKFRIDAY']);
+
+    $this->withSession(['_old_input' => ['quantity' => 2, 'coupon' => null]])
+        ->get(route('disco-run'))
+        ->assertOk()
+        ->assertSee('value="BLACKFRIDAY"', false)
+        ->assertSeeText('20% off: −₦4,000. You pay ₦16,000.');
+});
+
 test('paying the discounted total counts as paid in full, and the receipt names the coupon', function () {
     fakeBachs();
     Coupon::factory()->create(['code' => 'LRI20']);
@@ -254,6 +312,17 @@ test('organisers can create a coupon with its limits, and amounts are stored in 
         ->max_tickets_per_order->toBeNull()
         ->and($coupon->starts_at->toDateTimeString())->toBe('2026-12-01 08:00:00')
         ->and($coupon->ticketTypes->pluck('id')->all())->toBe([$this->ticketType->id]);
+});
+
+test('organisers can give a coupon to every buyer, and the list says so', function () {
+    $this->actingAs(User::factory()->superAdmin()->create());
+
+    Livewire::test(ManageCoupons::class)
+        ->callAction('create', data: ['code' => 'BLACKFRIDAY', 'discount_type' => CouponDiscountType::Percentage->value, 'discount_value' => '20', 'applies_automatically' => true])
+        ->assertHasNoActionErrors()
+        ->assertSeeText('Every buyer, automatically');
+
+    expect(Coupon::query()->sole()->applies_automatically)->toBeTrue();
 });
 
 test('a new coupon records who made it', function () {
