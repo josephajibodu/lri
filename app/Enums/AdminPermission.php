@@ -17,6 +17,7 @@ enum AdminPermission: string implements HasDescription, HasLabel
     case ManageTicketTypes = 'manage ticket types';
     case ManageCoupons = 'manage coupons';
     case SendReminders = 'send reminders';
+    case ManageLinks = 'manage links';
     case ManagePaymentMethods = 'manage payment methods';
     case ManageBirthdays = 'manage birthdays';
     case ManageBarracksRegistrations = 'manage barracks registrations';
@@ -34,6 +35,7 @@ enum AdminPermission: string implements HasDescription, HasLabel
             self::ManageTicketTypes => 'Ticket types',
             self::ManageCoupons => 'Coupons',
             self::SendReminders => 'Abandoned orders',
+            self::ManageLinks => 'Tracked links',
             self::ManagePaymentMethods => 'Ways to pay',
             self::ManageBirthdays => 'Birthdays',
             self::ManageBarracksRegistrations => 'Barracks permits',
@@ -47,12 +49,13 @@ enum AdminPermission: string implements HasDescription, HasLabel
     public function getDescription(): string
     {
         return match ($this) {
-            self::ViewDashboard => 'Money in, the checkout funnel, ways to pay and where buyers come from.',
+            self::ViewDashboard => 'Money in, the checkout funnel, ways to pay and where visitors and buyers come from.',
             self::ManageOrders => 'Every order with the buyer’s details, payments and journey. Can email tickets again, release disputed ones and mark test payments.',
             self::UseHeadsetDesk => 'Find tickets, fill in names and hand over headsets on the day.'.(config('lri.headset_desk.open') ? '' : ' Hidden for now: only super admins can open it.'),
             self::ManageTicketTypes => 'Prices, ticket limits and when sales open.',
             self::ManageCoupons => 'Create coupons, see how much they’ve been used, and disable them.',
             self::SendReminders => 'See who left without paying, with their details, and email them a reminder to come back and finish.',
+            self::ManageLinks => 'Make a short link and QR code for each place the tickets are shared, and see how many taps each gets.',
             self::ManagePaymentMethods => 'Switch ways to pay on or off and choose the featured ones.',
             self::ManageBirthdays => 'Birthdays members have shared.',
             self::ManageBarracksRegistrations => 'Barracks permit sign-ups, and printing their forms.',

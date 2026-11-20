@@ -26,6 +26,7 @@ test('each part of the admin opens only for roles that include it', function (st
     'headset desk' => ['/admin/headset-desk', AdminPermission::UseHeadsetDesk],
     'ticket types' => ['/admin/ticket-types', AdminPermission::ManageTicketTypes],
     'coupons' => ['/admin/coupons', AdminPermission::ManageCoupons],
+    'tracked links' => ['/admin/tracked-links', AdminPermission::ManageLinks],
     'ways to pay' => ['/admin/payment-channels', AdminPermission::ManagePaymentMethods],
     'birthdays' => ['/admin/birthdays', AdminPermission::ManageBirthdays],
     'barracks permits' => ['/admin/barracks-registrations', AdminPermission::ManageBarracksRegistrations],

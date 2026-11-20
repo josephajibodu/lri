@@ -87,7 +87,7 @@ test('each way to pay shows its success rate, leaving out attempts still open', 
         ->and($rows['bank_transfer']['revenue']->amount)->toBe($paid->sum('amount'));
 });
 
-test('orders are credited to their campaign, the site that sent them, or direct', function () {
+test('orders are credited to their campaign, the place that sent them, or direct', function () {
     Order::factory()->paid()->create(['amount' => 1_000_000, 'attribution' => ['source' => 'instagram', 'campaign' => 'launch']]);
     Order::factory()->create(['attribution' => ['source' => 'instagram', 'campaign' => 'launch']]);
     Order::factory()->paid()->create(['amount' => 2_000_000, 'attribution' => ['referrer' => 'l.facebook.com']]);
@@ -95,10 +95,32 @@ test('orders are credited to their campaign, the site that sent them, or direct'
 
     $rows = collect(SalesBySource::for(new ReportPeriod))->keyBy('source');
 
-    expect($rows['instagram'])->campaign->toBe('launch')->orders->toBe(2)->paid_orders->toBe(1)->conversion_rate->toBe(50.0)
-        ->and($rows['l.facebook.com']['revenue']->format())->toBe('₦20,000')
-        ->and($rows['direct'])->orders->toBe(1)->paid_orders->toBe(0)
-        ->and($rows->keys()->first())->toBe('l.facebook.com');
+    expect($rows['Instagram'])->detail->toBe('launch')->orders->toBe(2)->paid_orders->toBe(1)
+        ->and($rows['Facebook']['revenue']->format())->toBe('₦20,000')
+        ->and($rows['Direct or unknown'])->orders->toBe(1)->paid_orders->toBe(0)
+        ->and($rows->keys()->first())->toBe('Facebook');
+});
+
+test('visitors are counted once each, by where their first look at the ticket page came from', function () {
+    CheckoutEvent::factory()->create(['visitor_id' => 'ada', 'step' => CheckoutStep::TicketPageViewed, 'properties' => ['source' => 'instagram'], 'occurred_at' => now()->subHour()]);
+    CheckoutEvent::factory()->create(['visitor_id' => 'ada', 'step' => CheckoutStep::TicketPageViewed, 'properties' => ['source' => 'google']]);
+    CheckoutEvent::factory()->create(['visitor_id' => 'ada', 'step' => CheckoutStep::FormStarted]);
+    CheckoutEvent::factory()->create(['visitor_id' => 'bisi', 'step' => CheckoutStep::TicketPageViewed, 'properties' => ['source' => 'l.instagram.com']]);
+    CheckoutEvent::factory()->create(['visitor_id' => 'chidi', 'step' => CheckoutStep::TicketPageViewed, 'properties' => ['tickets' => 'on_sale']]);
+    Order::factory()->paid()->create(['amount' => 1_000_000, 'attribution' => ['source' => 'instagram']]);
+
+    $rows = collect(SalesBySource::for(new ReportPeriod))->keyBy('source');
+
+    expect($rows->keys()->all())->toBe(['Instagram', 'Direct or unknown'])
+        ->and($rows['Instagram'])->toMatchArray(['visitors' => 2, 'started' => 1, 'paid_orders' => 1, 'conversion_rate' => 50.0])
+        ->and($rows['Direct or unknown'])->toMatchArray(['visitors' => 1, 'started' => 0, 'paid_orders' => 0, 'conversion_rate' => 0.0]);
+});
+
+test('orders from before Instagram was told apart from Facebook ads are credited to Instagram when Instagram sent them', function () {
+    Order::factory()->paid()->create(['attribution' => ['source' => 'facebook', 'medium' => 'paid', 'referrer' => 'l.instagram.com']]);
+    Order::factory()->paid()->create(['attribution' => ['source' => 'facebook', 'medium' => 'paid', 'referrer' => 'lm.facebook.com']]);
+
+    expect(collect(SalesBySource::for(new ReportPeriod))->pluck('source')->sort()->values()->all())->toBe(['Facebook', 'Instagram']);
 });
 
 test('the summary adds up revenue, tickets and how many visitors bought', function () {

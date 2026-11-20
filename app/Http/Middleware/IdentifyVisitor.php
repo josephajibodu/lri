@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\TrafficSource;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -10,8 +11,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Give each browser a random visitor id, so the steps of one person's checkout can be tied together before they
- * give an email, and remember where they came from (UTM tags or the referring site) to credit the order.
- * Neither cookie holds anything about who the person is.
+ * give an email, and remember where they came from to credit their visit and order: a link's tags, an ad's click
+ * id, the app whose browser opened the link, or the site that sent them. It runs on every public page, so someone who
+ * lands on the home page from Instagram is still credited to Instagram when they reach the tickets. Neither cookie
+ * holds anything about who the person is.
  */
 class IdentifyVisitor
 {
@@ -67,8 +70,9 @@ class IdentifyVisitor
     }
 
     /**
-     * Where the visitor came from. A visit with campaign tags replaces what was remembered (the latest campaign
-     * gets the credit); an untagged visit from another site is only remembered when nothing is yet.
+     * Where the visitor came from. A visit with campaign tags or an ad's click id replaces what was remembered (the
+     * latest campaign gets the credit); an untagged visit from another site or an app's browser is only remembered
+     * when nothing is yet.
      *
      * @return array<string, string>|null
      */
@@ -82,17 +86,22 @@ class IdentifyVisitor
             ->filter(fn (mixed $value): bool => is_string($value) && $value !== '')
             ->map(fn (string $value): string => Str::limit(strtolower(trim($value)), 100, ''));
 
-        foreach (['gclid' => 'google', 'fbclid' => 'facebook'] as $clickId => $source) {
-            if ($request->filled($clickId) && ! $tags->has('source')) {
-                $tags->put('source', $source)->put('medium', 'paid');
-            }
+        $referrer = parse_url((string) $request->headers->get('referer'), PHP_URL_HOST);
+        $isExternal = is_string($referrer) && $referrer !== '' && $referrer !== $request->getHost();
+        $cameThrough = TrafficSource::fromUserAgent($request->userAgent()) ?? ($isExternal ? TrafficSource::fromHost($referrer) : null);
+
+        if (! $tags->has('source') && ($clicked = TrafficSource::fromClickIds($request->query(), $cameThrough)) !== null) {
+            $tags = collect($clicked)->merge($tags);
         }
 
-        $referrer = parse_url((string) $request->headers->get('referer'), PHP_URL_HOST);
-        $isExternal = is_string($referrer) && $referrer !== $request->getHost();
+        if ($tags->isEmpty()) {
+            if ($remembered !== null || ($cameThrough === null && ! $isExternal)) {
+                return $remembered;
+            }
 
-        if ($tags->isEmpty() && ($remembered !== null || ! $isExternal)) {
-            return $remembered;
+            if ($cameThrough !== null) {
+                $tags->put('source', $cameThrough->value);
+            }
         }
 
         $attribution = $tags->merge(array_filter([
