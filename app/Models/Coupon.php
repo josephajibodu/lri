@@ -48,6 +48,7 @@ class Coupon extends Model
      */
     protected $attributes = [
         'currency' => 'NGN',
+        'applies_automatically' => false,
     ];
 
     /**
