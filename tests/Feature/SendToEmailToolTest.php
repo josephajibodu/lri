@@ -122,7 +122,7 @@ test('a paid order queues the news for the email tool', function () {
     Queue::assertPushedTimes(SendToEmailTool::class, 1);
 });
 
-test('a buyer who didn’t tick the box never reaches the email tool, whatever happens to their order', function () {
+test('a buyer who didn’t tick the box reaches the email tool only once they pay', function () {
     Mail::fake();
     Queue::fake([SendToEmailTool::class]);
     connectMailchimp();
@@ -137,10 +137,13 @@ test('a buyer who didn’t tick the box never reaches the email tool, whatever h
     $payment = Payment::factory()->for($paid)->create(['amount' => 1_000_000]);
     deliverBachsWebhook(bachsEvent('collection.succeeded', ['checkout_id' => $payment->provider_checkout_id, 'amount' => '10000.00', 'status' => 'SUCCEEDED']))->assertOk();
 
+    $send = EmailToolSend::query()->sole();
+
     expect($placed->fresh()->status)->toBe(OrderStatus::Abandoned)
-        ->and($paid->fresh()->status)->toBe(OrderStatus::Paid)
-        ->and(EmailToolSend::query()->count())->toBe(0);
-    Queue::assertNotPushed(SendToEmailTool::class);
+        ->and($paid->fresh()->status)->toBe(OrderStatus::Paid);
+    expect($send->order_id)->toBe($paid->id)
+        ->and($send->event)->toBe(EmailToolEvent::OrderPaid);
+    Queue::assertPushedTimes(SendToEmailTool::class, 1);
 });
 
 test('with no email tool connected, nothing is queued', function () {

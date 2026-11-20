@@ -1,4 +1,4 @@
-@php($shareText = 'Silent Disco Run with Let’s Run Ibadan'.($startsAt ? ', '.$startsAt->format('D j M, g A') : '').($discoRun['venue'] ? ' in '.$discoRun['venue'] : '').'. Headsets on, run and vibe, then rave. Get your ticket: '.route('disco-run'))
+@php($shareText = 'Silent Disco Run with Let’s Run Ibadan'.($startsAt ? ', '.$startsAt->format('D j M, g A') : '').($discoRun['venue'] ? ' in '.$discoRun['venue'] : '').'. Headsets on, walk and vibe, then rave. No running needed. Get your ticket: '.route('disco-run'))
 <section class="dr-sec dr-share" id="share">
     <div class="wrap dr-share-grid">
         <figure class="dr-poster" data-reveal>

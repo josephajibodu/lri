@@ -24,7 +24,7 @@
             @endfor
         </div>
 
-        <p class="dr-lede">Headsets on. The city hears nothing, you hear everything. Run and vibe through Ibadan at night on three live DJ channels, then we rave at the finish.</p>
+        <p class="dr-lede">Headsets on. The city hears nothing, you hear everything. Walk, dance and vibe through Ibadan at night on three live DJ channels, then we rave at the finish.</p>
 
         {{-- The price, the headset and who can come sit next to the date and place, on the first screen of a phone, so nobody has to scroll to find out.
              While a sale every buyer gets is running, the price is what one ticket costs with it, the same as the ticket form shows. --}}
@@ -52,7 +52,7 @@
                 @endif
                 <ul class="dr-offer-notes">
                     <li>Headset included</li>
-                    <li>Walk, jog or run</li>
+                    <li>No running needed</li>
                 </ul>
             </div>
         </div>

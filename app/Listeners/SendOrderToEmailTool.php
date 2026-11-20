@@ -11,8 +11,10 @@ use App\Jobs\SendToEmailTool;
 use App\Models\EmailToolSend;
 
 /**
- * Note the news for the email tool and queue it, for buyers who ticked the consent box and only once per order:
- * an order that lapses twice doesn't start a second round of follow-ups.
+ * Note the news for the email tool and queue it, only once per order: an order that lapses twice doesn't start a
+ * second round of follow-ups. Every buyer who pays joins the event's emails, which carry an unsubscribe link. Before
+ * paying, only someone who ticked the old consent box is passed on, so nobody is asked to confirm a subscription
+ * while they're still paying.
  */
 class SendOrderToEmailTool
 {
@@ -23,7 +25,7 @@ class SendOrderToEmailTool
      */
     public function handle(OrderPlaced|OrderAbandoned|OrderPaid $event): void
     {
-        if (! $this->tools->isEnabled() || ! $event->order->marketing_consent) {
+        if (! $this->tools->isEnabled() || (! $event instanceof OrderPaid && ! $event->order->marketing_consent)) {
             return;
         }
 

@@ -149,7 +149,7 @@ return [
         'includes' => [
             'A wireless LED headset for the night',
             'Three live DJ channels to switch between',
-            'Pacers and sweepers so nobody runs alone',
+            'Pacers and sweepers so nobody is left behind',
             'Water on the route',
             'The rave after the run',
         ],

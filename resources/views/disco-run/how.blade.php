@@ -9,7 +9,7 @@
             @foreach ([
                 ['Check in', 'Pick up your wireless LED headset at the start, pair it, and find your tribe in the crowd.', 'coral'],
                 ['Pick a channel', 'Three DJs play live at the same time. Flip between them whenever you like. Your headset glows the colour of your channel.', 'green'],
-                ['Run and vibe', 'We run '.$discoRun['distance'].' through Ibadan together at every pace, singing out loud to music nobody else can hear.', 'sky'],
+                ['Move and vibe', 'We cover '.$discoRun['distance'].' of Ibadan together. Walk it, dance it or jog it, singing out loud to music nobody else can hear.', 'sky'],
                 ['Rave after', 'The finish line turns into the dance floor. Headsets stay on and the DJs go head to head until the last song.', 'pink'],
             ] as [$name, $copy, $tone])
                 <li class="dr-step dr-tone-{{ $tone }}" data-reveal style="--d: {{ $loop->index * .08 }}s">

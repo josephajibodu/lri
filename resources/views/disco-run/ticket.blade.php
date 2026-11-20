@@ -1,4 +1,4 @@
-<section class="dr-sec" id="tickets">
+<section class="dr-sec">
     <div class="wrap">
         <div class="dr-head" data-reveal>
             <p class="dr-label">Tickets</p>
@@ -27,7 +27,8 @@
                     </ul>
                 </div>
 
-                <div class="dr-ticket-stub">
+                {{-- Every "Get your ticket" link lands here, on the price and the form, not on the ticket's details above them --}}
+                <div class="dr-ticket-stub" id="tickets">
                     @if ($ticketing['state'] === 'on_sale')
                         @php($ticketType = $ticketing['ticketType'])
                         @php($quantity = (int) old('quantity', 1))
@@ -72,7 +73,7 @@
                             <div class="dr-field">
                                 <label for="email">Email</label>
                                 <input class="dr-input" id="email" name="email" type="email" value="{{ old('email') }}" required autocomplete="email" inputmode="email" aria-describedby="email-hint">
-                                <p class="dr-field-hint" id="email-hint">Your ticket comes here.</p>
+                                <p class="dr-field-hint" id="email-hint">Your ticket and news about the night come here. Unsubscribe any time.</p>
                                 <p class="dr-field-error" data-error-for="email">@error('email'){{ $message }}@enderror</p>
                             </div>
 
@@ -82,11 +83,6 @@
                                 <p class="dr-field-hint" id="phone-hint">For headset pickup updates.</p>
                                 <p class="dr-field-error" data-error-for="phone">@error('phone'){{ $message }}@enderror</p>
                             </div>
-
-                            <label class="dr-check">
-                                <input type="checkbox" name="marketing_consent" value="1" @checked(old('marketing_consent'))>
-                                <span>Email me about LRI runs and events. You can stop any time.</span>
-                            </label>
 
                             <details class="dr-coupon" data-coupon data-coupon-url="{{ route('coupons.check') }}" @if ($appliedCoupon) data-coupon-terms="{{ json_encode($appliedCoupon->checkoutTermsFor($ticketType)) }}" @endif @if ($couponCode || $errors->has('coupon')) open @endif>
                                 <summary>Have a coupon?</summary>

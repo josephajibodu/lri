@@ -54,13 +54,13 @@ test('the disco run page uses the flyer for link previews', function () {
         ->assertSee('<meta name="twitter:image" content="'.asset('images/disco-run/og-image.jpg').'">', false);
 });
 
-test('the top of the page gives the ticket’s price, the headset and every pace before the ticket button', function () {
+test('the top of the page gives the ticket’s price, the headset and that nobody has to run before the ticket button', function () {
     TicketType::factory()->create(['price' => 1_500_000]);
     PaymentChannel::factory()->create();
 
     $this->get(route('disco-run'))
         ->assertOk()
-        ->assertSeeInOrder(['class="dr-hero"', '₦15,000', 'Headset included', 'Walk, jog or run', 'Get your ticket ↓'], false);
+        ->assertSeeInOrder(['class="dr-hero"', '₦15,000', 'Headset included', 'No running needed', 'Get your ticket ↓'], false);
 });
 
 test('the top of the page gives the sale price with the full price struck through while a sale every buyer gets is running', function () {
@@ -130,6 +130,25 @@ test('the ticket takes orders with the featured way to pay up front and the othe
         ->assertDontSeeText('Tickets open soon');
 });
 
+test('the ticket links land on the price and the form rather than the ticket’s details', function () {
+    TicketType::factory()->create();
+    PaymentChannel::factory()->create();
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSeeInOrder(['class="dr-includes"', 'id="tickets"', 'data-checkout-total', 'name="name"'], false);
+});
+
+test('the ticket form asks for no email consent and says the ticket and news about the night come by email', function () {
+    TicketType::factory()->create();
+    PaymentChannel::factory()->create();
+
+    $this->get(route('disco-run'))
+        ->assertOk()
+        ->assertSeeText('Your ticket and news about the night come here. Unsubscribe any time.')
+        ->assertDontSee('name="marketing_consent"', false);
+});
+
 test('the header sends people to the ticket while tickets are on sale', function () {
     TicketType::factory()->create();
     PaymentChannel::factory()->create();
@@ -191,5 +210,5 @@ test('the disco run page lets people share the flyer on WhatsApp or download it'
         ->assertOk()
         ->assertSee('src="'.asset('images/disco-run/flyer.jpg').'"', false)
         ->assertSee('href="'.asset('images/disco-run/flyer-full.jpg').'" download', false)
-        ->assertSee('href="https://wa.me/?text='.rawurlencode('Silent Disco Run with Let’s Run Ibadan, Fri 11 Dec, 6 PM in Bodija, Ibadan. Headsets on, run and vibe, then rave. Get your ticket: '.route('disco-run')).'"', false);
+        ->assertSee('href="https://wa.me/?text='.rawurlencode('Silent Disco Run with Let’s Run Ibadan, Fri 11 Dec, 6 PM in Bodija, Ibadan. Headsets on, walk and vibe, then rave. No running needed. Get your ticket: '.route('disco-run')).'"', false);
 });
