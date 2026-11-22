@@ -93,5 +93,8 @@ class AppServiceProvider extends ServiceProvider
 
         /* Per receipt, not per ticket: naming a ticket emails someone, and one receipt can have many tickets. */
         RateLimiter::for('ticket-changes', fn (Request $request): Limit => Limit::perMinute(20)->by((string) $request->segment(2)));
+
+        /* Per staff member: a busy gate scans a ticket every few seconds, but nobody should be guessing codes. */
+        RateLimiter::for('check-in-scans', fn (Request $request): Limit => Limit::perMinute(60)->by('user:'.$request->user()?->getAuthIdentifier()));
     }
 }

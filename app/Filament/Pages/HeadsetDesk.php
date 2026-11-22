@@ -87,6 +87,29 @@ class HeadsetDesk extends Page implements HasTable
         return static::isCheckInOpen() && static::canAccess();
     }
 
+    /**
+     * A button to the check-in scanner, for anyone who can use the desk. The dashboard and the orders list have it too.
+     */
+    public static function checkInScannerAction(): Action
+    {
+        return Action::make('checkInScanner')
+            ->label('Check-in scanner')
+            ->icon(Heroicon::OutlinedQrCode)
+            ->color('gray')
+            ->url(fn (): string => route('check-in'))
+            ->visible(fn (): bool => static::canAccess());
+    }
+
+    /**
+     * @return array<Action>
+     */
+    protected function getHeaderActions(): array
+    {
+        return [
+            static::checkInScannerAction()->color('primary'),
+        ];
+    }
+
     public function getSubheading(): string
     {
         $paid = Ticket::query()->whereRelation('order', 'status', OrderStatus::Paid);

@@ -496,6 +496,22 @@ test('handing over a headset is recorded under the desk staff member, with the t
         ->and($line->changeRows())->toBe([['field' => 'Checked in at', 'before' => '–', 'after' => '6 Nov 2026, 11:00 AM']]);
 });
 
+test('letting someone in at the gate is recorded under the staff member who scanned them, with the time in Lagos', function () {
+    config()->set('lri.headset_desk.open', true);
+    config()->set('lri.headset_desk.check_in_open', true);
+    $this->travelTo('2026-12-11 17:30:00');
+    $order = Order::factory()->paid()->create();
+    $ticket = Ticket::factory()->for($order)->named()->create(['ticket_type_id' => $order->ticket_type_id]);
+    $this->actingAs(User::factory()->deskStaff()->create(['name' => 'Bisi Gate']));
+
+    $this->postJson(route('check-in.scans'), ['code' => $ticket->code])->assertOk();
+
+    $line = latestLogLine();
+    expect($line->description)->toBe("Changed ticket {$ticket->code}")
+        ->and($line->causer_name)->toBe('Bisi Gate')
+        ->and($line->changeRows())->toBe([['field' => 'Admitted at', 'before' => '–', 'after' => '11 Dec 2026, 6:30 PM']]);
+});
+
 test('a line still names the person, and can be found by them, after their login is removed', function () {
     $coupon = Coupon::factory()->create(['code' => 'LRI20']);
     $organiser = User::factory()->withPermissions(AdminPermission::ManageCoupons)->create(['name' => 'Ada Organiser']);
