@@ -20,6 +20,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     Mail::fake();
     config()->set('lri.headset_desk.open', true);
+    config()->set('lri.headset_desk.check_in_open', true);
 
     $this->staff = User::factory()->deskStaff()->create(['name' => 'Bisi Desk']);
     $this->order = Order::factory()->paid()->create(['buyer_name' => 'Ada Bello', 'buyer_email' => 'ada@example.com', 'quantity' => 2]);
@@ -99,6 +100,41 @@ test('the roles screen warns that ticking the desk does nothing until it’s ope
     config()->set('lri.headset_desk.open', false);
 
     expect(AdminPermission::UseHeadsetDesk->getDescription())->toContain('Hidden for now');
+});
+
+test('until check-in opens, the desk shows tickets but offers nothing to do with them', function () {
+    config()->set('lri.headset_desk.open', false);
+    config()->set('lri.headset_desk.check_in_open', false);
+
+    desk(User::factory()->superAdmin()->create())
+        ->assertSeeText('Read-only until check-in opens')
+        ->assertCanSeeTableRecords([$this->named, $this->blank])
+        ->assertSeeText('Paid, ready')
+        ->assertActionHidden(TestAction::make('giveHeadset')->table($this->named))
+        ->assertActionHidden(TestAction::make('changeName')->table($this->named))
+        ->assertActionHidden(TestAction::make('saveAndGiveHeadset')->table($this->blank));
+
+    config()->set('lri.headset_desk.check_in_open', true);
+
+    desk()->assertDontSeeText('Read-only until check-in opens');
+});
+
+test('until check-in opens, a headset can’t be handed out or a name changed, even by sending the request straight to the desk', function () {
+    config()->set('lri.headset_desk.check_in_open', false);
+
+    desk()
+        ->mountAction(TestAction::make('giveHeadset')->table($this->named))
+        ->call('callMountedAction')
+        ->mountAction(TestAction::make('changeName')->table($this->named))
+        ->set('mountedActions.0.data', ['name' => 'Someone Else', 'email' => 'else@example.com'])
+        ->call('callMountedAction')
+        ->mountAction(TestAction::make('saveAndGiveHeadset')->table($this->blank))
+        ->set('mountedActions.0.data', ['code' => $this->blank->code, 'name' => 'Tunde Okafor', 'email' => 'tunde@example.com'])
+        ->call('callMountedAction');
+
+    expect($this->named->fresh())->holder_name->toBe('Ada Bello')->checked_in_at->toBeNull()
+        ->and($this->blank->fresh())->holder_name->toBeNull()->checked_in_at->toBeNull();
+    Mail::assertNothingQueued();
 });
 
 test('the desk finds tickets by code with or without its dash, holder, or the buyer’s details', function (callable $search) {

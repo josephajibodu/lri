@@ -481,6 +481,7 @@ test('a coupon limited to certain tickets records which ones', function () {
 test('handing over a headset is recorded under the desk staff member, with the time in Lagos', function () {
     Mail::fake();
     config()->set('lri.headset_desk.open', true);
+    config()->set('lri.headset_desk.check_in_open', true);
     $this->travelTo('2026-11-06 10:00:00');
     $order = Order::factory()->paid()->create();
     $ticket = Ticket::factory()->for($order)->create(['ticket_type_id' => $order->ticket_type_id, 'holder_name' => 'Ada Bello', 'holder_email' => 'ada@example.com']);
