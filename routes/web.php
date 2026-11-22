@@ -4,6 +4,7 @@ use App\Enums\AdminPermission;
 use App\Http\Controllers\AdminInvitationController;
 use App\Http\Controllers\BarracksRegistrationController;
 use App\Http\Controllers\BirthdayController;
+use App\Http\Controllers\CheckInController;
 use App\Http\Controllers\CheckoutEventController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\DiscoRunController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\SeoController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TrackedLinkController;
 use App\Http\Middleware\EnsureBarracksRegistrationIsOpen;
+use App\Http\Middleware\EnsureCanCheckTicketsIn;
 use App\Http\Middleware\IdentifyVisitor;
 use Illuminate\Support\Facades\Route;
 
@@ -114,6 +116,19 @@ Route::prefix('/invitations/{token}')->group(function () {
     Route::post('/decline', [AdminInvitationController::class, 'decline'])
         ->middleware('throttle:invitation-answers')
         ->name('invitations.decline');
+});
+
+// The check-in scanner for staff on the gate. It isn't part of the admin, but only people who can use the headset desk
+// get in: anyone else with the link is sent to the home page. Phones fetch its manifest and service worker without
+// signing in, so those two are open, and the home-screen app starts at a page that can send staff to sign in.
+Route::get('/check-in/start', [CheckInController::class, 'start'])->name('check-in.start');
+Route::get('/check-in/manifest.webmanifest', [CheckInController::class, 'manifest'])->name('check-in.manifest');
+Route::get('/check-in/service-worker.js', [CheckInController::class, 'serviceWorker'])->name('check-in.service-worker');
+Route::middleware(EnsureCanCheckTicketsIn::class)->group(function () {
+    Route::get('/check-in', [CheckInController::class, 'show'])->name('check-in');
+    Route::post('/check-in/scans', [CheckInController::class, 'scan'])
+        ->middleware('throttle:check-in-scans')
+        ->name('check-in.scans');
 });
 
 Route::post('/webhooks/payments/{provider}', PaymentWebhookController::class)

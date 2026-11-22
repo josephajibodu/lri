@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\Pages;
 
+use App\Filament\Pages\HeadsetDesk;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
 use App\Reports\SalesBySource;
@@ -18,6 +19,7 @@ class ListOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            HeadsetDesk::checkInScannerAction(),
             Action::make('export')
                 ->label('Download CSV')
                 ->icon(Heroicon::OutlinedArrowDownTray)

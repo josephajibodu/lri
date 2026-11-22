@@ -106,6 +106,10 @@ return [
     | but no headset can be handed out and no name changed there. Set
     | HEADSET_DESK_CHECK_IN_OPEN=true on the day to let the desk work.
     |
+    | The check-in scanner at /check-in follows both: the same people can
+    | open it, and until check-in opens it checks tickets without marking
+    | anyone as let in.
+    |
     */
 
     'headset_desk' => [

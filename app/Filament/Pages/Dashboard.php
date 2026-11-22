@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\AdminPermission;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard as BaseDashboard;
@@ -27,6 +28,16 @@ class Dashboard extends BaseDashboard
     public static function canAccess(): bool
     {
         return auth()->user()?->can(AdminPermission::ViewDashboard->value) ?? false;
+    }
+
+    /**
+     * @return array<Action>
+     */
+    protected function getHeaderActions(): array
+    {
+        return [
+            HeadsetDesk::checkInScannerAction(),
+        ];
     }
 
     public function filtersForm(Schema $schema): Schema
