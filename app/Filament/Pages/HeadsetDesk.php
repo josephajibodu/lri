@@ -15,6 +15,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Components\EmbeddedTable;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -33,7 +34,8 @@ use UnitEnum;
  * buyer's name, email or order number; fill in the name and email of anyone the buyer didn't name; and hand over
  * one headset per paid ticket. A ticket with no name on it has nothing to check someone against, so the person has to
  * show its code, which stays hidden here until it's searched for in full. Otherwise anyone could say a buyer got them
- * a ticket and be given a spare one.
+ * a ticket and be given a spare one. Until check-in opens, the desk is read-only: tickets can be looked up, but nothing
+ * on them can be changed here.
  */
 class HeadsetDesk extends Page implements HasTable
 {
@@ -68,6 +70,23 @@ class HeadsetDesk extends Page implements HasTable
         return $user?->can(AdminPermission::UseHeadsetDesk->value) ?? false;
     }
 
+    /**
+     * Whether check-in has been opened with HEADSET_DESK_CHECK_IN_OPEN. Until then, no headset can be handed out and no
+     * name changed at the desk.
+     */
+    public static function isCheckInOpen(): bool
+    {
+        return (bool) config('lri.headset_desk.check_in_open');
+    }
+
+    /**
+     * Whether the signed-in person can change tickets at the desk right now.
+     */
+    public static function canChangeTickets(): bool
+    {
+        return static::isCheckInOpen() && static::canAccess();
+    }
+
     public function getSubheading(): string
     {
         $paid = Ticket::query()->whereRelation('order', 'status', OrderStatus::Paid);
@@ -79,6 +98,10 @@ class HeadsetDesk extends Page implements HasTable
     public function content(Schema $schema): Schema
     {
         return $schema->components([
+            Callout::make('Read-only until check-in opens')
+                ->description('You can look tickets up, but headsets can’t be handed out and names can’t be changed here yet.')
+                ->warning()
+                ->visible(fn (): bool => ! static::isCheckInOpen()),
             EmbeddedTable::make(),
         ]);
     }
@@ -149,7 +172,7 @@ class HeadsetDesk extends Page implements HasTable
                     ->color('success')
                     ->button()
                     ->visible(fn (Ticket $record): bool => $record->isValid() && $record->isNamed() && ! $record->isCollected())
-                    ->authorize(fn (): bool => static::canAccess())
+                    ->authorize(fn (): bool => static::canChangeTickets())
                     ->requiresConfirmation()
                     ->modalHeading(fn (Ticket $record): string => 'Give a headset to '.$record->holder_name.'?')
                     ->modalDescription(fn (Ticket $record): string => 'Ticket '.$record->code.'. This ticket can’t be used for another headset after this.')
@@ -161,7 +184,7 @@ class HeadsetDesk extends Page implements HasTable
                     ->color('warning')
                     ->button()
                     ->visible(fn (Ticket $record): bool => $record->isValid() && ! $record->isNamed() && ! $record->isCollected())
-                    ->authorize(fn (): bool => static::canAccess())
+                    ->authorize(fn (): bool => static::canChangeTickets())
                     ->modalHeading('Who’s collecting this ticket?')
                     ->modalDescription('Ask for the ticket’s code, from their QR code or the buyer’s email or receipt. Then type in their name and email, and we’ll email them their ticket.')
                     ->fillForm(fn (Ticket $record): array => ['code' => $this->isCodeOf($record, $this->tableSearch) ? $record->code : null])
@@ -193,7 +216,7 @@ class HeadsetDesk extends Page implements HasTable
                     ->icon(Heroicon::OutlinedPencilSquare)
                     ->color('gray')
                     ->visible(fn (Ticket $record): bool => $record->isValid() && $record->isNamed() && ! $record->isCollected())
-                    ->authorize(fn (): bool => static::canAccess())
+                    ->authorize(fn (): bool => static::canChangeTickets())
                     ->modalHeading(fn (Ticket $record): string => 'Ticket '.$record->code)
                     ->modalDescription('Fix the name or email. We’ll email them their ticket again.')
                     ->fillForm(fn (Ticket $record): array => [

@@ -102,10 +102,15 @@ return [
     | role has ticked. Set HEADSET_DESK_OPEN=true to give it back to every
     | role with "Headset desk" ticked.
     |
+    | It's also read-only until check-in opens: tickets can be looked up,
+    | but no headset can be handed out and no name changed there. Set
+    | HEADSET_DESK_CHECK_IN_OPEN=true on the day to let the desk work.
+    |
     */
 
     'headset_desk' => [
         'open' => (bool) env('HEADSET_DESK_OPEN', false),
+        'check_in_open' => (bool) env('HEADSET_DESK_CHECK_IN_OPEN', false),
     ],
 
     /*
