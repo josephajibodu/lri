@@ -20,7 +20,7 @@
                         <a class="btn btn-yellow btn-sm" href="#tribes">Find your tribe ↓</a>
                     @endif
                 </div>
-                <div class="clock" id="countdown" role="timer" aria-label="Countdown to the run" data-starts-at="{{ $nextRun['starts_at']->toIso8601String() }}">
+                <div class="clock" id="countdown" role="timer" aria-label="Countdown to the run" data-starts-at="{{ $nextRun['starts_at']->toIso8601String() }}"@if ($nextRun['repeats_weekly'] ?? false) data-repeats-weekly @endif>
                     <div class="clock-unit"><span class="clock-num" id="c-d">00</span><span class="clock-lbl">Days</span></div>
                     <span class="clock-sep" aria-hidden="true">:</span>
                     <div class="clock-unit"><span class="clock-num" id="c-h">00</span><span class="clock-lbl">Hrs</span></div>
