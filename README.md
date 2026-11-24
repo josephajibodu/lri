@@ -20,7 +20,7 @@ The website for Let's Run Ibadan (LRI), a running community of runners, joggers 
 
 ## Tech stack
 
-- [Laravel 13](https://laravel.com/docs) on PHP 8.4
+- [Laravel 13](https://laravel.com/docs) on PHP 8.4(to be upgraded soon)
 - Blade layouts, components and partials
 - Vite builds `resources/css/app.css` and `resources/js/app.js`. Tailwind CSS 4 is imported, but the page styles are plain CSS in `app.css`
 - Vanilla JavaScript for the countdown, stickers, pace slider, route map, kit check and footer animation
