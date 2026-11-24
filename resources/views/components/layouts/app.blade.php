@@ -47,6 +47,10 @@
         <link rel="preload" href="{{ Vite::asset('resources/fonts/instrument-sans-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+        @production
+            <script async src="https://www.sabilytics.com/script.js" data-site="rbp94naef8k2" data-domain="letsrunibadan.com"></script>
+        @endproduction
+
         {{ $head ?? '' }}
     </head>
     <body>
