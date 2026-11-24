@@ -34,6 +34,8 @@ return [
     | start time is read in the given timezone (Ibadan is Africa/Lagos).
     | For a run where each tribe starts from its own meeting point, leave
     | address and map_url null and the card links to the tribes instead.
+    | With repeats_weekly on, once a run has started the page shows the
+    | same time a week later, so starts_at only needs changing to move it.
     |
     */
 
@@ -41,6 +43,7 @@ return [
         'title' => 'Saturday Tribe Run',
         'starts_at' => '2026-11-07 06:30',
         'timezone' => 'Africa/Lagos',
+        'repeats_weekly' => true,
         'venue' => 'Your tribe’s meeting point',
         'address' => null,
         'map_url' => null,

@@ -40,6 +40,43 @@ test('the home page shows the next community run from config', function () {
         ->assertSee('data-starts-at="2026-12-05T06:30:00+01:00"', false);
 });
 
+test('a weekly run that has started counts down to the same time next week', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-21 07:00', 'Africa/Lagos'));
+    config()->set('lri.next_run', [
+        'title' => 'Saturday Tribe Run',
+        'starts_at' => '2026-11-07 06:30',
+        'timezone' => 'Africa/Lagos',
+        'repeats_weekly' => true,
+        'venue' => 'Your tribe’s meeting point',
+        'address' => null,
+        'map_url' => null,
+        'note' => 'Your tribe posts the route in its group.',
+    ]);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSeeText('Sat 28 Nov 2026')
+        ->assertSee('data-starts-at="2026-11-28T06:30:00+01:00" data-repeats-weekly', false);
+});
+
+test('a one-off run keeps its date after it has started', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-21 07:00', 'Africa/Lagos'));
+    config()->set('lri.next_run', [
+        'title' => 'Harmattan Hill Run',
+        'starts_at' => '2026-11-07 06:30',
+        'timezone' => 'Africa/Lagos',
+        'venue' => 'Agodi Gardens',
+        'address' => null,
+        'map_url' => null,
+        'note' => 'Bring water and a friend.',
+    ]);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('data-starts-at="2026-11-07T06:30:00+01:00"', false)
+        ->assertDontSee('data-repeats-weekly', false);
+});
+
 test('the home page links to the member form and social accounts from config', function () {
     config()->set('lri.links.member_form', 'https://forms.example.com/join-lri');
     config()->set('lri.links.instagram', 'https://instagram.example.com/lri');

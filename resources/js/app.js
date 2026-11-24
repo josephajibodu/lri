@@ -18,12 +18,17 @@ import.meta.glob("../fonts/*.woff2");
         observer.observe(el);
     }
 
-    /* Race clock to the next run, read from the countdown's data-starts-at */
+    /* Race clock to the next run, read from the countdown's data-starts-at. A weekly run rolls on to next week at zero. */
     var countdown = $("countdown");
     var target = countdown ? new Date(countdown.dataset.startsAt).getTime() : NaN;
+    var repeatsWeekly = countdown ? countdown.hasAttribute("data-repeats-weekly") : false;
     var clockTimer;
     function tick() {
         var ms = target - Date.now();
+        while (ms <= 0 && repeatsWeekly) {
+            target += 7 * 86400000;
+            ms = target - Date.now();
+        }
         if (ms <= 0) {
             ["c-d", "c-h", "c-m", "c-s"].forEach(function (id) { $(id).textContent = "00"; });
             $("next-status").textContent = "Last community run";

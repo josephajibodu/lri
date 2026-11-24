@@ -16,7 +16,7 @@ class HomeController extends Controller
     public function __invoke(): View
     {
         $nextRun = config('lri.next_run');
-        $nextRun['starts_at'] = CarbonImmutable::parse($nextRun['starts_at'], $nextRun['timezone']);
+        $nextRun['starts_at'] = $this->nextRunStart($nextRun);
 
         $discoRun = $this->upcomingDiscoRun();
 
@@ -26,6 +26,27 @@ class HomeController extends Controller
             'discoRunSale' => $discoRun ? EventTicketing::now('disco-run')['sale'] : null,
             'structuredData' => $this->structuredData($nextRun),
         ]);
+    }
+
+    /**
+     * When the next community run starts. A weekly run that has already started moves on a week at a time until it
+     * is still to come, so the card counts down to the coming Saturday without anyone editing the date.
+     *
+     * @param  array{starts_at: string, timezone: string, repeats_weekly?: bool}  $nextRun
+     */
+    private function nextRunStart(array $nextRun): CarbonImmutable
+    {
+        $startsAt = CarbonImmutable::parse($nextRun['starts_at'], $nextRun['timezone']);
+
+        if (! ($nextRun['repeats_weekly'] ?? false)) {
+            return $startsAt;
+        }
+
+        while ($startsAt->isPast()) {
+            $startsAt = $startsAt->addWeek();
+        }
+
+        return $startsAt;
     }
 
     /**
