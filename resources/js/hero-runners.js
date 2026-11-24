@@ -52,7 +52,7 @@ var CAST = [
     { hair: "low", beard: true, skin: 2, top: "tee", topColor: INK, stripe: ORANGE, bottom: "shorts", bottomColor: ORANGE, shoe: SKY, girth: 1.03, height: 1.04, pace: .03 },
     { hair: "hijab", hairColor: SKY, skin: 3, top: "long", topColor: CREAM, bottom: "tights", bottomColor: INK, shoe: CORAL, girth: .98, height: .95, pace: -.05 },
     { hair: "low", band: WHITE, skin: 0, top: "tee", topColor: CORAL, bottom: "shorts", bottomColor: INK, shoe: ORANGE, girth: 1.3, belly: 2.6, height: 1, pace: -.1 },
-    { hair: "puff", skin: 3, top: "tee", topColor: WHITE, stripe: GREEN, bottom: "shorts", bottomColor: GREEN, shoe: INK, accent: GREEN, flag: ORANGE, girth: 1, height: .97, pace: 0 },
+    { hair: "puff", skin: 3, top: "tee", topColor: WHITE, stripe: GREEN, bottom: "shorts", bottomColor: GREEN, shoe: INK, accent: GREEN, flag: INK, flagLetters: ORANGE, girth: 1, height: .97, pace: 0 },
     { hair: "afro", skin: 2, top: "singlet", topColor: GREEN, bottom: "shorts", bottomColor: INK, shoe: ORANGE, girth: 1, height: 1.02, pace: .07 },
     { hair: "pony", skin: 4, top: "tee", topColor: PINK, bottom: "shorts", bottomColor: INK, shoe: SKY, accent: WHITE, girth: .96, height: .96, pace: .02 },
     { hair: "bald", shades: true, skin: 1, top: "singlet", topColor: INK, bottom: "shorts", bottomColor: SKY, shoe: ORANGE, girth: 1.02, height: 1.05, pace: .14, bib: true },
@@ -61,7 +61,7 @@ var CAST = [
     { hair: "twists", visor: CORAL, skin: 1, top: "tee", topColor: SKY, bottom: "shorts", bottomColor: CORAL, shoe: INK, accent: CORAL, girth: .95, height: .98, pace: 0 },
     { hair: "cap", hairColor: GREEN, grey: true, skin: 2, top: "tee", topColor: CREAM, stripe: INK, bottom: "shorts", bottomColor: GREEN, shoe: ORANGE, girth: 1.12, belly: 1.8, height: .98, pace: -.5, maxPace: .1 },
     { hair: "tie", hairColor: PINK, skin: 4, top: "long", topColor: GREEN, bottom: "tights", bottomColor: INK, shoe: PINK, girth: 1.22, belly: 1.6, height: .94, pace: -.5, maxPace: .12 },
-    { hair: "braids", skin: 0, top: "tee", topColor: CORAL, bottom: "tights", bottomColor: INK, shoe: ORANGE, accent: ORANGE, girth: 1, height: 1, pace: .08 },
+    { hair: "low", beard: true, skin: 0, top: "singlet", topColor: SKY, bottom: "shorts", bottomColor: INK, shoe: ORANGE, girth: 1.04, height: 1.03, pace: .08 },
 ];
 
 /* ---------- Small maths and colour helpers ---------- */
@@ -425,6 +425,7 @@ function dress(spec, haze) {
         band: spec.band ? tone(spec.band) : null,
         visor: spec.visor ? tone(spec.visor) : null,
         flag: spec.flag ? tone(spec.flag) : null,
+        flagLetters: spec.flagLetters ? tone(spec.flagLetters) : null,
         ink: tone(INK),
         paper: tone(WHITE),
     };
@@ -752,10 +753,74 @@ function drawHead(ctx, pose, person, kit, detail) {
     }
     ctx.restore();
 }
-function drawFlag(ctx, pose, kit) {
+/*
+ * The LRI flag. The cloth is a rippling top edge and bottom edge, and the letters are flat shapes laid out on it.
+ * Every corner of a letter is carried onto the rippling cloth, so the word waves with the flag instead of floating on it.
+ */
+var FLAG_LENGTH = 29;
+var FLAG_DEPTH = 16;
+var FLAG_RIPPLE = .3;
+var FLAG_POLE_GAP = 4.4;
+var clothTopX = new Float32Array(6);
+var clothTopY = new Float32Array(6);
+var clothBottomX = new Float32Array(6);
+var clothBottomY = new Float32Array(6);
+var FLAG_WORD = shapeFlagWord();
+
+/*
+ * "LRI" in bold block letters, as outlines of [x, y] pairs with x to the right and y down. Every outline runs
+ * clockwise except the hole in the R, which runs the other way so it stays open when everything is filled at once.
+ *
+ * @return {{ width: number, height: number, shapes: number[][] }}
+ */
+function shapeFlagWord() {
+    var height = 10, stem = 2.4, bar = 2.1, gap = 1.6;
+    var shapes = [];
+    function box(left, top, right, bottom) {
+        shapes.push([left, top, right, top, right, bottom, left, bottom]);
+    }
+    function bowl(left, top, right, bottom, isHole) {
+        var radius = (bottom - top) / 2, centreX = right - radius, centreY = top + radius;
+        var points = [left, top];
+        for (var i = 0; i <= 8; i++) {
+            var a = -Math.PI / 2 + Math.PI * i / 8;
+            points.push(centreX + radius * Math.cos(a), centreY + radius * Math.sin(a));
+        }
+        points.push(left, bottom);
+        if (isHole) {
+            var reversed = [];
+            for (var p = points.length - 2; p >= 0; p -= 2) {
+                reversed.push(points[p], points[p + 1]);
+            }
+            points = reversed;
+        }
+        shapes.push(points);
+    }
+    var lWidth = 6, rLeft = lWidth + gap, rWidth = 7, bowlBottom = 6;
+    box(0, 0, stem, height);
+    box(0, height - bar, lWidth, height);
+    box(rLeft, 0, rLeft + stem, height);
+    bowl(rLeft, 0, rLeft + rWidth, bowlBottom, false);
+    bowl(rLeft + stem, bar, rLeft + rWidth - bar, bowlBottom - bar, true);
+    shapes.push([rLeft + stem, bowlBottom - 1, rLeft + stem + 2.6, bowlBottom - 1, rLeft + rWidth + .2, height, rLeft + rWidth - 2.5, height]);
+    var iLeft = rLeft + rWidth + gap;
+    box(iLeft, 0, iLeft + stem, height);
+    return { width: iLeft + stem, height: height, shapes: shapes };
+}
+/* A point on the cloth, by its share of the way from the pole to the far end and from the top edge to the bottom */
+var clothPoint = { x: 0, y: 0 };
+function onCloth(along, down) {
+    var at = clamp(along, 0, 1) * 5, index = Math.min(Math.floor(at), 4), f = at - index;
+    var topX = lerp(clothTopX[index], clothTopX[index + 1], f), topY = lerp(clothTopY[index], clothTopY[index + 1], f);
+    var bottomX = lerp(clothBottomX[index], clothBottomX[index + 1], f), bottomY = lerp(clothBottomY[index], clothBottomY[index + 1], f);
+    clothPoint.x = lerp(topX, bottomX, down);
+    clothPoint.y = lerp(topY, bottomY, down);
+}
+function drawFlag(ctx, pose, kit, detail) {
     var hand = pose.armNear;
     var wave = pose.phase * TAU;
     var topX = hand.handX + 1.5, topY = hand.handY + 37;
+    var i;
     ctx.beginPath();
     ctx.moveTo(hand.handX - .8, hand.handY - 7);
     ctx.lineTo(topX, topY);
@@ -764,14 +829,42 @@ function drawFlag(ctx, pose, kit) {
     ctx.strokeStyle = kit.ink;
     ctx.stroke();
     var angle = 180 * DEG + pose.lean;
-    layStrand(topX, topY, 5, 25, angle, .34, wave);
+    layStrand(topX, topY, 5, FLAG_LENGTH, angle, FLAG_RIPPLE, wave);
+    for (i = 0; i < 6; i++) {
+        clothTopX[i] = strandX[i];
+        clothTopY[i] = strandY[i];
+    }
+    layStrand(topX - 1, topY - FLAG_DEPTH, 5, FLAG_LENGTH - 2, angle, FLAG_RIPPLE, wave - .35);
+    for (i = 0; i < 6; i++) {
+        clothBottomX[i] = strandX[i];
+        clothBottomY[i] = strandY[i];
+    }
     ctx.beginPath();
-    ctx.moveTo(strandX[0], strandY[0]);
-    for (var i = 1; i < 6; i++) { ctx.lineTo(strandX[i], strandY[i]); }
-    layStrand(topX - 1, topY - 13, 5, 23, angle, .34, wave - .35);
-    for (var j = 5; j >= 0; j--) { ctx.lineTo(strandX[j], strandY[j]); }
+    ctx.moveTo(clothTopX[0], clothTopY[0]);
+    for (i = 1; i < 6; i++) { ctx.lineTo(clothTopX[i], clothTopY[i]); }
+    for (i = 5; i >= 0; i--) { ctx.lineTo(clothBottomX[i], clothBottomY[i]); }
     ctx.closePath();
     fillPath(ctx, kit.flag);
+    if (!kit.flagLetters || detail < 2) {
+        return;
+    }
+
+    /* The word reads left to right from the far end of the cloth towards the pole, centred from top to bottom */
+    var word = FLAG_WORD, inset = (FLAG_DEPTH - word.height) / 2;
+    ctx.beginPath();
+    for (var s = 0; s < word.shapes.length; s++) {
+        var shape = word.shapes[s];
+        for (var p = 0; p < shape.length; p += 2) {
+            onCloth((FLAG_POLE_GAP + word.width - shape[p]) / FLAG_LENGTH, (inset + shape[p + 1]) / FLAG_DEPTH);
+            if (p === 0) {
+                ctx.moveTo(clothPoint.x, clothPoint.y);
+            } else {
+                ctx.lineTo(clothPoint.x, clothPoint.y);
+            }
+        }
+        ctx.closePath();
+    }
+    fillPath(ctx, kit.flagLetters);
 }
 function drawPerson(ctx, person, kit, detail) {
     var pose = person.pose, spec = person.spec;
@@ -784,7 +877,7 @@ function drawPerson(ctx, person, kit, detail) {
     drawTorso(ctx, pose, person, kit, detail);
     drawHead(ctx, pose, person, kit, detail);
     if (spec.flag) {
-        drawFlag(ctx, pose, kit);
+        drawFlag(ctx, pose, kit, detail);
     }
     drawArm(ctx, pose.armNear, person, kit, false);
 }
@@ -1081,8 +1174,8 @@ function paintRoofs(ctx, width, height, u) {
 
 var LANES = [
     { scale: .4, at: .025, haze: 0, front: false, detail: 0, spread: 1, shadow: false, roster: [1, 6, 11, 9, 2, 5], counts: [3, 4, 6] },
-    { scale: .62, at: .15, haze: .28, front: false, detail: 1, spread: 1, shadow: true, roster: [11, 5, 8, 12, 13], counts: [2, 4, 5] },
-    { scale: .82, at: .42, haze: .05, front: true, detail: 2, spread: .75, shadow: true, roster: [4, 6, 2, 10], counts: [2, 3, 4] },
+    { scale: .62, at: .15, haze: .28, front: false, detail: 1, spread: 1, shadow: true, roster: [11, 8, 5, 12, 13], counts: [2, 4, 5] },
+    { scale: .82, at: .42, haze: .05, front: true, detail: 2, spread: .75, shadow: true, roster: [4, 7, 2, 10], counts: [2, 3, 4] },
     { scale: 1, at: .72, haze: 0, front: true, detail: 2, spread: .6, shadow: true, roster: [0, 3, 9], counts: [2, 2, 3] },
 ];
 var FAR_CROWD = "#B7B1A4";
